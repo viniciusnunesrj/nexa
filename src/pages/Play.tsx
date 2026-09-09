@@ -479,7 +479,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
         </div>
 
         {/* Action Controls & Battle Log */}
-        <div className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center bg-slate-900/60 rounded-3xl p-4 shadow-[0_0_30px_rgba(6,182,212,0.08)]">
+        <div className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center">
           {/* Logs */}
           <div className="w-full max-w-xl bg-slate-950/80 border border-white/10 rounded-2xl p-4 min-h-[90px] flex flex-col justify-center text-center mb-6">
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
@@ -491,20 +491,18 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
           </div>
 
           {/* Launch Button */}
-<button
-  onClick={startCombat}
-  disabled={inBattle || (!selectedChar && teamCards.length === 0)}
-  className={`w-full max-w-sm px-8 py-4 rounded-2xl font-heading font-black text-lg uppercase tracking-wider transition-all flex items-center justify-center gap-3 ${
-    inBattle
-      ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-      : 'bg-cyan-300 text-slate-950 border-2 border-cyan-100 shadow-[0_0_35px_rgba(34,211,238,0.85)] hover:bg-cyan-200 hover:scale-105'
-  }`}
->
-  <Swords className="w-6 h-6" />
-  <span>
-    {inBattle ? 'Engajando em Batalha...' : 'Iniciar Batalha na Arena'}
-  </span>
-</button>
+          <button
+            onClick={startCombat}
+            disabled={inBattle || (!selectedChar && teamCards.length === 0)}
+            className={`px-10 py-4 rounded-2xl font-heading font-black text-lg uppercase tracking-wider transition-all flex items-center gap-3 ${
+              inBattle
+                ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                : 'bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 shadow-[0_0_30px_rgba(6,182,212,0.45)] hover:scale-105 [@media(hover:none)]:from-cyan-300 [@media(hover:none)]:to-cyan-500 [@media(hover:none)]:shadow-[0_0_30px_rgba(6,182,212,0.6)]'
+            }`}
+          >
+            <Swords className="w-6 h-6" />
+            <span>{inBattle ? 'Engajando em Batalha...' : 'Iniciar Batalha na Arena'}</span>
+          </button>
         </div>
       </div>
 
