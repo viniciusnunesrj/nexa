@@ -497,7 +497,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             className={`px-10 py-4 rounded-2xl font-heading font-black text-lg uppercase tracking-wider transition-all flex items-center gap-3 ${
               inBattle
                 ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 shadow-[0_0_30px_rgba(6,182,212,0.45)] hover:scale-105'
+                : 'bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 shadow-[0_0_30px_rgba(6,182,212,0.45)] hover:scale-105 [@media(hover:none)]:from-cyan-300 [@media(hover:none)]:to-cyan-500 [@media(hover:none)]:shadow-[0_0_30px_rgba(6,182,212,0.6)]'
             }`}
           >
             <Swords className="w-6 h-6" />
