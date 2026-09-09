@@ -479,7 +479,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
         </div>
 
         {/* Action Controls & Battle Log */}
-        <div className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center">
+        <div className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center bg-slate-900/60 rounded-3xl p-4 shadow-[0_0_30px_rgba(6,182,212,0.08)]">
           {/* Logs */}
           <div className="w-full max-w-xl bg-slate-950/80 border border-white/10 rounded-2xl p-4 min-h-[90px] flex flex-col justify-center text-center mb-6">
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
@@ -497,7 +497,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
   className={`px-10 py-4 rounded-2xl font-heading font-black text-lg uppercase tracking-wider transition-all flex items-center gap-3 ${
     inBattle
       ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-      : 'bg-red-600 text-white border-4 border-yellow-300 shadow-[0_0_30px_rgba(255,0,0,0.8)]'
+      : 'bg-cyan-400 text-slate-950 border border-cyan-200 shadow-[0_0_30px_rgba(34,211,238,0.55)] md:bg-gradient-to-r md:from-cyan-500 md:to-indigo-600 md:hover:from-cyan-400 md:hover:to-indigo-500 md:hover:scale-105'
   }`}
 >
   <Swords className="w-6 h-6" />
