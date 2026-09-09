@@ -66,7 +66,7 @@ async function runTests() {
   assert(victoryRewards.nexGained === 100, `Recompensa de vitória calculada: +${victoryRewards.nexGained} NEX`);
 
   // Atualizar saldo persistido através do EconomyService (Single Source of Truth)
-  const updatedUser1 = EconomyService.applyBattleReward(user1.id, {
+  const updatedUser1 = await EconomyService.applyBattleReward(user1.id, {
     nexGained: victoryRewards.nexGained,
     nxaGained: victoryRewards.nxaGained,
     xpGained: victoryRewards.xpGained,
@@ -143,7 +143,7 @@ async function runTests() {
   console.log('\n--- TESTE 5: Jogar novamente (Recompensa Aditiva) ---');
   // Usuário 1 joga novamente e ganha (+100 NEX)
   const battle2 = RewardService.calculateBattleRewards(true, user1Check!.level, user1.id, user1.username);
-  const user1AfterBattle2 = EconomyService.applyBattleReward(user1.id, {
+  const user1AfterBattle2 = await EconomyService.applyBattleReward(user1.id, {
     nexGained: battle2.nexGained,
     nxaGained: battle2.nxaGained,
     xpGained: battle2.xpGained,
@@ -157,7 +157,7 @@ async function runTests() {
 
   // Usuário 1 joga uma terceira partida e é derrotado (+25 NEX consolação)
   const defeatRewards = RewardService.calculateBattleRewards(false, user1AfterBattle2.level, user1.id, user1.username);
-  const user1AfterDefeat = EconomyService.applyBattleReward(user1.id, {
+  const user1AfterDefeat = await EconomyService.applyBattleReward(user1.id, {
     nexGained: defeatRewards.nexGained,
     nxaGained: defeatRewards.nxaGained,
     xpGained: defeatRewards.xpGained,

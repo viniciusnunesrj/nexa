@@ -35,6 +35,7 @@ function storageSet(key: string, value: string): void {
 }
 
 export class EconomyServiceClass {
+  private pendingBattles = new Set<string>();
   /**
    * Reads raw stored accounts from persistent database
    */
@@ -331,7 +332,7 @@ export class EconomyServiceClass {
    * em uma ÚNICA transação na base de dados persistente.
    * Evita a condição de corrida em que múltiplos setState sobrescreviam o saldo.
    */
-  public applyBattleReward(
+  public async applyBattleReward(
     userId: string,
     reward: {
       nexGained: number;
@@ -339,7 +340,39 @@ export class EconomyServiceClass {
       xpGained: number;
       victory: boolean;
     }
-  ): NexaUser & { levelUpResult?: LevelUpResult } {
+  ): Promise<NexaUser & { levelUpResult?: LevelUpResult }> {
+    if (isSupabaseConfigured()) {
+      if (this.pendingBattles.has(userId)) throw new Error('Aguarde a confirmação da batalha em andamento.');
+      this.pendingBattles.add(userId);
+      try {
+        const res = await SupabaseService.applyBattleRewardAtomic({ userId, ...reward });
+        if (!res.success || !res.profile) {
+          throw new Error(res.error || 'Não foi possível confirmar a batalha no Supabase.');
+        }
+        const profile = res.profile;
+        this.hydrateProfileFromSupabase(profile);
+        // The current RPC advances at most one level and grants no level rewards.
+        const newLevel = res.level!;
+        const previousLevel = res.leveledUp ? newLevel - 1 : newLevel;
+        return {
+          ...profile,
+          levelUpResult: {
+            leveledUp: res.leveledUp === true,
+            previousLevel,
+            newLevel,
+            levelsGained: res.leveledUp ? [newLevel] : [],
+            rewardsGranted: [],
+            unlockedSlots: profile.unlockedSlots || 3,
+            previousSlots: profile.unlockedSlots || 3,
+            newSlotsUnlocked: false,
+            leftoverXp: profile.experience,
+            maxXpForNewLevel: profile.maxExperience,
+          },
+        };
+      } finally {
+        this.pendingBattles.delete(userId);
+      }
+    }
     const accounts = this.getRawAccounts();
     const index = accounts.findIndex((a) => a.id === userId);
 
@@ -388,23 +421,6 @@ export class EconomyServiceClass {
     const finalUser = this.getUser(userId) || accounts[index];
     this.syncActiveSessionIfCurrent(finalUser);
 
-    // Persiste dados da batalha no Supabase
-    if (isSupabaseConfigured()) {
-      SupabaseService.applyBattleRewardAtomic({
-        userId,
-        victory: reward.victory,
-        nexGained: reward.nexGained,
-        nxaGained: reward.nxaGained,
-        xpGained: reward.xpGained,
-      }).then((res) => {
-        if (res.success && res.balanceNex !== undefined) {
-          this.updateUserBalance(userId, 'NEX', res.balanceNex);
-          if (res.balanceNxa !== undefined) {
-            this.updateUserBalance(userId, 'NXA', res.balanceNxa);
-          }
-        }
-      }).catch(() => {});
-    }
 
     return {
       ...finalUser,

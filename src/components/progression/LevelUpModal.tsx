@@ -87,7 +87,9 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ data, onClose, onNav
           </div>
 
           <p className="text-xs font-mono text-slate-300 mb-4">
-            Você atingiu novos patamares de sincronização e desbloqueou recompensas exclusivas:
+            {data.rewardsGranted.length > 0
+              ? 'Você atingiu novos patamares de sincronização e desbloqueou recompensas exclusivas:'
+              : 'Seu avanço de nível foi confirmado. Nenhuma recompensa de nível foi creditada nesta batalha.'}
           </p>
 
           {/* Unlocked Rewards List */}
@@ -157,7 +159,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ data, onClose, onNav
 
           <p className="text-[11px] font-mono text-emerald-400/90 mb-6 flex items-center justify-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Itens e créditos creditados automaticamente à sua conta.</span>
+            <span>{data.rewardsGranted.length > 0 ? 'Itens e créditos creditados automaticamente à sua conta.' : 'Nível atualizado na sua conta.'}</span>
           </p>
 
           {/* Action Buttons */}
@@ -176,7 +178,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({ data, onClose, onNav
               onClick={onClose}
               className="w-full sm:w-1/2 py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-heading font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(34,211,238,0.4)] flex items-center justify-center gap-2"
             >
-              <span>RESGATAR E CONTINUAR</span>
+              <span>{data.rewardsGranted.length > 0 ? 'RESGATAR E CONTINUAR' : 'CONTINUAR'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

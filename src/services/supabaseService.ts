@@ -16,6 +16,12 @@ import { MOCK_COMMUNITY_USERS, CURRENT_USER } from '../data/mockUsers';
 
 class SupabaseServiceClass {
   private inMemoryProfiles: Map<string, NexaUser> = new Map();
+  private profileRevision = 0;
+
+  public acceptConfirmedProfile(profile: NexaUser): void {
+    this.profileRevision += 1;
+    this.inMemoryProfiles.set(profile.id, profile);
+  }
   private inMemoryCards: Map<string, Card> = new Map();
   private inMemoryBoxes: Map<string, PlayerBox> = new Map();
   private inMemoryTransactions: LedgerEntry[] = [];
@@ -69,6 +75,7 @@ class SupabaseServiceClass {
   }
 
   public async fetchProfile(userId: string): Promise<NexaUser | null> {
+    const revision = this.profileRevision;
     if (!userId) return null;
 
     if (isSupabaseConfigured()) {
@@ -83,6 +90,7 @@ class SupabaseServiceClass {
           console.warn('[SupabaseService] Erro ao buscar perfil:', error.message);
         } else if (data) {
           const user = mapProfileToNexaUser(data);
+          if (revision !== this.profileRevision) return this.getProfileSync(userId);
           this.inMemoryProfiles.set(user.id, user);
           return user;
         }
@@ -99,6 +107,7 @@ class SupabaseServiceClass {
   }
 
   public async fetchAllProfiles(): Promise<NexaUser[]> {
+    const revision = this.profileRevision;
     if (isSupabaseConfigured()) {
       try {
         const { data, error } = await supabase
@@ -109,6 +118,7 @@ class SupabaseServiceClass {
         if (error) {
           console.warn('[SupabaseService] Erro ao buscar todos os perfis:', error.message);
         } else if (data && data.length > 0) {
+          if (revision !== this.profileRevision) return Array.from(this.inMemoryProfiles.values());
           const users = data.map(mapProfileToNexaUser);
           for (const u of users) {
             this.inMemoryProfiles.set(u.id, u);
@@ -127,6 +137,7 @@ class SupabaseServiceClass {
     userId: string,
     updates: Partial<Pick<NexaUser, 'username' | 'avatar' | 'bio' | 'title' | 'isFirstAccess'>>
   ): Promise<void> {
+    const revision = this.profileRevision;
     const configurationError = getSupabaseConfigurationError();
     if (configurationError) throw new Error(configurationError);
     const payload: Record<string, any> = { updated_at: new Date().toISOString() };
@@ -139,7 +150,7 @@ class SupabaseServiceClass {
       .eq('id', userId).select('*').maybeSingle();
     if (error) throw new Error('Falha ao salvar perfil no Supabase: ' + error.message);
     if (!data || data.id !== userId) throw new Error('O Supabase não confirmou a atualização do perfil.');
-    this.inMemoryProfiles.set(userId, mapProfileToNexaUser(data));
+    if (revision === this.profileRevision) this.inMemoryProfiles.set(userId, mapProfileToNexaUser(data));
   }
 
   public async upsertProfile(user: NexaUser): Promise<NexaUser> {
@@ -609,6 +620,7 @@ class SupabaseServiceClass {
     level?: number;
     experience?: number;
     leveledUp?: boolean;
+    profile?: NexaUser;
     error?: string;
   }> {
     if (!isSupabaseConfigured()) {
@@ -632,8 +644,23 @@ class SupabaseServiceClass {
         return { success: false, error: (data as any).error || 'Falha ao aplicar recompensa' };
       }
 
+      if (!data || data.success !== true || !Number.isFinite(data.level) ||
+          !Number.isFinite(data.experience) || !Number.isFinite(data.balance_nex) ||
+          !Number.isFinite(data.balance_nxa) || typeof data.leveled_up !== 'boolean') {
+        return { success: false, error: 'Resposta de batalha inválida. Recarregue o perfil antes de continuar.' };
+      }
+      // The current RPC omits max_experience and other profile fields. Read them
+      // after its commit; never infer the server XP threshold from the local table.
+      const { data: row, error: profileError } = await supabase.from('profiles')
+        .select('*').eq('id', params.userId).single();
+      if (profileError || !row || !Number.isFinite(row.max_experience) || row.max_experience <= 0) {
+        return { success: false, error: 'Batalha processada, mas não foi possível confirmar o perfil. Recarregue a página; não repita a solicitação.' };
+      }
+      const profile = mapProfileToNexaUser(row);
+      this.acceptConfirmedProfile(profile);
       return {
         success: true,
+        profile,
         balanceNex: Number((data as any).balance_nex),
         balanceNxa: Number((data as any).balance_nxa),
         level: Number((data as any).level),

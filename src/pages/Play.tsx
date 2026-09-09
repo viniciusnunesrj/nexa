@@ -222,10 +222,17 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
       ]);
     }, 1800);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       // Execute battle logic (updates victories, XP, currencies, and drops)
       const combatantId = selectedChar ? selectedChar.id : teamCards[0]?.id || user.id;
-      const rewards = executeBattle(combatantId);
+      let rewards;
+      try {
+        rewards = await executeBattle(combatantId);
+      } catch (error) {
+        setInBattle(false);
+        setCombatLogs((prev) => [...prev, error instanceof Error ? error.message : 'Não foi possível confirmar a batalha.']);
+        return;
+      }
       setBattleTurn(4);
       setInBattle(false);
       setBattleResult(rewards);

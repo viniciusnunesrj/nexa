@@ -88,14 +88,14 @@ interface GameStateContextType {
   cancelListing: (listingId: string) => void;
   buyListing: (listingId: string) => void;
   equipCharacter: (characterId: string) => void;
-  executeBattle: (characterId: string) => {
+  executeBattle: (characterId: string) => Promise<{
     victory: boolean;
     xpGained: number;
     nexGained: number;
     nxaGained: number;
     droppedItem: GameItem | null;
     droppedBox: PlayerBox | null;
-  };
+  }>;
   executeFusion: (itemIds: string[]) => FusionExecutionResult;
   proposeTrade: (
     receiverId: string,
@@ -389,8 +389,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (!atomicRes.success) {
           throw new Error(atomicRes.error || 'Falha na liquidação atômica da compra no mercado.');
         }
-        if (atomicRes.newBalanceNXA !== undefined) {
-          EconomyService.updateUserBalance(user.id, 'NXA', atomicRes.newBalanceNXA);
+        if (atomicRes.buyerBalanceNxa !== undefined) {
+          EconomyService.updateUserBalance(user.id, 'NXA', atomicRes.buyerBalanceNxa);
         }
       }
 
@@ -470,7 +470,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // EXECUTE BATTLE
-  const executeBattle = (characterId: string) => {
+  const executeBattle = async (characterId: string) => {
     const char = assets.find((a) => a.id === characterId && a.type === 'Character') as Character;
     const power = char ? char.power : 1000;
     
@@ -485,7 +485,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const rewards = RewardService.calculateBattleRewards(victory, user.level, user.id, user.username);
 
     // 3. Atualizar atomicamente o saldo persistido desse userId na base de dados
-    const updatedUser = EconomyService.applyBattleReward(userId, {
+    const updatedUser = await EconomyService.applyBattleReward(userId, {
       nexGained: rewards.nexGained,
       nxaGained: rewards.nxaGained,
       xpGained: rewards.xpGained,
