@@ -636,6 +636,17 @@ class SupabaseServiceClass {
         p_xp_gained: params.xpGained,
       });
 
+      // TEMP: raw RPC fields only; absent fields remain undefined.
+      console.log('[NEXA battle RPC: server response]', {
+        leveled_up: data?.leveled_up,
+        level: data?.level,
+        experience: data?.experience,
+        max_experience: data?.max_experience,
+        previous_level: data?.previous_level,
+        new_level: data?.new_level,
+        level_rewards_claimed: data?.level_rewards_claimed,
+      });
+
       if (error) {
         return { success: false, error: error.message };
       }

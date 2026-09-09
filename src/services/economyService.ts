@@ -345,6 +345,18 @@ export class EconomyServiceClass {
       if (this.pendingBattles.has(userId)) throw new Error('Aguarde a confirmação da batalha em andamento.');
       this.pendingBattles.add(userId);
       try {
+        // TEMP: read-only progression diagnostics; never log the account object.
+        try {
+          const localUser = JSON.parse(storageGet(AUTH_USERS_KEY) || '[]')
+            .find((account: NexaUser) => account.id === userId);
+          console.log('[NEXA battle RPC: local before]', {
+            level: localUser?.level,
+            experience: localUser?.experience,
+            maxExperience: localUser?.maxExperience,
+          });
+        } catch {
+          // Diagnostic failures must not interfere with battle processing.
+        }
         const res = await SupabaseService.applyBattleRewardAtomic({ userId, ...reward });
         if (!res.success || !res.profile) {
           throw new Error(res.error || 'Não foi possível confirmar a batalha no Supabase.');
