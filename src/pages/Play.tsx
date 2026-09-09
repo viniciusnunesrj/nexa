@@ -494,10 +494,10 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
 <button
   onClick={startCombat}
   disabled={inBattle || (!selectedChar && teamCards.length === 0)}
-  className={`px-10 py-4 rounded-2xl font-heading font-black text-lg uppercase tracking-wider transition-all flex items-center gap-3 ${
+  className={`w-full max-w-sm px-8 py-4 rounded-2xl font-heading font-black text-lg uppercase tracking-wider transition-all flex items-center justify-center gap-3 ${
     inBattle
       ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-      : 'bg-cyan-400 text-slate-950 border border-cyan-200 shadow-[0_0_30px_rgba(34,211,238,0.55)] md:bg-gradient-to-r md:from-cyan-500 md:to-indigo-600 md:hover:from-cyan-400 md:hover:to-indigo-500 md:hover:scale-105'
+      : 'bg-cyan-300 text-slate-950 border-2 border-cyan-100 shadow-[0_0_35px_rgba(34,211,238,0.85)] hover:bg-cyan-200 hover:scale-105'
   }`}
 >
   <Swords className="w-6 h-6" />
