@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Remix Remix Remix Remix Remix Remix NEXA — Game \u0026 Marketplace",
+  "description": "NEXA — Jogue. Evolua. Negocie. Plataforma gaming futurista de coleção, batalhas e marketplace P2P de itens digitais.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
