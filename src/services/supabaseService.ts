@@ -637,7 +637,7 @@ class SupabaseServiceClass {
       });
 
       // TEMP: raw RPC fields only; absent fields remain undefined.
-      console.log('[NEXA battle RPC: server response]', {
+      console.log('[NEXA BATTLE RPC RESULT]', {
         leveled_up: data?.leveled_up,
         level: data?.level,
         experience: data?.experience,

@@ -349,7 +349,7 @@ export class EconomyServiceClass {
         try {
           const localUser = JSON.parse(storageGet(AUTH_USERS_KEY) || '[]')
             .find((account: NexaUser) => account.id === userId);
-          console.log('[NEXA battle RPC: local before]', {
+          console.log('[NEXA BATTLE BEFORE RPC]', {
             level: localUser?.level,
             experience: localUser?.experience,
             maxExperience: localUser?.maxExperience,
@@ -366,7 +366,7 @@ export class EconomyServiceClass {
         // The current RPC advances at most one level and grants no level rewards.
         const newLevel = res.level!;
         const previousLevel = res.leveledUp ? newLevel - 1 : newLevel;
-        return {
+        const result = {
           ...profile,
           levelUpResult: {
             leveledUp: res.leveledUp === true,
@@ -381,6 +381,14 @@ export class EconomyServiceClass {
             maxXpForNewLevel: profile.maxExperience,
           },
         };
+        console.log('[NEXA LEVELUP RESULT]', {
+          leveledUp: result.levelUpResult.leveledUp,
+          previousLevel: result.levelUpResult.previousLevel,
+          newLevel: result.levelUpResult.newLevel,
+          levelsGained: result.levelUpResult.levelsGained,
+          rewardsGranted: result.levelUpResult.rewardsGranted,
+        });
+        return result;
       } finally {
         this.pendingBattles.delete(userId);
       }
@@ -434,6 +442,13 @@ export class EconomyServiceClass {
     this.syncActiveSessionIfCurrent(finalUser);
 
 
+    console.log('[NEXA LEVELUP RESULT]', {
+      leveledUp: levelUpResult.leveledUp,
+      previousLevel: levelUpResult.previousLevel,
+      newLevel: levelUpResult.newLevel,
+      levelsGained: levelUpResult.levelsGained,
+      rewardsGranted: levelUpResult.rewardsGranted,
+    });
     return {
       ...finalUser,
       levelUpResult,
