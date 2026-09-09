@@ -491,14 +491,20 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
           </div>
 
           {/* Launch Button */}
-          <button
-            onClick={startCombat}
-            disabled={inBattle || (!selectedChar && teamCards.length === 0)}
-            className="px-10 py-4 rounded-2xl font-black text-lg uppercase bg-red-600 text-white border-4 border-yellow-300" }`}
-          >
-            <Swords className="w-6 h-6" />
-            <span>{inBattle ? 'Engajando em Batalha...' : 'Iniciar Batalha na Arena'}</span>
-          </button>
+<button
+  onClick={startCombat}
+  disabled={inBattle || (!selectedChar && teamCards.length === 0)}
+  className={`px-10 py-4 rounded-2xl font-heading font-black text-lg uppercase tracking-wider transition-all flex items-center gap-3 ${
+    inBattle
+      ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+      : 'bg-red-600 text-white border-4 border-yellow-300 shadow-[0_0_30px_rgba(255,0,0,0.8)]'
+  }`}
+>
+  <Swords className="w-6 h-6" />
+  <span>
+    {inBattle ? 'Engajando em Batalha...' : 'Iniciar Batalha na Arena'}
+  </span>
+</button>
         </div>
       </div>
 
