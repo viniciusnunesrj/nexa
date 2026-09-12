@@ -64,7 +64,7 @@ export class BoxSystemTestRunner {
     try {
       EconomyService.updateUserBalance(uid, 'NEX', 100);
       const boxesBefore = BoxService.getAvailableBoxes(uid).length;
-      const purchaseRes = BoxService.purchaseBox(uid, 'BASIC');
+      const purchaseRes = await BoxService.purchaseBox(uid, 'BASIC');
       const userAfter = EconomyService.getUser(uid);
       const boxesAfter = BoxService.getAvailableBoxes(uid).length;
 
@@ -96,7 +96,7 @@ export class BoxSystemTestRunner {
     try {
       EconomyService.updateUserBalance(uid, 'NEX', 99);
       const boxesBefore = BoxService.getAvailableBoxes(uid).length;
-      const purchaseRes = BoxService.purchaseBox(uid, 'BASIC');
+      const purchaseRes = await BoxService.purchaseBox(uid, 'BASIC');
       const userAfter = EconomyService.getUser(uid);
       const boxesAfter = BoxService.getAvailableBoxes(uid).length;
 
@@ -130,7 +130,7 @@ export class BoxSystemTestRunner {
     try {
       EconomyService.updateUserBalance(uid, 'NEX', 1000);
       const boxesBefore = BoxService.getAvailableBoxes(uid).length;
-      const purchaseRes = BoxService.purchaseBox(uid, 'BASIC');
+      const purchaseRes = await BoxService.purchaseBox(uid, 'BASIC');
       const userAfter = EconomyService.getUser(uid);
       const boxesAfter = BoxService.getAvailableBoxes(uid).length;
 
@@ -229,10 +229,10 @@ export class BoxSystemTestRunner {
       const boxesBefore = BoxService.getAvailableBoxes(uid).length;
 
       // Executa simultaneamente duas tentativas de compra de 100 NEX quando saldo é 100 NEX
-      const [res1, res2] = [
+      const [res1, res2] = await Promise.all([
         BoxService.purchaseBox(uid, 'BASIC'),
         BoxService.purchaseBox(uid, 'BASIC'),
-      ];
+      ]);
 
       const boxesAfter = BoxService.getAvailableBoxes(uid).length;
       const userAfter = EconomyService.getUser(uid);

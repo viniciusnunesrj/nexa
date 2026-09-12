@@ -79,7 +79,7 @@ interface GameStateContextType {
   boxHistory: BoxHistoryRecord[];
   isPurchasing: boolean;
   openBox: (boxId: string) => BoxRewardSummary;
-  purchaseBox: (boxType: BoxType) => { success: boolean; error?: string; box?: PlayerBox };
+  purchaseBox: (boxType: BoxType) => Promise<{ success: boolean; error?: string; box?: PlayerBox }>;
   unlockCharacterWithFragments: (fragmentId: string) => { success: boolean; error?: string; unlockedCharacter?: Character };
   refreshBoxes: () => void;
   dismissNotification: (id: string) => void;
@@ -536,7 +536,10 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       // 6. Adicionar item dropado se gerado
-      if (rewards.droppedItem) {
+      if (onlineBattle && rewards.droppedItem) {
+        // TODO: only expose battle items after confirmation by a secure server RPC.
+        console.warn('[NEXA BATTLE] Drop de item online suspenso até existir RPC segura; nenhum item foi concedido.');
+      } else if (rewards.droppedItem) {
         setAssets((prev) => [rewards.droppedItem!, ...prev]);
         if (['Épico', 'Lendário', 'Mítico'].includes(rewards.droppedItem.rarity)) {
           soundService.playMythicDrop();
@@ -556,6 +559,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       return {
         ...rewards,
+        droppedItem: onlineBattle ? null : rewards.droppedItem,
         droppedBoxType: onlineBattle ? null : rewards.droppedBoxType,
         droppedBox,
       };
@@ -602,13 +606,13 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // PURCHASE BOX
-  const purchaseBox = (boxType: BoxType) => {
+  const purchaseBox = async (boxType: BoxType) => {
     if (isPurchasing) {
       return { success: false, error: 'Processamento de compra em andamento. Aguarde...' };
     }
     setIsPurchasing(true);
     try {
-      const res = BoxService.purchaseBox(user.id, boxType);
+      const res = await BoxService.purchaseBox(user.id, boxType);
       if (res.success && res.box) {
         const updatedUser = EconomyService.getUser(user.id);
         if (updatedUser) syncUser(updatedUser);

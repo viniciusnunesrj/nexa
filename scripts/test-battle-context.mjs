@@ -26,18 +26,20 @@ let apply = async () => outcome;
 const modal = [];
 let ledgerCalls = 0;
 let boxCalls = 0;
+let assetWrites = 0;
+const droppedItem = { name: 'Colete de Kevlar Sintético', rarity: 'Comum' };
 const dependencies = {
   user, pendingBattles, assets: [],
   setLevelUpData: value => modal.push(value),
   isSupabaseConfigured: () => online,
   RewardService: { calculateBattleRewards: () => ({ xpGained: 150, nexGained: 100,
-    nxaGained: 10, droppedItem: null, droppedBoxType: 'BASIC' }) },
+    nxaGained: 10, droppedItem, droppedBoxType: 'BASIC' }) },
   EconomyService: { applyBattleReward: (...args) => apply(...args) },
   syncUser: profile => assert.equal('levelUpResult' in profile, false),
   BoxService: { getAvailableBoxes: () => [], getBoxCounts: () => ({}),
     grantBox: () => { boxCalls++; return { boxType: 'BASIC' }; } },
   LedgerService: { recordEntry: () => { ledgerCalls++; return {}; } },
-  setBoxes: () => {}, setBoxCounts: () => {}, setAssets: () => {}, setLedger: () => {},
+  setBoxes: () => {}, setBoxCounts: () => {}, setAssets: () => { assetWrites++; }, setLedger: () => {},
   localStorage: { getItem: () => null }, ASSETS_KEY: 'test-assets',
   soundService: { playMythicDrop: () => {} },
 };
@@ -54,6 +56,7 @@ try {
   assert.equal(modal.at(-1), null);
   assert.equal(noLevel.droppedBox, null);
   assert.equal(noLevel.droppedBoxType, null);
+  assert.equal(noLevel.droppedItem, null);
 
   // Old local results, mismatched profiles and non-empty rewards never open online.
   for (const result of [levelUpResult,
@@ -69,7 +72,8 @@ try {
   assert.equal(modal.at(-1), outcome.levelUpResult);
   assert.equal(ledgerCalls, 0);
   assert.equal(boxCalls, 0);
-  assert.equal(warnings.length, 5);
+  assert.equal(assetWrites, 0);
+  assert.equal(warnings.length, 10);
 
   // Concurrent clicks are blocked; errors clear both the old modal and the lock.
   let rejectBattle;
@@ -92,6 +96,8 @@ try {
   assert.equal(ledgerCalls, 1);
   assert.equal(boxCalls, 1);
   assert.equal(offline.droppedBox.boxType, 'BASIC');
+  assert.equal(offline.droppedItem, droppedItem);
+  assert.equal(assetWrites, 1);
 } finally {
   console.warn = originalWarn;
 }

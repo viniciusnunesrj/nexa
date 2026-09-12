@@ -119,6 +119,9 @@ export class BoxService {
     boxType: BoxType,
     source: PlayerBox['source'] = 'GAMEPLAY_DROP'
   ): PlayerBox {
+    if (isSupabaseConfigured()) {
+      throw new Error('Concessão local de caixa bloqueada online; é necessária confirmação por RPC segura.');
+    }
     const all = this.getAllStoredBoxes();
     const config = BOX_CONFIG[boxType] || BOX_CONFIG.BASIC;
 
@@ -135,11 +138,6 @@ export class BoxService {
     all.push(newBox);
     this.saveAllStoredBoxes(all);
 
-    // Persiste no Supabase
-    if (isSupabaseConfigured()) {
-      SupabaseService.saveBox(newBox).catch(() => {});
-    }
-
     return newBox;
   }
 
@@ -149,6 +147,11 @@ export class BoxService {
    */
   public static grantRecruitBoxIfEligible(userId: string): PlayerBox | null {
     if (!userId) return null;
+    if (isSupabaseConfigured()) {
+      // TODO: provision the starter box through an authenticated server RPC.
+      console.warn('[NEXA BOX] Caixa de recruta online suspensa até existir RPC segura.');
+      return null;
+    }
     const flagKey = `nexa_starter_pack_claimed_${userId}`;
     const claimedFlag = storageGet(flagKey);
 
@@ -185,15 +188,15 @@ export class BoxService {
    * 8. registrar a transação no histórico (Ledger: BOX_PURCHASE, -preço)
    * 9. atualizar a interface imediatamente
    */
-  public static purchaseBox(
+  public static async purchaseBox(
     userId: string,
     boxType: BoxType
-  ): {
+  ): Promise<{
     success: boolean;
     error?: string;
     box?: PlayerBox;
     updatedBalance?: number;
-  } {
+  }> {
     if (!userId) {
       return { success: false, error: 'Usuário não autenticado.' };
     }
@@ -213,6 +216,30 @@ export class BoxService {
     }
 
     const price = config.priceNEX;
+
+    if (isSupabaseConfigured()) {
+      // The RPC owns payment and creation. Never grantBox or debit locally first.
+      const boxId = `box-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      try {
+        const res = await SupabaseService.purchaseBoxAtomic({
+          userId, boxId, boxType, boxName: config.name, costNex: price,
+        });
+        if (!res.success) return { success: false, error: res.error || 'Compra não confirmada pelo servidor.' };
+        if (!res.boxId || !Number.isFinite(res.newBalance) || res.newBalance! < 0) {
+          return { success: false, error: 'Resposta de compra inválida. Recarregue o inventário antes de tentar novamente.' };
+        }
+        const confirmedBox: PlayerBox = {
+          id: res.boxId, ownerId: userId, boxType, name: config.name,
+          description: config.description, acquiredAt: new Date().toISOString(), source: 'SHOP_PURCHASE',
+        };
+        const all = this.getAllStoredBoxes().filter(box => box.id !== confirmedBox.id);
+        this.saveAllStoredBoxes([...all, confirmedBox]);
+        EconomyService.updateUserBalance(userId, 'NEX', res.newBalance!);
+        return { success: true, box: confirmedBox, updatedBalance: res.newBalance };
+      } catch {
+        return { success: false, error: 'Não foi possível confirmar a compra. Recarregue o inventário antes de tentar novamente.' };
+      }
+    }
 
     // 4. Impedir compra se saldo < preço
     if (user.balanceNEX < price) {
@@ -246,23 +273,6 @@ export class BoxService {
       'BOX_PURCHASE',
       `Compra de ${config.name} na loja de caixas (-${price.toLocaleString()} NEX)`
     );
-
-    // 9. Execução atômica no Supabase quando online
-    if (isSupabaseConfigured()) {
-      SupabaseService.purchaseBoxAtomic({
-        userId,
-        boxId: grantedBox.id,
-        boxType,
-        boxName: config.name,
-        costNex: price,
-      }).then((res) => {
-        if (res.success && res.newBalance !== undefined) {
-          EconomyService.updateUserBalance(userId, 'NEX', res.newBalance);
-        }
-      }).catch((err) => {
-        console.warn('[BoxService] Erro ao sincronizar purchaseBoxAtomic no Supabase:', err);
-      });
-    }
 
     return {
       success: true,

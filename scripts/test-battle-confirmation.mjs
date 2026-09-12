@@ -6,6 +6,7 @@ const source = `
 import assert from 'node:assert/strict';
 import { EconomyService } from './src/services/economyService';
 import { ProgressionService } from './src/services/progressionService';
+import { BoxService, BOXES_STORAGE_KEY } from './src/services/boxService';
 import { SupabaseService } from './src/services/supabaseService';
 import { mapProfileToNexaUser } from './src/lib/supabaseMappers';
 import { AUTH_USERS_KEY } from './src/services/authService';
@@ -100,6 +101,43 @@ for (const xpGained of [150, 50]) {
 }
 assert.equal(calls, 6);
 
+// Free online grants never touch local inventory, flags or direct table writes.
+let directBoxWrites = 0;
+let directLedgerWrites = 0;
+SupabaseService.saveBox = async () => { directBoxWrites++; };
+SupabaseService.recordTransaction = async () => { directLedgerWrites++; };
+const boxesBefore = store.get(BOXES_STORAGE_KEY);
+assert.throws(() => BoxService.grantBox(initial.id, 'BASIC'), /bloqueada online/);
+assert.equal(BoxService.grantRecruitBoxIfEligible(initial.id), null);
+assert.equal(store.get(BOXES_STORAGE_KEY), boxesBefore);
+assert.equal(store.has('nexa_starter_pack_claimed_' + initial.id), false);
+
+// Purchase remains pending until the real RPC wrapper confirms payment/creation.
+const balanceBefore = EconomyService.getUser(initial.id).balanceNEX;
+const deniedPurchase = BoxService.purchaseBox(initial.id, 'BASIC');
+assert.equal(store.get(BOXES_STORAGE_KEY), boxesBefore);
+assert.equal(EconomyService.getUser(initial.id).balanceNEX, balanceBefore);
+completeRpc({ data: null, error: { message: 'RLS denied' } });
+assert.equal((await deniedPurchase).success, false);
+assert.equal(store.get(BOXES_STORAGE_KEY), boxesBefore);
+
+const invalidPurchase = BoxService.purchaseBox(initial.id, 'BASIC');
+completeRpc({ data: { success: true }, error: null });
+assert.equal((await invalidPurchase).success, false);
+assert.equal(store.get(BOXES_STORAGE_KEY), boxesBefore);
+
+const bought = BoxService.purchaseBox(initial.id, 'BASIC');
+assert.equal(store.get(BOXES_STORAGE_KEY), boxesBefore);
+completeRpc({ data: { success: true, new_balance: 0, box_id: 'confirmed-box' }, error: null });
+const purchase = await bought;
+assert.equal(purchase.success, true);
+assert.equal(purchase.box.id, 'confirmed-box');
+assert.equal(purchase.updatedBalance, 0);
+assert.equal(JSON.parse(store.get(BOXES_STORAGE_KEY)).filter(box => box.id === 'confirmed-box').length, 1);
+assert.equal(directBoxWrites, 0);
+assert.equal(directLedgerWrites, 0);
+assert.equal(calls, 9);
+
 // Offline fallback remains available only without a Supabase configuration.
 ProgressionService.addExperience = grant;
 globalThis.offlineTest = true;
@@ -112,8 +150,8 @@ assert.equal(local.levelUpResult.previousLevel, 5);
 assert.equal(local.levelUpResult.newLevel, 6);
 assert.equal(local.levelUpResult.rewardsGranted[0].name, 'Caixa Básica');
 assert.equal(ProgressionService.claimLevelReward(initial.id, 6).success, false);
-assert.equal(calls, 6);
-console.log('PASS: online guards, confirmation, inconsistent RPC, stale cache, lock cleanup, 150/50 XP, offline 5->6 reward');
+assert.equal(calls, 9);
+console.log('PASS: online guards, RPC confirmation, no phantom boxes, rejected/pending/successful purchase, offline 5->6 reward');
 `;
 
 const result = await build({
