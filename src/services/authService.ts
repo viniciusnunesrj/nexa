@@ -6,10 +6,12 @@ export const AUTH_USERS_KEY = 'nexa_auth_users_db_v2';
 export const AUTH_SESSION_KEY = 'nexa_auth_current_session_v2';
 export const ASSETS_STORAGE_KEY = 'nexa_assets_v1';
 export const AUTH_BACKUP_KEY = 'nexa_auth_before_online_v1';
+export type ProfileUpdates = { bio?: string; title?: string; avatar?: string };
 
 class AuthServiceClass {
   private currentUser: NexaUser | null = null;
   private revision = 0;
+  private profileSaveVersion = 0;
 
   // Retained for existing callers. Never seed demo accounts or write remote data.
   public async ensureInitialized(): Promise<void> {}
@@ -61,6 +63,7 @@ class AuthServiceClass {
 
   // getUser verifies the token with Supabase Auth, unlike reading local JSON.
   public async restoreCurrentUser(): Promise<NexaUser | null> {
+    const profileSaveVersion = this.profileSaveVersion;
     const revision = ++this.revision;
     this.currentUser = null;
     this.requireOnline();
@@ -71,7 +74,38 @@ class AuthServiceClass {
     if (error) throw error;
     if (!data.user) throw new Error('Sessão não confirmada pelo Supabase. Faça login novamente.');
     const profile = await SupabaseService.ensureAuthenticatedProfile(data.user);
+    if (profileSaveVersion !== this.profileSaveVersion && this.currentUser?.id === profile.id) {
+      return this.currentUser;
+    }
     return this.acceptProfile(profile, revision);
+  }
+
+  public async updateUserProfile(userId: string, updates: ProfileUpdates): Promise<NexaUser> {
+    this.requireOnline();
+    const patch: ProfileUpdates = {};
+    for (const field of ['bio', 'title', 'avatar'] as const) {
+      if (updates[field] === undefined) continue;
+      if (typeof updates[field] !== 'string') throw new Error('Os campos do perfil devem ser texto.');
+      patch[field] = updates[field];
+    }
+    if (patch.avatar !== undefined) {
+      patch.avatar = patch.avatar.trim();
+      if (!patch.avatar) delete patch.avatar;
+      else {
+        let url: URL;
+        try { url = new URL(patch.avatar); } catch { throw new Error('Informe uma URL válida para o avatar.'); }
+        if (!['https:', 'http:'].includes(url.protocol)) throw new Error('O avatar deve usar uma URL HTTP ou HTTPS.');
+      }
+    }
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user || data.user.id !== userId) throw new Error('Não foi possível confirmar o proprietário do perfil.');
+    const revision = this.revision;
+    const confirmed = await SupabaseService.updateEditableProfile(userId, patch);
+    if (revision !== this.revision) throw new Error('A sessão mudou durante o salvamento. Reabra o perfil.');
+    this.profileSaveVersion += 1;
+    this.cacheVerifiedProfile(confirmed);
+    this.currentUser = confirmed;
+    return confirmed;
   }
 
   public async register(data: RegisterData): Promise<AuthResult> {

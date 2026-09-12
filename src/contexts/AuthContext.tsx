@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { NexaUser, RegisterData, AuthResult, LevelUpResult } from '../types';
-import { authService } from '../services/authService';
+import { authService, ProfileUpdates } from '../services/authService';
 import { EconomyService } from '../services/economyService';
 import { ProgressionService } from '../services/progressionService';
 import { CURRENT_USER } from '../data/mockUsers';
@@ -25,7 +25,7 @@ interface AuthContextType {
   addXP: (amount: number) => LevelUpResult | undefined;
   addSeasonXP: (amount: number) => void;
   claimSeasonReward: (level: number) => void;
-  updateUserProfile: (bio: string, title?: string) => void;
+  updateUserProfile: (updates: ProfileUpdates) => Promise<NexaUser>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const activeOperation = useRef(false);
   const revision = useRef(0);
   const mounted = useRef(false);
+  const profileSavePending = useRef(false);
+  const profileSaveVersion = useRef(0);
 
   // Kept for existing consumers; this list cannot grant authentication.
   const refreshUsersList = async () => {
@@ -56,16 +58,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let disposed = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const restore = async () => {
-      if (disposed || activeOperation.current) return;
+      if (disposed || activeOperation.current || profileSavePending.current) return;
+      const saveVersion = profileSaveVersion.current;
       const request = ++revision.current;
       try {
         const profile = await authService.restoreCurrentUser();
-        if (disposed || request !== revision.current) return;
+        if (disposed || request !== revision.current || saveVersion !== profileSaveVersion.current || profileSavePending.current) return;
         setCurrentUser(profile);
         setAuthError(null);
         if (profile) void refreshUsersList();
       } catch (err: any) {
-        if (disposed || request !== revision.current) return;
+        if (disposed || request !== revision.current || saveVersion !== profileSaveVersion.current || profileSavePending.current) return;
         setCurrentUser(null);
         setAuthError(err?.message || 'Não foi possível verificar sua sessão no Supabase.');
       }
@@ -210,16 +213,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUsersList();
   };
 
-  const updateUserProfile = (bio: string, title?: string) => {
-    if (!currentUser) return;
-    const updated: NexaUser = {
-      ...currentUser,
-      bio,
-      title: title !== undefined ? title : currentUser.title,
-    };
-    setCurrentUser(updated);
-    authService.updateUser(updated);
-    refreshUsersList();
+  const updateUserProfile = async (updates: ProfileUpdates): Promise<NexaUser> => {
+    if (!currentUser) throw new Error('Perfil autenticado indisponível.');
+    if (profileSavePending.current) throw new Error('Aguarde o salvamento em andamento.');
+    profileSavePending.current = true;
+    profileSaveVersion.current += 1;
+    const request = revision.current;
+    try {
+      const confirmed = await authService.updateUserProfile(currentUser.id, updates);
+      if (request !== revision.current || !mounted.current) throw new Error('A sessão mudou durante o salvamento.');
+      setCurrentUser(previous => previous?.id === confirmed.id ? {
+        ...previous, bio: confirmed.bio, title: confirmed.title, avatar: confirmed.avatar,
+      } : previous);
+      void refreshUsersList();
+      return confirmed;
+    } finally {
+      profileSavePending.current = false;
+    }
   };
 
   // Safe fallback for user object so components don't crash when logged out

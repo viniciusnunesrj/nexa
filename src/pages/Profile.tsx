@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
 import { RarityBadge } from '../components/common/RarityBadge';
@@ -35,6 +35,9 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(user.title);
   const [bio, setBio] = useState(user.bio);
+  const [avatar, setAvatar] = useState(user.avatar);
+  const [isSaving, setIsSaving] = useState(false);
+  const saving = useRef(false);
 
   const userItems = assets.filter((a) => a.ownerId === user.id);
   const totalPower = userItems.reduce((acc, curr) => acc + ('power' in curr ? curr.power : 0), 0);
@@ -52,15 +55,24 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
     (tx) => tx.sellerId === user.id || tx.buyerId === user.id
   );
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateUserProfile({ title, bio });
-    setIsEditing(false);
-    soundService.playClick();
-    notify({
-      type: 'SUCCESS',
-      message: 'Perfil de piloto atualizado com sucesso!',
-    });
+    if (saving.current) return;
+    saving.current = true;
+    setIsSaving(true);
+    try {
+      const confirmed = await updateUserProfile({ title, bio, avatar });
+      setTitle(confirmed.title);
+      setBio(confirmed.bio);
+      setAvatar(confirmed.avatar);
+      setIsEditing(false);
+      notify('success', 'Perfil atualizado', 'Alterações salvas com sucesso.');
+    } catch (error) {
+      notify('error', 'Não foi possível salvar', error instanceof Error ? error.message : 'Tente novamente.');
+    } finally {
+      saving.current = false;
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -98,7 +110,15 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
             </div>
 
             <button
-              onClick={() => setIsEditing(!isEditing)}
+              disabled={isSaving}
+              onClick={() => {
+                if (!isEditing) {
+                  setBio(typeof user.bio === 'string' ? user.bio : '');
+                  setTitle(typeof user.title === 'string' ? user.title : '');
+                  setAvatar(typeof user.avatar === 'string' ? user.avatar : '');
+                }
+                setIsEditing(!isEditing);
+              }}
               className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-300 transition-colors flex items-center gap-1.5"
             >
               <Edit3 className="w-3.5 h-3.5" />
@@ -109,6 +129,14 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
           {/* Edit Form */}
           {isEditing ? (
             <form onSubmit={handleSaveProfile} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4 mb-6">
+              <fieldset disabled={isSaving} className="space-y-4">
+              <div>
+                <label htmlFor="profile-avatar" className="block text-xs font-mono text-slate-400 uppercase mb-1">URL do avatar</label>
+                <input id="profile-avatar" type="url" value={avatar}
+                  onChange={(e) => setAvatar(e.target.value)} placeholder="https://..."
+                  className="w-full bg-[#161624] border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
+                <p className="text-xs text-slate-400">Deixe vazio para manter o avatar atual.</p>
+              </div>
               <div>
                 <label className="block text-xs font-mono text-slate-400 uppercase mb-1">
                   Título de Honra do Piloto:
@@ -138,13 +166,14 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                   type="submit"
                   className="px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-mono text-xs font-bold flex items-center gap-1.5"
                 >
-                  <Check className="w-4 h-4" /> Salvar Alterações
+                  <Check className="w-4 h-4" /> {isSaving ? 'Salvando...' : 'Salvar Alterações'}
                 </button>
               </div>
+              </fieldset>
             </form>
           ) : (
             <p className="text-xs text-slate-300 font-mono max-w-2xl mb-6 leading-relaxed">
-              {user.bio}
+              {typeof user.bio === 'string' ? user.bio : ''}
             </p>
           )}
 

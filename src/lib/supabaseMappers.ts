@@ -26,8 +26,8 @@ export function mapProfileToNexaUser(row: any): NexaUser {
     claimedSeasonRewards: Array.isArray(row.claimed_season_rewards)
       ? row.claimed_season_rewards
       : [],
-    bio: row.bio || 'Piloto ativo na rede NEXA.',
-    title: row.title || 'Recruta Neon',
+    bio: typeof row.bio === 'string' ? row.bio : 'Piloto ativo na rede NEXA.',
+    title: typeof row.title === 'string' ? row.title : 'Recruta Neon',
     isFirstAccess: row.is_first_access !== undefined ? Boolean(row.is_first_access) : false,
     unlockedSlots: typeof row.unlocked_slots === 'number' ? row.unlocked_slots : 3,
     levelRewardsClaimed: Array.isArray(row.level_rewards_claimed)

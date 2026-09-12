@@ -100,6 +100,56 @@ function setup(options = {}) {
 
 function unchanged(s) { assert.deepEqual([...s.storage], [...s.before]); assert.equal(s.service.isAuthenticated(), false); }
 
+test('profile edit: confirmed strings only, exact patch and avatar URL', async () => {
+  const s = setup();
+  await s.service.restoreCurrentUser();
+  const confirmed = await s.service.updateUserProfile(user.id, { bio: '', title: 'Novo título', avatar: 'https://example.com/avatar.png', level: 999 });
+  assert.equal(confirmed.bio, '');
+  assert.equal(confirmed.title, 'Novo título');
+  assert.equal(confirmed.avatar, 'https://example.com/avatar.png');
+  assert.equal(confirmed.level, 7);
+  const write = s.calls.find(c => c[0] === 'query' && c[1].action === 'update')[1];
+  assert.deepEqual(Object.keys(write.payload).sort(), ['avatar', 'bio', 'title', 'updated_at']);
+  assert.equal((await s.service.restoreCurrentUser()).bio, '');
+  await s.service.updateUserProfile(user.id, { avatar: '   ', bio: 'Texto' });
+  assert.equal(s.state.row.avatar, 'https://example.com/avatar.png');
+  await assert.rejects(s.service.updateUserProfile(user.id, { bio: { title: 'invalid' } }), /texto/);
+  await assert.rejects(s.service.updateUserProfile(user.id, { avatar: 'blob:temporary' }), /HTTP/);
+});
+
+test('profile edit: pending or failed update never applies draft or logs out', async () => {
+  const s = setup();
+  const before = await s.service.restoreCurrentUser();
+  const update = s.profiles.updateEditableProfile.bind(s.profiles);
+  let reject;
+  s.profiles.updateEditableProfile = () => new Promise((_, fail) => { reject = fail; });
+  const saving = s.service.updateUserProfile(user.id, { bio: 'Draft' });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(s.service.getCurrentUser(), before);
+  reject(new Error('Update denied'));
+  await assert.rejects(saving, /Update denied/);
+  assert.equal(s.service.getCurrentUser(), before);
+  assert.equal(s.calls.some(c => c[0] === 'signOut'), false);
+  s.profiles.updateEditableProfile = update;
+  s.state.zeroUpdated = true;
+  await assert.rejects(s.service.updateUserProfile(user.id, { bio: 'Draft' }), /não confirmou/);
+});
+
+test('profile edit: stale restore cannot overwrite confirmed save', async () => {
+  const s = setup();
+  const old = await s.service.restoreCurrentUser();
+  const ensure = s.profiles.ensureAuthenticatedProfile.bind(s.profiles);
+  let finish;
+  s.profiles.ensureAuthenticatedProfile = () => new Promise(resolve => { finish = resolve; });
+  const restoring = s.service.restoreCurrentUser();
+  await new Promise(resolve => setImmediate(resolve));
+  const saved = await s.service.updateUserProfile(user.id, { bio: 'Confirmed bio' });
+  finish(old);
+  assert.equal((await restoring).bio, 'Confirmed bio');
+  assert.equal(s.service.getCurrentUser(), saved);
+  s.profiles.ensureAuthenticatedProfile = ensure;
+});
+
 test('legacy local session cannot authenticate, even before initialization', async () => {
   const s = setup({ noSession: true });
   assert.equal(s.service.getCurrentUser(), null);

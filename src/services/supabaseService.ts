@@ -41,6 +41,7 @@ class SupabaseServiceClass {
 
   /** Strict remote read for authentication. Never substitutes memory/demo data. */
   public async fetchRemoteProfile(userId: string): Promise<NexaUser | null> {
+    const revision = this.profileRevision;
     const configurationError = getSupabaseConfigurationError();
     if (configurationError) throw new Error(configurationError);
     if (!userId) throw new Error('ID de usuário ausente.');
@@ -48,6 +49,10 @@ class SupabaseServiceClass {
     if (error) throw new Error('Falha ao verificar profiles no Supabase: ' + error.message);
     if (!data) return null;
     if (data.id !== userId) throw new Error('O perfil retornado não corresponde ao usuário autenticado.');
+    if (revision !== this.profileRevision) {
+      const confirmed = this.inMemoryProfiles.get(userId);
+      if (confirmed) return confirmed;
+    }
     const profile = mapProfileToNexaUser(data);
     this.inMemoryProfiles.set(profile.id, profile);
     return profile;
@@ -136,7 +141,7 @@ class SupabaseServiceClass {
   public async updateEditableProfile(
     userId: string,
     updates: Partial<Pick<NexaUser, 'username' | 'avatar' | 'bio' | 'title' | 'isFirstAccess'>>
-  ): Promise<void> {
+  ): Promise<NexaUser> {
     const revision = this.profileRevision;
     const configurationError = getSupabaseConfigurationError();
     if (configurationError) throw new Error(configurationError);
@@ -150,7 +155,16 @@ class SupabaseServiceClass {
       .eq('id', userId).select('*').maybeSingle();
     if (error) throw new Error('Falha ao salvar perfil no Supabase: ' + error.message);
     if (!data || data.id !== userId) throw new Error('O Supabase não confirmou a atualização do perfil.');
-    if (revision === this.profileRevision) this.inMemoryProfiles.set(userId, mapProfileToNexaUser(data));
+    const profile = mapProfileToNexaUser(data);
+    // Empty text is valid for an edited bio/title; do not replace it with defaults.
+    for (const field of ['bio', 'title', 'avatar'] as const) {
+      if (updates[field] !== undefined && typeof data[field] !== 'string') {
+        throw new Error('O servidor retornou dados de perfil inválidos.');
+      }
+      if (typeof data[field] === 'string') profile[field] = data[field];
+    }
+    if (revision === this.profileRevision) this.acceptConfirmedProfile(profile);
+    return profile;
   }
 
   public async upsertProfile(user: NexaUser): Promise<NexaUser> {
