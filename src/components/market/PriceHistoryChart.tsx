@@ -8,14 +8,18 @@ interface PriceHistoryChartProps {
 
 export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floorPrice }) => {
   const [hoveredPoint, setHoveredPoint] = useState<PricePoint | null>(null);
+  data = Array.isArray(data) ? data.filter(point => point && typeof point.date === 'string' &&
+    typeof point.price === 'number' && Number.isFinite(point.price) && point.price >= 0) : [];
+  const hasFloor = typeof floorPrice === 'number' && Number.isFinite(floorPrice) && floorPrice >= 0;
 
   if (!data || data.length === 0) {
     return <div className="p-8 text-center text-slate-500 font-mono text-sm">Sem dados históricos suficientes.</div>;
   }
 
   const prices = data.map((d) => d.price);
-  const minPrice = Math.max(0, Math.min(...prices) * 0.85);
-  const maxPrice = Math.max(...prices) * 1.15;
+  const minPrice = prices.reduce((min, price) => Math.min(min, price), prices[0]) * 0.85;
+  const peak = prices.reduce((max, price) => Math.max(max, price), prices[0]);
+  const maxPrice = peak <= Number.MAX_VALUE / 1.15 ? peak * 1.15 : peak;
   const priceRange = maxPrice - minPrice || 1;
 
   const width = 800;
@@ -27,7 +31,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floo
 
   // Compute SVG Points
   const points = data.map((d, index) => {
-    const x = padding.left + (index / (data.length - 1)) * chartWidth;
+    const x = padding.left + (data.length === 1 ? 0.5 : index / (data.length - 1)) * chartWidth;
     const y = padding.top + chartHeight - ((d.price - minPrice) / priceRange) * chartHeight;
     return { x, y, data: d };
   });
@@ -44,7 +48,8 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floo
   const areaD = `${pathD} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`;
 
   // Floor line Y
-  const floorY = padding.top + chartHeight - ((floorPrice - minPrice) / priceRange) * chartHeight;
+  const floorY = hasFloor && floorPrice >= minPrice && floorPrice <= maxPrice
+    ? padding.top + chartHeight - ((floorPrice - minPrice) / priceRange) * chartHeight : null;
 
   return (
     <div className="relative w-full rounded-2xl bg-[#09090f] border border-white/10 p-5 shadow-2xl overflow-hidden">
@@ -56,13 +61,10 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floo
             <span className="font-heading text-2xl font-bold text-cyan-300">
               {data[data.length - 1].price.toLocaleString()} NXA
             </span>
-            <span className="text-xs font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded">
-              +18.4% este mês
-            </span>
           </div>
         </div>
 
-        {hoveredPoint ? (
+        {hoveredPoint && data.includes(hoveredPoint) ? (
           <div className="bg-slate-900/90 border border-cyan-500/40 px-3.5 py-1.5 rounded-lg flex items-center gap-4 text-xs font-mono">
             <div>
               <span className="text-slate-400 block text-[10px]">Data</span>
@@ -74,7 +76,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floo
             </div>
             <div>
               <span className="text-slate-400 block text-[10px]">Volume</span>
-              <span className="text-amber-400 font-bold">{hoveredPoint.volume.toLocaleString()} NXA</span>
+              <span className="text-amber-400 font-bold">{typeof hoveredPoint.volume === 'number' && Number.isFinite(hoveredPoint.volume) && hoveredPoint.volume >= 0 ? hoveredPoint.volume.toLocaleString() + ' NXA' : 'Indisponível'}</span>
             </div>
           </div>
         ) : (
@@ -83,7 +85,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floo
               <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" /> Preço de Venda
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-0.5 bg-amber-400/80" /> Piso Mercado ({floorPrice} NXA)
+              <span className="w-2.5 h-0.5 bg-amber-400/80" /> Piso Mercado ({hasFloor ? floorPrice.toLocaleString() + ' NXA' : 'Indisponível'})
             </span>
           </div>
         )}
@@ -139,7 +141,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floo
           })}
 
           {/* Floor Price Line */}
-          {floorY >= padding.top && floorY <= padding.top + chartHeight && (
+          {floorY !== null && floorY >= padding.top && floorY <= padding.top + chartHeight && (
             <line
               x1={padding.left}
               y1={floorY}

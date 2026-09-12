@@ -12,18 +12,21 @@ import {
   Layers,
 } from 'lucide-react';
 
+const safeText = (value: unknown, fallback = 'Indisponível'): string => typeof value === 'string' && value.trim() ? value : fallback;
+const formatNXA = (value: unknown): string => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value.toLocaleString() + ' NXA' : 'Indisponível';
+
 export const HistoryPage: React.FC = () => {
   const { transactions, marketStats } = useGameState();
   const [search, setSearch] = useState('');
 
-  const filteredTransactions = transactions.filter((tx) => {
+  const filteredTransactions = (Array.isArray(transactions) ? transactions : []).filter((tx) => tx && typeof tx === 'object').filter((tx) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
-      tx.itemSnapshot.name.toLowerCase().includes(q) ||
-      tx.buyerName.toLowerCase().includes(q) ||
-      tx.sellerName.toLowerCase().includes(q) ||
-      tx.id.toLowerCase().includes(q)
+      safeText(tx.itemSnapshot?.name, '').toLowerCase().includes(q) ||
+      safeText(tx.buyerName, '').toLowerCase().includes(q) ||
+      safeText(tx.sellerName, '').toLowerCase().includes(q) ||
+      safeText(tx.id, '').toLowerCase().includes(q)
     );
   });
 
@@ -44,8 +47,8 @@ export const HistoryPage: React.FC = () => {
 
       {/* 30-Day SVG Price Trend Chart */}
       <PriceHistoryChart
-        data={marketStats.priceHistory}
-        floorPrice={marketStats.currentFloorPrice}
+        data={marketStats?.priceHistory}
+        floorPrice={marketStats?.currentFloorPrice}
       />
 
       {/* Macro Economic Metrics */}
@@ -53,7 +56,7 @@ export const HistoryPage: React.FC = () => {
         <div className="p-4 rounded-2xl bg-[#0b0b12] border border-white/10">
           <span className="text-[10px] font-mono text-slate-500 uppercase block">Preço Piso (Floor)</span>
           <span className="font-heading text-2xl font-bold text-amber-400 mt-1 block">
-            {marketStats.currentFloorPrice.toLocaleString()} NXA
+            {formatNXA(marketStats?.currentFloorPrice)}
           </span>
           <span className="text-[10px] font-mono text-slate-400 mt-1 block">Base de entrada</span>
         </div>
@@ -61,7 +64,7 @@ export const HistoryPage: React.FC = () => {
         <div className="p-4 rounded-2xl bg-[#0b0b12] border border-white/10">
           <span className="text-[10px] font-mono text-slate-500 uppercase block">Pico Histórico (ATH)</span>
           <span className="font-heading text-2xl font-bold text-purple-400 mt-1 block">
-            {marketStats.athPrice.toLocaleString()} NXA
+            {formatNXA(marketStats?.allTimeHigh)}
           </span>
           <span className="text-[10px] font-mono text-slate-400 mt-1 block">Maior venda registrada</span>
         </div>
@@ -69,17 +72,17 @@ export const HistoryPage: React.FC = () => {
         <div className="p-4 rounded-2xl bg-[#0b0b12] border border-white/10">
           <span className="text-[10px] font-mono text-slate-500 uppercase block">Volume Transacionado</span>
           <span className="font-heading text-2xl font-bold text-cyan-300 mt-1 block">
-            {marketStats.totalVolumeNXA.toLocaleString()} NXA
+            {formatNXA(marketStats?.totalVolumeNXA)}
           </span>
           <span className="text-[10px] font-mono text-slate-400 mt-1 block">Liquidez total do ecossistema</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#0b0b12] border border-white/10">
-          <span className="text-[10px] font-mono text-slate-500 uppercase block">Taxas Recolhidas (2%)</span>
+          <span className="text-[10px] font-mono text-slate-500 uppercase block">Taxas Recolhidas</span>
           <span className="font-heading text-2xl font-bold text-emerald-400 mt-1 block">
-            {marketStats.totalFeesBurned.toLocaleString()} NXA
+            Indisponível
           </span>
-          <span className="text-[10px] font-mono text-slate-400 mt-1 block">Fundo de desenvolvimento</span>
+          <span className="text-[10px] font-mono text-slate-400 mt-1 block">Total confirmado não disponível</span>
         </div>
       </div>
 
@@ -121,34 +124,35 @@ export const HistoryPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filteredTransactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-white/5 text-slate-300 transition-colors">
+              {filteredTransactions.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-slate-400">Nenhuma transação disponível para esta consulta.</td></tr>}
+              {filteredTransactions.map((tx, index) => (
+                <tr key={index} className="hover:bg-white/5 text-slate-300 transition-colors">
                   <td className="py-3 px-4 text-[11px] text-slate-500 font-mono">
                     <span className="px-1.5 py-0.5 rounded bg-white/5">
-                      {tx.id.slice(0, 10)}...
+                      {typeof tx.id === 'string' ? tx.id.slice(0, 10) + '...' : 'Indisponível'}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-slate-400">{tx.timestamp}</td>
+                  <td className="py-3 px-4 text-slate-400">{safeText(tx.timestamp)}</td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
-                      <img
+                      {typeof tx.itemSnapshot?.image === 'string' && tx.itemSnapshot.image.trim() && <img
                         src={tx.itemSnapshot.image}
-                        alt={tx.itemSnapshot.name}
+                        alt={safeText(tx.itemSnapshot?.name, 'Ativo não identificado')}
                         className="w-6 h-6 rounded object-cover"
-                      />
+                      />}
                       <span className="font-bold text-white truncate max-w-[150px]">
-                        {tx.itemSnapshot.name}
+                        {safeText(tx.itemSnapshot?.name, 'Ativo não identificado')}
                       </span>
-                      <RarityBadge rarity={tx.itemSnapshot.rarity} size="sm" showDot={false} />
+                      {['Comum', 'Incomum', 'Raro', 'Épico', 'Lendário', 'Mítico'].includes(tx.itemSnapshot?.rarity) && <RarityBadge rarity={tx.itemSnapshot.rarity} size="sm" showDot={false} />}
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-slate-300">{tx.sellerName}</td>
-                  <td className="py-3 px-4 text-slate-300">{tx.buyerName}</td>
+                  <td className="py-3 px-4 text-slate-300">{safeText(tx.sellerName)}</td>
+                  <td className="py-3 px-4 text-slate-300">{safeText(tx.buyerName)}</td>
                   <td className="py-3 px-4 text-right font-bold text-cyan-300">
-                    {tx.amount.toLocaleString()} NXA
+                    {formatNXA(tx.amount)}
                   </td>
                   <td className="py-3 px-4 text-right text-amber-400">
-                    {tx.fee.toLocaleString()} NXA
+                    {formatNXA(tx.fee)}
                   </td>
                 </tr>
               ))}
