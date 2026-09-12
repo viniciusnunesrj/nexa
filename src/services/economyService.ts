@@ -340,11 +340,12 @@ export class EconomyServiceClass {
       xpGained: number;
       victory: boolean;
     }
-  ): Promise<NexaUser & { levelUpResult?: LevelUpResult }> {
+  ): Promise<NexaUser & { levelUpResult?: LevelUpResult & { confirmedOnline?: true } }> {
     if (isSupabaseConfigured()) {
       if (this.pendingBattles.has(userId)) throw new Error('Aguarde a confirmação da batalha em andamento.');
       this.pendingBattles.add(userId);
       try {
+        const levelBeforeBattle = this.getUser(userId)?.level;
         // TEMP: read-only progression diagnostics; never log the account object.
         try {
           const localUser = JSON.parse(storageGet(AUTH_USERS_KEY) || '[]')
@@ -361,18 +362,36 @@ export class EconomyServiceClass {
         if (!res.success || !res.profile) {
           throw new Error(res.error || 'Não foi possível confirmar a batalha no Supabase.');
         }
-        const profile = res.profile;
+        // Never retain a transient celebration carried by an older cached profile.
+        const { levelUpResult: _oldLevelUpResult, ...profile } = res.profile as
+          NexaUser & { levelUpResult?: LevelUpResult };
         this.hydrateProfileFromSupabase(profile);
-        // The current RPC advances at most one level and grants no level rewards.
-        const newLevel = res.level!;
-        const previousLevel = res.leveledUp ? newLevel - 1 : newLevel;
+        // Celebrate only when the confirmed profile agrees with the RPC and advances.
+        const leveledUp = res.leveledUp === true &&
+          Number.isInteger(levelBeforeBattle) &&
+          Number.isInteger(profile.level) &&
+          profile.level === res.level &&
+          profile.level > levelBeforeBattle!;
+        if (res.leveledUp === true && !leveledUp) {
+          console.warn('[NEXA INCONSISTENT LEVEL UP]', {
+            previousLevel: levelBeforeBattle ?? null,
+            rpcLevel: res.level,
+            confirmedLevel: profile.level,
+            experience: profile.experience,
+            maxExperience: profile.maxExperience,
+          });
+        }
+        if (!leveledUp) return profile;
+        const newLevel = profile.level;
+        const previousLevel = levelBeforeBattle!;
         const result = {
           ...profile,
           levelUpResult: {
-            leveledUp: res.leveledUp === true,
+            confirmedOnline: true as const,
+            leveledUp,
             previousLevel,
             newLevel,
-            levelsGained: res.leveledUp ? [newLevel] : [],
+            levelsGained: leveledUp ? [newLevel] : [],
             rewardsGranted: [],
             unlockedSlots: profile.unlockedSlots || 3,
             previousSlots: profile.unlockedSlots || 3,

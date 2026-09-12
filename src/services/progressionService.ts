@@ -10,6 +10,7 @@ import {
 import { EconomyService } from './economyService';
 import { BoxService } from './boxService';
 import { LedgerService } from './ledgerService';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 const LEVEL_UP_HISTORY_KEY = 'nexa_level_up_history_v1';
 const ASSETS_KEY = 'nexa_assets_v1';
@@ -123,6 +124,9 @@ export class ProgressionServiceClass {
     userId: string,
     level: number
   ): { success: boolean; message: string; reward?: LevelReward; user?: NexaUser } {
+    if (isSupabaseConfigured()) {
+      return { success: false, message: 'Recompensas de nível online aguardam implementação atômica no servidor.' };
+    }
     const user = EconomyService.getUser(userId);
     if (!user) {
       return { success: false, message: 'Piloto não encontrado.' };
@@ -226,6 +230,9 @@ export class ProgressionServiceClass {
     user: NexaUser,
     reward: LevelReward
   ): { user: NexaUser; description: string } {
+    if (isSupabaseConfigured()) {
+      throw new Error('Concessão local de recompensa de nível bloqueada no modo online.');
+    }
     let currentUser = user;
     const desc = `${reward.icon} ${reward.name} (Nível ${reward.level})`;
 
@@ -359,6 +366,9 @@ export class ProgressionServiceClass {
    * ============================================================================
    */
   public addExperience(userId: string, amount: number): LevelUpResult {
+    if (isSupabaseConfigured()) {
+      throw new Error('Progressão local bloqueada no modo online. Utilize a RPC de batalha.');
+    }
     if (amount <= 0) {
       const user = EconomyService.getUser(userId);
       const lvl = user?.level || 1;

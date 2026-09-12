@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import {
   NexaAsset,
   Character,
@@ -154,6 +154,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isPurchasing, setIsPurchasing] = useState<boolean>(false);
   const [isClaimingSynthesis, setIsClaimingSynthesis] = useState<boolean>(false);
   const [levelUpData, setLevelUpData] = useState<LevelUpResult | null>(null);
+  const pendingBattles = useRef(new Set<string>());
 
   // Derived progression slot counters
   const unlockedSlots = ProgressionService.getUnlockedSlots(user.level);
@@ -471,80 +472,96 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // EXECUTE BATTLE
   const executeBattle = async (characterId: string) => {
-    const char = assets.find((a) => a.id === characterId && a.type === 'Character') as Character;
-    const power = char ? char.power : 1000;
-    
-    // Opponent difficulty generator
-    const opponentPower = Math.floor(power * (0.8 + Math.random() * 0.45));
-    const victory = Math.random() * power >= Math.random() * opponentPower;
-
-    // 1. Identificar o userId do usuário autenticado
     const userId = user.id;
+    if (pendingBattles.current.has(userId)) throw new Error('Aguarde a confirmação da batalha em andamento.');
+    pendingBattles.current.add(userId);
+    try {
+      setLevelUpData(null);
+      const onlineBattle = isSupabaseConfigured();
+      const char = assets.find((a) => a.id === characterId && a.type === 'Character') as Character;
+      const power = char ? char.power : 1000;
 
-    // 2. Calcular a recompensa
-    const rewards = RewardService.calculateBattleRewards(victory, user.level, user.id, user.username);
+      // Opponent difficulty generator
+      const opponentPower = Math.floor(power * (0.8 + Math.random() * 0.45));
+      const victory = Math.random() * power >= Math.random() * opponentPower;
 
-    // 3. Atualizar atomicamente o saldo persistido desse userId na base de dados
-    const updatedUser = await EconomyService.applyBattleReward(userId, {
-      nexGained: rewards.nexGained,
-      nxaGained: rewards.nxaGained,
-      xpGained: rewards.xpGained,
-      victory,
-    });
+      // 2. Calcular a recompensa
+      const rewards = RewardService.calculateBattleRewards(victory, user.level, user.id, user.username);
 
-    // 4. Atualizar o estado global / currentUser e interface
-    syncUser(updatedUser);
+      // 3. Atualizar atomicamente o saldo persistido desse userId na base de dados
+      const updatedUser = await EconomyService.applyBattleReward(userId, {
+        nexGained: rewards.nexGained,
+        nxaGained: rewards.nxaGained,
+        xpGained: rewards.xpGained,
+        victory,
+      });
 
-    // 5. Se subiu de nível, ativa o modal de celebração com animação e recompensas
-    if (updatedUser.levelUpResult && updatedUser.levelUpResult.leveledUp) {
-      setLevelUpData(updatedUser.levelUpResult);
-      // Atualiza caixas e histórico se recompensas incluírem caixas
-      setBoxes(BoxService.getAvailableBoxes(userId));
-      setBoxCounts(BoxService.getBoxCounts(userId));
-      try {
-        const stored = localStorage.getItem(ASSETS_KEY);
-        if (stored) setAssets(JSON.parse(stored));
-      } catch {
-        // storage fallback
+      // 4. Atualizar o estado global / currentUser e interface
+      const { levelUpResult, ...confirmedUser } = updatedUser;
+      syncUser(confirmedUser);
+
+      // 5. Se subiu de nível, ativa o modal de celebração com animação e recompensas
+      if (levelUpResult?.leveledUp &&
+          (!onlineBattle || (levelUpResult.confirmedOnline === true &&
+            levelUpResult.rewardsGranted.length === 0 &&
+            updatedUser.level > user.level)) &&
+          levelUpResult.newLevel === updatedUser.level &&
+          levelUpResult.newLevel > levelUpResult.previousLevel) {
+        setLevelUpData(levelUpResult);
+        // Atualiza caixas e histórico se recompensas incluírem caixas
+        setBoxes(BoxService.getAvailableBoxes(userId));
+        setBoxCounts(BoxService.getBoxCounts(userId));
+        try {
+          const stored = localStorage.getItem(ASSETS_KEY);
+          if (stored) setAssets(JSON.parse(stored));
+        } catch {
+          // storage fallback
+        }
       }
-    }
 
-    // 6. Registrar a transação / recompensa no histórico persistente
-    if (rewards.nexGained > 0 || rewards.nxaGained > 0) {
-      const ledg = LedgerService.recordEntry(
-        updatedUser.id,
-        updatedUser.username,
-        'NEX',
-        rewards.nexGained,
-        updatedUser.balanceNEX,
-        'BATTLE_REWARD',
-        victory
-          ? `Vitória na Arena vs Gladiador Bot (+${rewards.nexGained} NEX)`
-          : `Recompensa de Consolação de Arena (+${rewards.nexGained} NEX)`
-      );
-      setLedger((prev) => [ledg, ...prev]);
-    }
-
-    // 6. Adicionar item dropado se gerado
-    if (rewards.droppedItem) {
-      setAssets((prev) => [rewards.droppedItem!, ...prev]);
-      if (['Épico', 'Lendário', 'Mítico'].includes(rewards.droppedItem.rarity)) {
-        soundService.playMythicDrop();
+      // 6. Registrar a transação / recompensa no histórico persistente
+      if (!onlineBattle && (rewards.nexGained > 0 || rewards.nxaGained > 0)) {
+        const ledg = LedgerService.recordEntry(
+          updatedUser.id,
+          updatedUser.username,
+          'NEX',
+          rewards.nexGained,
+          updatedUser.balanceNEX,
+          'BATTLE_REWARD',
+          victory
+            ? `Vitória na Arena vs Gladiador Bot (+${rewards.nexGained} NEX)`
+            : `Recompensa de Consolação de Arena (+${rewards.nexGained} NEX)`
+        );
+        setLedger((prev) => [ledg, ...prev]);
       }
-    }
 
-    // 7. Sorteio de drop de caixa na vitória
-    let droppedBox: PlayerBox | null = null;
-    if (rewards.droppedBoxType) {
-      droppedBox = BoxService.grantBox(userId, rewards.droppedBoxType, 'GAMEPLAY_DROP');
-      setBoxes((prev) => [...prev, droppedBox!]);
-      setBoxCounts(BoxService.getBoxCounts(userId));
-    }
+      // 6. Adicionar item dropado se gerado
+      if (rewards.droppedItem) {
+        setAssets((prev) => [rewards.droppedItem!, ...prev]);
+        if (['Épico', 'Lendário', 'Mítico'].includes(rewards.droppedItem.rarity)) {
+          soundService.playMythicDrop();
+        }
+      }
 
-    return {
-      ...rewards,
-      droppedBox,
-    };
+      // 7. Sorteio de drop de caixa na vitória
+      let droppedBox: PlayerBox | null = null;
+      if (onlineBattle && rewards.droppedBoxType) {
+        // TODO: grant online battle boxes through an authenticated atomic RPC.
+        console.warn('[NEXA BATTLE] Drop de caixa online suspenso até existir RPC segura; nenhuma caixa foi concedida.');
+      } else if (rewards.droppedBoxType) {
+        droppedBox = BoxService.grantBox(userId, rewards.droppedBoxType, 'GAMEPLAY_DROP');
+        setBoxes((prev) => [...prev, droppedBox!]);
+        setBoxCounts(BoxService.getBoxCounts(userId));
+      }
+
+      return {
+        ...rewards,
+        droppedBoxType: onlineBattle ? null : rewards.droppedBoxType,
+        droppedBox,
+      };
+    } finally {
+      pendingBattles.current.delete(userId);
+    }
   };
 
   // OPEN BOX
