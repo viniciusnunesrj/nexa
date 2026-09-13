@@ -1,4 +1,6 @@
 import { CardFragment, CardTemplate, Card } from '../types';
+import { isSupabaseConfigured } from '../lib/supabase';
+import { SupabaseService } from './supabaseService';
 
 const CARD_FRAGMENTS_KEY = 'nexa_card_fragments_v1';
 const memoryStore: Record<string, string> = {};
@@ -26,6 +28,14 @@ function storageSet(key: string, value: string): void {
 }
 
 export class CardFragmentServiceClass {
+  private remoteFragments = new Map<string, CardFragment[]>();
+
+  public async refreshOnline(userId: string): Promise<CardFragment[]> {
+    const fragments = await SupabaseService.fetchCardFragments(userId);
+    this.remoteFragments.set(userId, fragments);
+    return fragments;
+  }
+
   private getAllFragments(): CardFragment[] {
     const raw = storageGet(CARD_FRAGMENTS_KEY);
     if (!raw) return [];
@@ -42,6 +52,7 @@ export class CardFragmentServiceClass {
 
   public getUserFragments(userId: string): CardFragment[] {
     if (!userId) return [];
+    if (isSupabaseConfigured()) return this.remoteFragments.get(userId) || [];
     return this.getAllFragments().filter((f) => f.ownerId === userId);
   }
 
@@ -67,6 +78,7 @@ export class CardFragmentServiceClass {
     fragment: CardFragment;
     fragmentsAwarded: number;
   } {
+    if (isSupabaseConfigured()) throw new Error("Fragmentos online só podem ser concedidos pelo servidor.");
     const fragments = this.getAllFragments();
     const existingIndex = fragments.findIndex(
       (f) => f.ownerId === userId && f.templateId === template.templateId
@@ -109,6 +121,7 @@ export class CardFragmentServiceClass {
     error?: string;
     card?: Card;
   } {
+    if (isSupabaseConfigured()) throw new Error("Craft online de fragmentos indisponível até existir RPC segura.");
     const fragments = this.getAllFragments();
     const index = fragments.findIndex(
       (f) => f.ownerId === userId && f.templateId === template.templateId

@@ -62,11 +62,17 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
   const def = BOX_DEFINITIONS[summary.boxType];
 
   // Determine the primary winning asset
-  const winningAsset: NexaAsset = useMemo(() => {
+  const winningAsset = useMemo(() => {
     if (summary.cards && summary.cards.length > 0) return summary.cards[0];
     if (summary.characters && summary.characters.length > 0) return summary.characters[0];
     if (summary.assets && summary.assets.length > 0) return summary.assets[0];
     if (summary.items && summary.items.length > 0) return summary.items[0];
+    if (summary.rewardPreview) return {
+      ...summary.rewardPreview,
+      id: summary.rewardPreview.templateId,
+      type: 'Card',
+      description: 'Duplicata convertida em fragmentos pelo servidor.',
+    };
     return {
       id: 'fallback',
       name: 'Ativo Quântico',
@@ -479,7 +485,7 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
                   </p>
 
                   {/* Synthesis Metrics if Card */}
-                  {winningAsset.type === 'Card' && (
+                  {winningAsset.type === 'Card' && !duplicateConversion && (
                     <div className="grid grid-cols-2 gap-2 pt-2">
                       <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
                         <span className="text-[10px] text-slate-400 font-mono block uppercase">Taxa de Síntese</span>

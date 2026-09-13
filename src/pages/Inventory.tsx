@@ -35,10 +35,10 @@ export const Inventory: React.FC<InventoryProps> = ({ onNavigate }) => {
     assets,
     equipCharacter,
     listAsset,
-    boxes,
-    fragments,
-    openBox,
-    unlockCharacterWithFragments,
+boxes,
+cardFragments,
+openBox,
+craftCardWithFragments,
   } = useGameState();
 
   const [activeTab, setActiveTab] = useState<string>('ALL');
@@ -54,7 +54,7 @@ export const Inventory: React.FC<InventoryProps> = ({ onNavigate }) => {
 
   const myAssets = assets.filter((a) => a.ownerId === user.id);
   const myBoxes = boxes.filter((b) => b.ownerId === user.id);
-  const myFragments = fragments.filter((f) => f.userId === user.id);
+  const myFragments = cardFragments.filter((f) => f.ownerId === user.id);
 
   // Tab categories
   const tabs = [
@@ -333,9 +333,9 @@ export const Inventory: React.FC<InventoryProps> = ({ onNavigate }) => {
                     </div>
 
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         try {
-                          const summary = openBox(sampleBox.id);
+                          const summary = await openBox(sampleBox.id);
                           setActiveOpeningSummary(summary);
                         } catch {
                           // Toast handled in context
@@ -359,10 +359,10 @@ export const Inventory: React.FC<InventoryProps> = ({ onNavigate }) => {
             <div>
               <h3 className="font-heading text-lg font-bold text-white flex items-center gap-2">
                 <Repeat className="w-5 h-5 text-amber-400" />
-                <span>Fragmentos de Personagem</span>
+                <span>Fragmentos de Carta</span>
               </h3>
               <p className="text-xs font-mono text-slate-400">
-                Personagens repetidos em caixas são convertidos em fragmentos. Reúna 100 para desbloquear ou sintetizar o herói.
+                Cartas repetidas em caixas são convertidas em fragmentos. Reúna 100 para sintetizar uma nova carta.
               </p>
             </div>
           </div>
@@ -389,14 +389,14 @@ export const Inventory: React.FC<InventoryProps> = ({ onNavigate }) => {
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0"
-                        style={{ borderColor: RARITY_CONFIG[frag.characterRarity]?.color || '#06b6d4' }}
+                        style={{ borderColor: RARITY_CONFIG[frag.cardRarity]?.color || '#06b6d4' }}
                       >
-                        <img src={frag.characterImage} alt={frag.characterName} className="w-full h-full object-cover" />
+                        <img src={frag.cardImage} alt={frag.cardName} className="w-full h-full object-cover" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <RarityBadge rarity={frag.characterRarity} size="sm" />
+                        <RarityBadge rarity={frag.cardRarity} size="sm" />
                         <h4 className="font-heading text-base font-black text-white truncate mt-1">
-                          {frag.characterName}
+                          {frag.cardName}
                         </h4>
                         <span className="text-[10px] font-mono text-slate-400 block">
                           Sintetização Quântica
@@ -431,7 +431,7 @@ export const Inventory: React.FC<InventoryProps> = ({ onNavigate }) => {
 
                     {/* Button [ DESBLOQUEAR ] - disabled if < 100 */}
                     <button
-                      onClick={() => unlockCharacterWithFragments(frag.id)}
+                      onClick={() => craftCardWithFragments(frag.templateId)}
                       disabled={!canUnlock}
                       className={`w-full py-3 rounded-xl font-heading font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                         canUnlock
@@ -442,12 +442,12 @@ export const Inventory: React.FC<InventoryProps> = ({ onNavigate }) => {
                       {canUnlock ? (
                         <>
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>DESBLOQUEAR HERÓI</span>
+                          <span>SINTETIZAR CARTA</span>
                         </>
                       ) : (
                         <>
                           <Lock className="w-4 h-4" />
-                          <span>DESBLOQUEAR (Faltam {required - frag.amount})</span>
+                          <span>SINTETIZAR (Faltam {required - frag.amount})</span>
                         </>
                       )}
                     </button>

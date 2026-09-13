@@ -80,7 +80,7 @@ interface GameStateContextType {
   userPity: UserPityState;
   boxHistory: BoxHistoryRecord[];
   isPurchasing: boolean;
-  openBox: (boxId: string) => BoxRewardSummary;
+  openBox: (boxId: string) => Promise<BoxRewardSummary>;
   purchaseBox: (boxType: BoxType) => Promise<{ success: boolean; error?: string; box?: PlayerBox }>;
   unlockCharacterWithFragments: (fragmentId: string) => { success: boolean; error?: string; unlockedCharacter?: Character };
   refreshBoxes: () => void;
@@ -236,11 +236,23 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const refreshCardFragments = () => {
     if (!user?.id) return;
+    if (isSupabaseConfigured()) {
+      CardFragmentService.refreshOnline(user.id).then(setCardFragments).catch(() => {});
+      return;
+    }
     setCardFragments(CardFragmentService.getUserFragments(user.id));
   };
 
   const refreshBoxes = () => {
     if (!user?.id) return;
+    if (isSupabaseConfigured()) {
+      SupabaseService.fetchBoxHistory(user.id).then(setBoxHistory).catch(() => {});
+      BoxService.refreshOnlineBoxes(user.id).then(remote => {
+        setBoxes(remote);
+        setBoxCounts(BoxService.getBoxCounts(user.id));
+      }).catch(() => {});
+      return;
+    }
     setBoxes(BoxService.getAvailableBoxes(user.id));
     setBoxCounts(BoxService.getBoxCounts(user.id));
     setFragments(CharacterFragmentService.getUserFragments(user.id));
@@ -656,9 +668,21 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // OPEN BOX
-  const openBox = (boxId: string): BoxRewardSummary => {
+  const openBox = async (boxId: string): Promise<BoxRewardSummary> => {
     try {
-      const summary = BoxService.openBox(user.id, boxId);
+      const summary = await BoxService.openBox(user.id, boxId);
+      if (isSupabaseConfigured()) {
+        const [remoteCards, remoteFragments, remoteHistory] = await Promise.all([
+          SupabaseService.fetchBoxInventoryCards(user.id), CardFragmentService.refreshOnline(user.id), SupabaseService.fetchBoxHistory(user.id),
+        ]);
+        setAssets(prev => [...prev.filter(a => !(a.ownerId === user.id && (a.type === 'Card' || (a as any).type === 'card'))), ...remoteCards]);
+        setCardFragments(remoteFragments);
+        setBoxHistory(remoteHistory);
+        setBoxes(BoxService.getAvailableBoxes(user.id));
+        setBoxCounts(BoxService.getBoxCounts(user.id));
+        soundService.playVictory();
+        return summary;
+      }
 
       // Refresh assets from localStorage
       try {

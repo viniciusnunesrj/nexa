@@ -76,6 +76,7 @@ export interface BoxRewardSummary {
   characters: Character[];
   items: GameItem[];
   cards?: Card[];
+  rewardPreview?: { templateId: string; name: string; rarity: Rarity; image: string };
   fragments: CharacterFragment[];
   nexGained: number;
   nxaGained: number;

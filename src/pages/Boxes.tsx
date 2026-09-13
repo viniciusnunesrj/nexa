@@ -60,13 +60,13 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
   const totalBoxes = myBoxes.length;
 
   // Handles clicking "ABRIR"
-  const handleOpenBox = (boxType: BoxType) => {
+  const handleOpenBox = async (boxType: BoxType) => {
     const availableBox = myBoxes.find((b) => b.boxType === boxType);
     if (!availableBox) return;
 
     try {
       setOpeningBoxType(boxType);
-      const summary = openBox(availableBox.id);
+      const summary = await openBox(availableBox.id);
       setActiveOpeningSummary(summary);
     } catch {
       // Handled in context toast

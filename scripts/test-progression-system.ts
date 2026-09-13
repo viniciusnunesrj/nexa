@@ -246,7 +246,7 @@ async function runProgressionTests() {
   const boxToOpen = userBoxesNow.find((b) => b.boxType === 'BASIC');
   assert(!!boxToOpen, 'Usuário possui caixa comum para abrir');
 
-  const openResult = BoxService.openBox(user.id, boxToOpen!.id);
+  const openResult = await BoxService.openBox(user.id, boxToOpen!.id);
   assert(
     (openResult.cards && openResult.cards.length > 0) ||
     (openResult.duplicateCardsConverted && openResult.duplicateCardsConverted.length > 0),

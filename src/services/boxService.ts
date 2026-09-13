@@ -52,6 +52,62 @@ function storageSet(key: string, value: string): void {
 }
 
 export class BoxService {
+  private static onlineBoxes = new Map<string, PlayerBox[]>();
+  private static revisions = new Map<string, number>();
+  private static purchases = new Map<string, Promise<{ success: boolean; error?: string; box?: PlayerBox; updatedBalance?: number }>>();
+  private static openings = new Map<string, Promise<BoxRewardSummary>>();
+  private static requestId(key: string): string {
+    const saved = storageGet(key);
+    if (saved) return saved;
+    const id = crypto.randomUUID();
+    storageSet(key, id);
+    return id;
+  }
+  public static async refreshOnlineBoxes(userId: string): Promise<PlayerBox[]> {
+    const revision = this.revisions.get(userId) || 0;
+    const boxes = await SupabaseService.fetchUserBoxes(userId);
+    if (revision === (this.revisions.get(userId) || 0)) this.onlineBoxes.set(userId, boxes);
+    return this.onlineBoxes.get(userId) || [];
+  }
+  private static async purchaseOnline(userId: string, boxType: BoxType) {
+    const key = 'nexa_box_purchase_pending:' + userId + ':' + boxType;
+    const running = this.purchases.get(key);
+    if (running) return running;
+    const task = (async () => {
+      try {
+        const result = await SupabaseService.purchaseBoxAtomic({ boxType, requestId: this.requestId(key) });
+        this.revisions.set(userId, (this.revisions.get(userId) || 0) + 1);
+        // Refresh from server: an idempotent old purchase result must not resurrect a consumed box.
+        await this.refreshOnlineBoxes(userId);
+        const profile = await SupabaseService.fetchRemoteProfile(userId);
+        if (!profile) throw new Error('Compra confirmada; perfil ainda não sincronizado. Repita a solicitação.');
+        EconomyService.updateUserBalance(userId, 'NEX', profile.balanceNEX);
+        storageSet(key, '');
+        return { success: true, box: result.box, updatedBalance: result.newBalance };
+      } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : 'Compra não confirmada; tente novamente.' };
+      }
+    })();
+    this.purchases.set(key, task);
+    try { return await task; } finally { this.purchases.delete(key); }
+  }
+  private static async openOnline(userId: string, boxId: string): Promise<BoxRewardSummary> {
+    const key = 'nexa_box_open_pending:' + userId + ':' + boxId;
+    const running = this.openings.get(key);
+    if (running) return running;
+    const task = (async () => {
+      const summary = await SupabaseService.openBoxAtomic({ boxId, requestId: this.requestId(key) });
+      this.revisions.set(userId, (this.revisions.get(userId) || 0) + 1);
+      this.onlineBoxes.set(userId, (this.onlineBoxes.get(userId) || []).filter(box => box.id !== boxId));
+      // Only confirmed summary is shown. No local mint, roll, delete RPC or fragment credit.
+      storageSet(key, '');
+      return summary;
+    })();
+    this.openings.set(key, task);
+    try { return await task; } finally { this.openings.delete(key); }
+  }
+
+
   /**
    * Obtém todas as caixas armazenadas no sistema
    */
@@ -75,28 +131,8 @@ export class BoxService {
    * Retorna as caixas disponíveis pertencentes a um usuário
    */
   public static getAvailableBoxes(userId: string): PlayerBox[] {
-    const all = this.getAllStoredBoxes();
-    const local = all.filter((b) => b.ownerId === userId);
-
-    if (isSupabaseConfigured()) {
-      SupabaseService.fetchUserBoxes(userId).then((remoteBoxes) => {
-        if (remoteBoxes && remoteBoxes.length > 0) {
-          const currentAll = this.getAllStoredBoxes();
-          let changed = false;
-          for (const rb of remoteBoxes) {
-            if (!currentAll.some((b) => b.id === rb.id)) {
-              currentAll.push(rb);
-              changed = true;
-            }
-          }
-          if (changed) {
-            this.saveAllStoredBoxes(currentAll);
-          }
-        }
-      }).catch(() => {});
-    }
-
-    return local;
+    if (isSupabaseConfigured()) return this.onlineBoxes.get(userId) || [];
+    return this.getAllStoredBoxes().filter(box => box.ownerId === userId);
   }
 
   /**
@@ -201,6 +237,7 @@ export class BoxService {
       return { success: false, error: 'Usuário não autenticado.' };
     }
 
+    if (isSupabaseConfigured()) return this.purchaseOnline(userId, boxType);
     const user = EconomyService.getUser(userId);
     if (!user) {
       return { success: false, error: 'Usuário não encontrado no sistema.' };
@@ -216,30 +253,6 @@ export class BoxService {
     }
 
     const price = config.priceNEX;
-
-    if (isSupabaseConfigured()) {
-      // The RPC owns payment and creation. Never grantBox or debit locally first.
-      const boxId = `box-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-      try {
-        const res = await SupabaseService.purchaseBoxAtomic({
-          userId, boxId, boxType, boxName: config.name, costNex: price,
-        });
-        if (!res.success) return { success: false, error: res.error || 'Compra não confirmada pelo servidor.' };
-        if (!res.boxId || !Number.isFinite(res.newBalance) || res.newBalance! < 0) {
-          return { success: false, error: 'Resposta de compra inválida. Recarregue o inventário antes de tentar novamente.' };
-        }
-        const confirmedBox: PlayerBox = {
-          id: res.boxId, ownerId: userId, boxType, name: config.name,
-          description: config.description, acquiredAt: new Date().toISOString(), source: 'SHOP_PURCHASE',
-        };
-        const all = this.getAllStoredBoxes().filter(box => box.id !== confirmedBox.id);
-        this.saveAllStoredBoxes([...all, confirmedBox]);
-        EconomyService.updateUserBalance(userId, 'NEX', res.newBalance!);
-        return { success: true, box: confirmedBox, updatedBalance: res.newBalance };
-      } catch {
-        return { success: false, error: 'Não foi possível confirmar a compra. Recarregue o inventário antes de tentar novamente.' };
-      }
-    }
 
     // 4. Impedir compra se saldo < preço
     if (user.balanceNEX < price) {
@@ -292,7 +305,8 @@ export class BoxService {
    * 7. registrar no histórico: BOX_OPEN e CARD_DUPLICATE
    * 8. sem geração de NEX grátis do nada
    */
-  public static openBox(userId: string, boxId: string): BoxRewardSummary {
+  public static async openBox(userId: string, boxId: string): Promise<BoxRewardSummary> {
+    if (isSupabaseConfigured()) return this.openOnline(userId, boxId);
     const allBoxes = this.getAllStoredBoxes();
     const boxIndex = allBoxes.findIndex((b) => b.id === boxId && b.ownerId === userId);
 
@@ -312,15 +326,6 @@ export class BoxService {
     // 2. Remove a caixa do inventário
     allBoxes.splice(boxIndex, 1);
     this.saveAllStoredBoxes(allBoxes);
-
-    if (isSupabaseConfigured()) {
-      SupabaseService.openBoxAtomic({
-        userId,
-        boxId: targetBox.id,
-      }).catch(() => {
-        SupabaseService.deleteBox(targetBox.id).catch(() => {});
-      });
-    }
 
     // 3. Sorteia a recompensa rigorosamente baseada nos pesos ANTES da animação
     const cardTemplate = rollBoxReward(boxType);
@@ -405,9 +410,6 @@ export class BoxService {
       storageSet(ASSETS_STORAGE_KEY, JSON.stringify(currentAssets));
       rewardCards.push(newCard);
 
-      if (isSupabaseConfigured()) {
-        SupabaseService.saveCard(newCard).catch(() => {});
-      }
     }
 
     // 8. Registrar transação BOX_OPEN

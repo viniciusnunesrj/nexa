@@ -165,7 +165,7 @@ export class BoxSystemTestRunner {
         throw new Error('Nenhuma caixa disponível para teste de abertura.');
       }
       const boxToOpen = ownedBoxes[0];
-      const openResult = BoxService.openBox(uid, boxToOpen.id);
+      const openResult = await BoxService.openBox(uid, boxToOpen.id);
       const ownedBoxesAfter = BoxService.getAvailableBoxes(uid);
 
       const boxDecremented = ownedBoxesAfter.length === ownedBoxes.length - 1;
@@ -198,7 +198,7 @@ export class BoxSystemTestRunner {
     try {
       let threwError = false;
       try {
-        BoxService.openBox(uid, 'caixa-fantasma-inexistente-999');
+        await BoxService.openBox(uid, 'caixa-fantasma-inexistente-999');
       } catch {
         threwError = true;
       }

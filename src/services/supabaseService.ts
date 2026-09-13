@@ -1,3 +1,5 @@
+import { getTemplateById } from '../config/collectionsData';
+import { BoxRewardSummary, CardFragment, BoxHistoryRecord } from '../types';
 import { supabase, isSupabaseConfigured, getSupabaseConfigurationError } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import { NexaUser, Card, PlayerBox, LedgerEntry, Listing, Character, BattlePreferences, BattleRunResult } from '../types';
@@ -446,28 +448,10 @@ class SupabaseServiceClass {
   // ==========================================================================
 
   public async fetchUserBoxes(userId: string): Promise<PlayerBox[]> {
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('user_boxes')
-          .select('*')
-          .eq('owner_id', userId);
-
-        if (error) {
-          console.warn('[SupabaseService] Erro ao carregar caixas do Supabase:', error.message);
-        } else if (data) {
-          const boxes = data.map(mapRowToPlayerBox);
-          for (const b of boxes) {
-            this.inMemoryBoxes.set(b.id, b);
-          }
-          return boxes;
-        }
-      } catch (err) {
-        console.warn('[SupabaseService] Exceção ao carregar caixas:', err);
-      }
-    }
-
-    return Array.from(this.inMemoryBoxes.values()).filter((b) => b.ownerId === userId);
+    if (!isSupabaseConfigured()) return Array.from(this.inMemoryBoxes.values()).filter(b => b.ownerId === userId);
+    const { data, error } = await supabase.from('user_boxes').select('*').eq('owner_id', userId);
+    if (error) throw new Error(error.message);
+    return (data || []).map(mapRowToPlayerBox);
   }
 
   public async saveBox(box: PlayerBox): Promise<void> {
@@ -634,78 +618,70 @@ class SupabaseServiceClass {
   // ATOMIC RPC METHODS (SECURITY DEFINER / SERVER-SIDE CONSISTENCY)
   // ==========================================================================
 
-  public async purchaseBoxAtomic(params: {
-    userId: string;
-    boxId: string;
-    boxType: string;
-    boxName: string;
-    costNex: number;
-  }): Promise<{ success: boolean; newBalance?: number; boxId?: string; error?: string }> {
-    if (!isSupabaseConfigured()) {
-      return { success: false, error: 'Supabase não configurado' };
+  public async purchaseBoxAtomic(params: { boxType: string; requestId: string }) {
+    if (!isSupabaseConfigured()) throw new Error('Supabase não configurado');
+    const { data, error } = await supabase.rpc('purchase_box_v2', {
+      p_box_type: params.boxType, p_request_id: params.requestId,
+    });
+    if (error) throw new Error(error.message);
+    if (!data?.success || !data.box?.id || !Number.isFinite(Number(data.new_balance))) {
+      throw new Error('Resposta de compra inválida; tente novamente com a mesma solicitação.');
     }
-
-    try {
-      const { data, error } = await supabase.rpc('purchase_box_atomic', {
-        p_user_id: params.userId,
-        p_box_id: params.boxId,
-        p_box_type: params.boxType,
-        p_box_name: params.boxName,
-        p_cost_nex: params.costNex,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      if (data && typeof data === 'object') {
-        if ((data as any).success === false) {
-          return { success: false, error: (data as any).error || 'Falha na compra da caixa' };
-        }
-        return {
-          success: true,
-          newBalance: Number((data as any).new_balance),
-          boxId: (data as any).box_id || params.boxId,
-        };
-      }
-      return { success: false, error: 'Resposta inválida do servidor' };
-    } catch (err: any) {
-      return { success: false, error: err?.message || 'Erro de rede ao comprar caixa' };
-    }
+    return { box: mapRowToPlayerBox(data.box), newBalance: Number(data.new_balance) };
   }
 
-  public async openBoxAtomic(params: {
-    userId: string;
-    boxId: string;
-  }): Promise<{ success: boolean; boxType?: string; boxName?: string; error?: string }> {
-    if (!isSupabaseConfigured()) {
-      return { success: false, error: 'Supabase não configurado' };
-    }
+  public async openBoxAtomic(params: { boxId: string; requestId: string }): Promise<BoxRewardSummary> {
+    if (!isSupabaseConfigured()) throw new Error('Supabase não configurado');
+    const { data, error } = await supabase.rpc('open_box_v2', {
+      p_box_id: params.boxId, p_request_id: params.requestId,
+    });
+    if (error) throw new Error(error.message);
+    if (!data?.success || data.box_id !== params.boxId || !data.reward?.templateId ||
+        (!data.card && !data.fragment)) throw new Error('Resposta de abertura inválida; repita a solicitação.');
+    const cards = data.card ? [mapRowToCard(data.card)] : [];
+    return {
+      boxId: data.box_id, boxType: data.box_type, boxName: data.box_name, openedAt: data.opened_at,
+      assets: cards, cards, items: [], characters: [], fragments: [],
+      nexGained: 0, nxaGained: 0, highestRarity: data.reward.rarity,
+      pityBefore: 0, pityAfter: 0, pityTriggered: false, duplicateCharactersConverted: [],
+      rewardPreview: data.reward,
+      duplicateCardsConverted: data.fragment ? [{
+        templateId: data.reward.templateId, cardName: data.reward.name, rarity: data.reward.rarity,
+        fragmentsAwarded: Number(data.fragments_awarded), totalFragmentsNow: Number(data.fragment.quantity),
+      }] : [],
+    };
+  }
 
-    try {
-      const { data, error } = await supabase.rpc('open_box_atomic', {
-        p_user_id: params.userId,
-        p_box_id: params.boxId,
-      });
+  public async fetchBoxHistory(userId: string): Promise<BoxHistoryRecord[]> {
+    const { data, error } = await supabase.from('box_operations_v1').select('request_id,result')
+      .eq('owner_id', userId).eq('operation', 'OPEN').order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data || []).map(row => {
+      const r = row.result;
+      return {
+        id: row.request_id, userId, boxId: r.box_id, boxType: r.box_type, boxName: r.box_name,
+        timestamp: r.opened_at, highestRarity: r.reward.rarity,
+        rewardsSummary: r.fragment ? r.reward.name + ' → ' + r.fragments_awarded + ' fragmentos' : r.reward.name,
+        itemsReceivedNames: [r.reward.name], nexGained: 0, pityBefore: 0, pityAfter: 0, pityTriggered: false,
+      };
+    });
+  }
 
-      if (error) {
-        return { success: false, error: error.message };
-      }
+  public async fetchBoxInventoryCards(userId: string): Promise<Card[]> {
+    const { data, error } = await supabase.from('user_cards').select('*').eq('owner_id', userId);
+    if (error) throw new Error(error.message);
+    return (data || []).map(mapRowToCard);
+  }
 
-      if (data && typeof data === 'object') {
-        if ((data as any).success === false) {
-          return { success: false, error: (data as any).error || 'Falha ao consumir caixa' };
-        }
-        return {
-          success: true,
-          boxType: (data as any).box_type,
-          boxName: (data as any).box_name,
-        };
-      }
-      return { success: false, error: 'Resposta inválida do servidor' };
-    } catch (err: any) {
-      return { success: false, error: err?.message || 'Erro de conexão ao abrir caixa' };
-    }
+  public async fetchCardFragments(userId: string): Promise<CardFragment[]> {
+    if (!isSupabaseConfigured()) throw new Error('Supabase não configurado');
+    const { data, error } = await supabase.from('card_fragments').select('*').eq('owner_id', userId);
+    if (error) throw new Error(error.message);
+    return (data || []).map(row => ({
+      id: row.owner_id + ':' + row.template_id, ownerId: row.owner_id, templateId: row.template_id,
+      amount: Number(row.quantity), updatedAt: row.updated_at, maxRequired: 100,
+      cardName: getTemplateById(row.template_id)?.name || row.template_id, cardRarity: getTemplateById(row.template_id)?.rarity || 'Comum', cardImage: getTemplateById(row.template_id)?.image || '', collectionId: getTemplateById(row.template_id)?.collectionId || '',
+    }));
   }
 
   public async claimSynthesisAtomic(params: {

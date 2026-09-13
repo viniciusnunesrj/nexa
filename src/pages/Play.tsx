@@ -962,11 +962,13 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                     </div>
                   </div>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       if (!battleResult.droppedBox) return;
-                      const summary = openBox(battleResult.droppedBox.id);
-                      if (summary) {
+                      try {
+                        const summary = await openBox(battleResult.droppedBox.id);
                         setActiveOpeningSummary(summary);
+                      } catch {
+                        // Error notification is handled by the context.
                       }
                     }}
                     className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-heading text-xs font-black uppercase tracking-wider transition-all shrink-0"
