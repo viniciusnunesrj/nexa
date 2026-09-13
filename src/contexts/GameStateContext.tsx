@@ -485,10 +485,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       if (isSupabaseConfigured()) {
         SupabaseService.updateListing(listingId, { status: 'SOLD', buyerId: user.id } as any).catch(() => {});
-        if (result.transferredItem.type === 'Card' || (result.transferredItem as any).type === 'card') {
-          SupabaseService.saveCard(result.transferredItem as Card).catch(() => {});
         }
-      }
 
       // 4. Add transaction
       setTransactions((prev) => [result.transaction, ...prev]);

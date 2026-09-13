@@ -491,9 +491,7 @@ export class EconomyServiceClass {
       }
     }
 
-    if (isSupabaseConfigured()) {
-      SupabaseService.saveCard(card).catch(() => {});
-    }
+    
   }
 
   /**
