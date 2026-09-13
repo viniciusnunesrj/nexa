@@ -7,3 +7,4 @@ export * from './seasons';
 export * from './boxes';
 export * from './collections';
 export * from './progression';
+export * from './battle';

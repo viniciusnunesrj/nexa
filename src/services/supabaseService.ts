@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured, getSupabaseConfigurationError } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
-import { NexaUser, Card, PlayerBox, LedgerEntry, Listing, Character, BattlePreferences } from '../types';
+import { NexaUser, Card, PlayerBox, LedgerEntry, Listing, Character, BattlePreferences, BattleRunResult } from '../types';
 import {
   mapProfileToNexaUser,
   mapRowToCard,
@@ -334,6 +334,25 @@ class SupabaseServiceClass {
             throw new Error('O Supabase não confirmou as preferências de batalha.');
           }
           return mapRowToBattlePreferences(data);
+  }
+
+  public async startBattleAtomic(requestId: string): Promise<BattleRunResult> {
+    const configurationError = getSupabaseConfigurationError();
+    if (configurationError) throw new Error(configurationError);
+    if (!requestId.trim()) throw new Error('request_id obrigatório para iniciar a batalha.');
+
+    const { data, error } = await supabase.rpc('start_battle_atomic', {
+      p_request_id: requestId,
+    });
+    if (error) throw new Error('Falha ao iniciar batalha server-side: ' + error.message);
+    if (!data || typeof data !== 'object') {
+      throw new Error('O Supabase não retornou o resultado da batalha.');
+    }
+    const result = data as Partial<BattleRunResult>;
+    if (result.success !== true || typeof result.run_id !== 'string') {
+      throw new Error('Resultado de batalha inválido retornado pelo servidor.');
+    }
+    return data as BattleRunResult;
   }
 
   // ==========================================================================
@@ -722,64 +741,11 @@ class SupabaseServiceClass {
     profile?: NexaUser;
     error?: string;
   }> {
-    if (!isSupabaseConfigured()) {
-      return { success: false, error: 'Supabase não configurado' };
-    }
-
-    try {
-      const { data, error } = await supabase.rpc('apply_battle_reward_atomic', {
-        p_user_id: params.userId,
-        p_victory: params.victory,
-        p_nex_gained: params.nexGained,
-        p_nxa_gained: params.nxaGained,
-        p_xp_gained: params.xpGained,
-      });
-
-      // TEMP: raw RPC fields only; absent fields remain undefined.
-      console.log('[NEXA BATTLE RPC RESULT]', {
-        leveled_up: data?.leveled_up,
-        level: data?.level,
-        experience: data?.experience,
-        max_experience: data?.max_experience,
-        previous_level: data?.previous_level,
-        new_level: data?.new_level,
-        level_rewards_claimed: data?.level_rewards_claimed,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      if (data && (data as any).success === false) {
-        return { success: false, error: (data as any).error || 'Falha ao aplicar recompensa' };
-      }
-
-      if (!data || data.success !== true || !Number.isFinite(data.level) ||
-          !Number.isFinite(data.experience) || !Number.isFinite(data.balance_nex) ||
-          !Number.isFinite(data.balance_nxa) || typeof data.leveled_up !== 'boolean') {
-        return { success: false, error: 'Resposta de batalha inválida. Recarregue o perfil antes de continuar.' };
-      }
-      // The current RPC omits max_experience and other profile fields. Read them
-      // after its commit; never infer the server XP threshold from the local table.
-      const { data: row, error: profileError } = await supabase.from('profiles')
-        .select('*').eq('id', params.userId).single();
-      if (profileError || !row || !Number.isFinite(row.max_experience) || row.max_experience <= 0) {
-        return { success: false, error: 'Batalha processada, mas não foi possível confirmar o perfil. Recarregue a página; não repita a solicitação.' };
-      }
-      const profile = mapProfileToNexaUser(row);
-      this.acceptConfirmedProfile(profile);
-      return {
-        success: true,
-        profile,
-        balanceNex: Number((data as any).balance_nex),
-        balanceNxa: Number((data as any).balance_nxa),
-        level: Number((data as any).level),
-        experience: Number((data as any).experience),
-        leveledUp: Boolean((data as any).leveled_up),
-      };
-    } catch (err: any) {
-      return { success: false, error: err?.message || 'Erro de rede' };
-    }
+    void params;
+    return {
+      success: false,
+      error: 'Recompensas de batalha são aplicadas exclusivamente por start_battle_atomic.',
+    };
   }
 }
 
