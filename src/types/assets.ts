@@ -53,7 +53,7 @@ export interface Character extends BaseAsset {
 
 export interface BattlePreferences {
   userId: string;
-  mainCharacterId: string | null;
+  mainCardId: string | null;
   battleTeamCardIds: string[];
   updatedAt: string;
 }

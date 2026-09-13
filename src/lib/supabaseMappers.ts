@@ -136,7 +136,7 @@ export function mapRowToCharacter(row: any): Character {
 export function mapRowToBattlePreferences(row: any): BattlePreferences {
   return {
     userId: row.user_id,
-    mainCharacterId: row.main_character_id || null,
+    mainCardId: row.main_card_id || null,
     battleTeamCardIds: Array.isArray(row.battle_team_card_ids) ? row.battle_team_card_ids : [],
     updatedAt: row.updated_at || row.created_at || new Date().toISOString(),
   };

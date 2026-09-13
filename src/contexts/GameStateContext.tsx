@@ -89,7 +89,7 @@ interface GameStateContextType {
   cancelListing: (listingId: string) => void;
   buyListing: (listingId: string) => void;
   equipCharacter: (characterId: string) => void;
-  executeBattle: (characterId: string) => Promise<{
+  executeBattle: (battlePower: number) => Promise<{
     victory: boolean;
     xpGained: number;
     nexGained: number;
@@ -118,7 +118,7 @@ interface GameStateContextType {
   activeSynthesizingCardsCount: number;
   battlePreferences: BattlePreferences | null;
   isCharacterPersistenceLoading: boolean;
-  saveBattlePreferences: (mainCharacterId: string | null, battleTeamCardIds: string[]) => Promise<void>;
+  saveBattlePreferences: (mainCardId: string | null, battleTeamCardIds: string[]) => Promise<void>;
 }
 
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
@@ -313,11 +313,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [user?.id]);
 
   const saveBattlePreferences = async (
-    mainCharacterId: string | null,
+    mainCardId: string | null,
     battleTeamCardIds: string[]
   ): Promise<void> => {
     if (!isSupabaseConfigured()) return;
-    const confirmed = await SupabaseService.saveBattlePreferences(mainCharacterId, battleTeamCardIds);
+    const confirmed = await SupabaseService.saveBattlePreferences(mainCardId, battleTeamCardIds);
     setBattlePreferences(confirmed);
   };
 
@@ -518,15 +518,14 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // EXECUTE BATTLE
-  const executeBattle = async (characterId: string) => {
+  const executeBattle = async (battlePower: number) => {
     const userId = user.id;
     if (pendingBattles.current.has(userId)) throw new Error('Aguarde a confirmação da batalha em andamento.');
     pendingBattles.current.add(userId);
     try {
       setLevelUpData(null);
       const onlineBattle = isSupabaseConfigured();
-      const char = assets.find((a) => a.id === characterId && a.type === 'Character') as Character;
-      const power = char ? char.power : 1000;
+      const power = Math.max(0, battlePower);
 
       // Opponent difficulty generator
       const opponentPower = Math.floor(power * (0.8 + Math.random() * 0.45));

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
-import { Character, GameItem, PlayerBox, BoxRewardSummary, Card } from '../types';
+import { GameItem, PlayerBox, BoxRewardSummary, Card } from '../types';
 import { RARITY_CONFIG } from '../config/designTokens';
 import { BOX_DEFINITIONS } from '../config/boxRates';
 import { RarityBadge } from '../components/common/RarityBadge';
@@ -53,14 +53,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
     saveBattlePreferences,
   } = useGameState();
 
-  // User characters from inventory
-  const characters = assets.filter(
-    (a) => a.ownerId === user.id && a.type === 'Character'
-  ) as Character[];
-
-  const [selectedCharId, setSelectedCharId] = useState<string>('');
-
-  const selectedChar = characters.find((c) => c.id === selectedCharId);
+  const [mainCardId, setMainCardId] = useState<string | null>(null);
 
   // ==========================================
   // PARTE 1: CARTAS DO INVENTÁRIO (FONTE ÚNICA)
@@ -83,46 +76,56 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
   useEffect(() => {
     if (isCharacterPersistenceLoading || hasHydratedBattlePreferences.current) return;
 
-    const fallbackMainCharacterId =
-      characters.find((c) => c.isEquipped)?.id || characters[0]?.id || '';
     if (isSupabaseConfigured()) {
-      setSelectedCharId(battlePreferences?.mainCharacterId || fallbackMainCharacterId);
-      setSelectedTeamCardIds(
-        Array.from(new Set(battlePreferences?.battleTeamCardIds || [])).slice(0, 4)
+      const team = Array.from(new Set(battlePreferences?.battleTeamCardIds || [])).slice(0, 4);
+      setSelectedTeamCardIds(team);
+      setMainCardId(
+        battlePreferences?.mainCardId && team.includes(battlePreferences.mainCardId)
+          ? battlePreferences.mainCardId
+          : team[0] || null
       );
     } else {
       let localTeam: string[] = [];
+      let localMainCardId: string | null = null;
       try {
         const saved = localStorage.getItem(`nexa_battle_team_${user.id}`);
         const parsed = saved ? JSON.parse(saved) : [];
-        if (Array.isArray(parsed)) localTeam = Array.from(new Set(parsed)).slice(0, 4);
+        if (Array.isArray(parsed)) {
+          localTeam = Array.from(new Set(parsed)).slice(0, 4);
+        } else if (parsed && Array.isArray(parsed.team)) {
+          const validTeamIds: string[] = parsed.team.filter(
+            (id: unknown): id is string => typeof id === 'string'
+          );
+          localTeam = Array.from(new Set<string>(validTeamIds)).slice(0, 4);
+          localMainCardId = typeof parsed.mainCardId === 'string' ? parsed.mainCardId : null;
+        }
       } catch {
         localTeam = [];
       }
-      setSelectedCharId(fallbackMainCharacterId);
       setSelectedTeamCardIds(localTeam);
+      setMainCardId(localMainCardId && localTeam.includes(localMainCardId) ? localMainCardId : localTeam[0] || null);
     }
     hasHydratedBattlePreferences.current = true;
-  }, [battlePreferences, characters, isCharacterPersistenceLoading, user.id]);
+  }, [battlePreferences, isCharacterPersistenceLoading, user.id]);
 
   useEffect(() => {
     if (isCharacterPersistenceLoading || !hasHydratedBattlePreferences.current) return;
     const teamKey = JSON.stringify(selectedTeamCardIds);
     const preferenceKey = JSON.stringify({
-      mainCharacterId: selectedCharId || null,
+      mainCardId,
       team: selectedTeamCardIds,
     });
 
     if (isSupabaseConfigured()) {
       const serverKey = battlePreferences
         ? JSON.stringify({
-            mainCharacterId: battlePreferences.mainCharacterId,
+            mainCardId: battlePreferences.mainCardId,
             team: battlePreferences.battleTeamCardIds,
           })
         : null;
       if (serverKey === preferenceKey || lastPersistedBattlePreferences.current === preferenceKey) return;
       lastPersistedBattlePreferences.current = preferenceKey;
-      saveBattlePreferences(selectedCharId || null, selectedTeamCardIds).catch((error) => {
+      saveBattlePreferences(mainCardId, selectedTeamCardIds).catch((error) => {
         console.warn('[Play] Falha ao persistir preferências de batalha:', error);
         lastPersistedBattlePreferences.current = null;
       });
@@ -130,7 +133,10 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
     }
 
     try {
-      localStorage.setItem(`nexa_battle_team_${user.id}`, teamKey);
+      localStorage.setItem(
+        `nexa_battle_team_${user.id}`,
+        JSON.stringify({ mainCardId, team: selectedTeamCardIds })
+      );
     } catch {
       // Offline storage is best effort.
     }
@@ -138,7 +144,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
     battlePreferences,
     isCharacterPersistenceLoading,
     saveBattlePreferences,
-    selectedCharId,
+    mainCardId,
     selectedTeamCardIds,
     user.id,
   ]);
@@ -156,8 +162,8 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
     return CARD_POWER_MAP[c.rarity] || 500;
   };
 
-  const cardsBonusPower = teamCards.reduce((acc, c) => acc + getCardPower(c), 0);
-  const totalFighterPower = (selectedChar ? selectedChar.power : 1000) + cardsBonusPower;
+  const totalFighterPower = teamCards.reduce((acc, c) => acc + getCardPower(c), 0);
+  const mainCard = teamCards.find((card) => card.id === mainCardId) || null;
 
   // Alternar seleção da carta no time (respeita card.state sem mutação indevida)
   const handleToggleCardSelection = (card: Card) => {
@@ -170,12 +176,15 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
       if (prev.includes(card.id)) {
         updated = prev.filter((id) => id !== card.id);
       } else {
-        // Permite até 4 cartas de suporte no time de batalha
+        // Mantém uma única formação de até quatro cartas, sem remover outra carta implicitamente.
         if (prev.length >= 4) {
-          updated = [...prev.slice(1), card.id];
+          updated = prev;
         } else {
           updated = [...prev, card.id];
         }
+      }
+      if (!mainCardId && updated.length > 0) {
+        setMainCardId(updated[0]);
       }
       return updated;
     });
@@ -186,8 +195,17 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
     soundService.playClick();
     setSelectedTeamCardIds((prev) => {
       const updated = prev.filter((id) => id !== cardId);
+      if (mainCardId === cardId) {
+        setMainCardId(updated[0] || null);
+      }
       return updated;
     });
+  };
+
+  const handleSetMainCard = (card: Card) => {
+    if (!selectedTeamCardIds.includes(card.id) || card.state !== 'FREE') return;
+    soundService.playClick();
+    setMainCardId(card.id);
   };
 
   // Battle state
@@ -222,14 +240,12 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
   const [selectedArena, setSelectedArena] = useState(arenas[0].id);
 
   const startCombat = () => {
-    if (!selectedChar && teamCards.length === 0) return;
+    if (teamCards.length === 0) return;
 
     setInBattle(true);
     setBattleResult(null);
     setCombatLogs([
-      teamCards.length > 0
-        ? `Iniciando combate na arena com formação de ${teamCards.length} carta(s) de suporte!`
-        : 'Iniciando protocolo de combate na arena...',
+      `Iniciando combate na arena com formação de ${teamCards.length} carta(s).`,
     ]);
     setPlayerHp(100);
     setEnemyHp(100);
@@ -254,18 +270,11 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
       soundService.playLaser();
       setEnemyHp((prev) => Math.max(25, prev - 45));
 
-      if (teamCards.length > 0) {
-        const randomCard = teamCards[Math.floor(Math.random() * teamCards.length)];
-        setCombatLogs((prev) => [
-          ...prev,
-          `${randomCard.name} liberou rajada elemental (+${getCardPower(randomCard)} PWR) causando 450 de dano!`,
-        ]);
-      } else {
-        setCombatLogs((prev) => [
-          ...prev,
-          `${selectedChar?.name || 'Seu combatente'} disparou uma rajada devastadora causando 450 de dano!`,
-        ]);
-      }
+      const randomCard = teamCards[Math.floor(Math.random() * teamCards.length)];
+      setCombatLogs((prev) => [
+        ...prev,
+        `${randomCard.name} liberou rajada elemental (+${getCardPower(randomCard)} PWR) causando 450 de dano!`,
+      ]);
     }, 900);
 
     setTimeout(() => {
@@ -280,10 +289,9 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
 
     setTimeout(async () => {
       // Execute battle logic (updates victories, XP, currencies, and drops)
-      const combatantId = selectedChar ? selectedChar.id : teamCards[0]?.id || user.id;
       let rewards;
       try {
-        rewards = await executeBattle(combatantId);
+        rewards = await executeBattle(totalFighterPower);
       } catch (error) {
         setInBattle(false);
         setCombatLogs((prev) => [...prev, error instanceof Error ? error.message : 'Não foi possível confirmar a batalha.']);
@@ -335,7 +343,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             Arena de Batalha
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-1">
-            Monte seu time com seus personagens e cartas <strong className="text-emerald-400">FREE</strong> do inventário para desafiar a arena.
+            Monte uma formação de até quatro cartas <strong className="text-emerald-400">FREE</strong> do inventário e defina uma delas como principal para desafiar a arena.
           </p>
         </div>
 
@@ -367,17 +375,17 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
           <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white/5 border border-white/10 relative overflow-hidden">
             <div className="w-full flex items-center justify-between mb-4">
               <span className="text-xs font-mono text-cyan-400 font-bold uppercase">
-                Seu Combatente & Formação
+                Sua Formação
               </span>
-              {selectedChar && <RarityBadge rarity={selectedChar.rarity} size="sm" />}
+              {mainCard && <RarityBadge rarity={mainCard.rarity} size="sm" />}
             </div>
 
-            {selectedChar ? (
+            {mainCard ? (
               <>
                 <div className="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.3)] mb-4 bg-slate-950">
                   <img
-                    src={selectedChar.image}
-                    alt={selectedChar.name}
+                    src={mainCard.image}
+                    alt={mainCard.name}
                     className={`w-full h-full object-cover transition-transform duration-300 ${
                       inBattle ? 'scale-110 animate-pulse' : ''
                     }`}
@@ -388,10 +396,10 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                 </div>
 
                 <h3 className="font-heading text-xl font-bold text-white">
-                  {selectedChar.name}
+                  {mainCard.name}
                 </h3>
                 <span className="text-xs font-mono text-slate-400 mt-0.5">
-                  Classe: {selectedChar.class} • Nível {selectedChar.level}
+                  Carta principal da formação
                 </span>
 
                 {/* HP Bar */}
@@ -413,9 +421,9 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                   <span className="flex items-center gap-1 text-cyan-400 font-bold bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-500/30">
                     <Zap className="w-3.5 h-3.5 text-cyan-300" /> {totalFighterPower} PWR Total
                   </span>
-                  {cardsBonusPower > 0 && (
+                  {totalFighterPower > 0 && (
                     <span className="text-[11px] text-emerald-400 font-semibold">
-                      (+{cardsBonusPower} de {teamCards.length} carta{teamCards.length > 1 ? 's' : ''})
+                      ({teamCards.length} carta{teamCards.length > 1 ? 's' : ''} na formação)
                     </span>
                   )}
                 </div>
@@ -448,6 +456,11 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                               <span className="text-white font-bold block truncate text-[11px]">
                                 {card.name}
                               </span>
+                              {card.id === mainCardId && (
+                                <span className="text-[10px] text-amber-300 font-bold block">
+                                  PRINCIPAL
+                                </span>
+                              )}
                               <span className="text-[10px] text-cyan-300 font-bold">
                                 +{getCardPower(card)} PWR
                               </span>
@@ -461,6 +474,16 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
+                          {card.id !== mainCardId && (
+                            <button
+                              onClick={() => handleSetMainCard(card)}
+                              disabled={inBattle}
+                              title="Definir como principal"
+                              className="px-1.5 py-1 rounded-md text-[9px] text-amber-300 hover:bg-amber-500/10 transition-colors shrink-0"
+                            >
+                              Principal
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -478,7 +501,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
               </>
             ) : (
               <div className="py-12 text-slate-500 font-mono text-xs">
-                Nenhum combatente selecionado.
+                Nenhuma carta principal selecionada.
               </div>
             )}
           </div>
@@ -556,7 +579,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
           {/* Launch Button */}
           <button
             onClick={startCombat}
-            disabled={inBattle || (!selectedChar && teamCards.length === 0)}
+            disabled={inBattle || teamCards.length === 0}
             className={`px-10 py-4 rounded-2xl font-heading font-black text-lg uppercase tracking-wider transition-all flex items-center gap-3 ${
               inBattle
                 ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
@@ -752,53 +775,6 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Switch Character Arsenal Picker */}
-      <div className="rounded-2xl bg-[#0b0b12] border border-white/10 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-heading text-xl font-bold text-white">
-            Selecionar Líder / Personagem Principal
-          </h3>
-          <span className="text-xs font-mono text-slate-400">
-            {characters.length} combatente(s) disponíveis
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          {characters.map((char) => {
-            const isSelected = char.id === selectedCharId;
-            return (
-              <div
-                key={char.id}
-                onClick={() => {
-                  setSelectedCharId(char.id);
-                  soundService.playClick();
-                }}
-                className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center gap-3 ${
-                  isSelected
-                    ? 'bg-cyan-950/60 border-cyan-500 ring-1 ring-cyan-400 text-white'
-                    : 'bg-white/5 border-white/5 text-slate-400 hover:border-white/20'
-                }`}
-              >
-                <img
-                  src={char.image}
-                  alt={char.name}
-                  className="w-12 h-12 rounded-lg object-cover bg-slate-950"
-                />
-                <div className="min-w-0">
-                  <h5 className="font-heading font-bold text-xs text-white truncate">
-                    {char.name}
-                  </h5>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <RarityBadge rarity={char.rarity} size="sm" showDot={false} />
-                    <span className="text-[10px] font-mono text-cyan-400">{char.power} PWR</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </div>
 
       {/* Battle Rewards & Loot Reveal Modal */}

@@ -319,14 +319,14 @@ class SupabaseServiceClass {
         }
 
   public async saveBattlePreferences(
-    mainCharacterId: string | null,
+    mainCardId: string | null,
     battleTeamCardIds: string[]
   ): Promise<BattlePreferences> {
           const configurationError = getSupabaseConfigurationError();
           if (configurationError) throw new Error(configurationError);
 
           const { data, error } = await supabase.rpc('save_battle_preferences', {
-            p_main_character_id: mainCharacterId,
+            p_main_card_id: mainCardId,
             p_battle_team_card_ids: battleTeamCardIds,
           });
           if (error) throw new Error('Falha ao salvar preferências de batalha: ' + error.message);
