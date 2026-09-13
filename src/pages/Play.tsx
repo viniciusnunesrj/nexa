@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
 import { GameItem, PlayerBox, BoxRewardSummary, Card } from '../types';
 import { RARITY_CONFIG } from '../config/designTokens';
+import { getTemplateById } from '../config/collectionsData';
 import { BOX_DEFINITIONS } from '../config/boxRates';
 import { RarityBadge } from '../components/common/RarityBadge';
 import { BoxOpeningModal } from '../components/boxes/BoxOpeningModal';
@@ -34,13 +35,13 @@ interface PlayProps {
   onNavigate: (page: string) => void;
 }
 
-const CARD_POWER_MAP: Record<string, number> = {
-  Comum: 300,
-  Incomum: 550,
-  Raro: 900,
-  Épico: 1400,
-  Lendário: 2000,
-  Mítico: 2800,
+const RARITY_POWER_BASE: Record<string, number> = {
+  Comum: 100,
+  Incomum: 180,
+  Raro: 280,
+  Épico: 420,
+  Lendário: 600,
+  Mítico: 850,
 };
 
 export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
@@ -160,7 +161,10 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
 
   // Cálculo de poder das cartas
   const getCardPower = (c: Card): number => {
-    return CARD_POWER_MAP[c.rarity] || 500;
+    const template = getTemplateById(c.templateId);
+    return template
+      ? (RARITY_POWER_BASE[c.rarity] || 100) + template.marketValue + template.synthesisRate * 10
+      : RARITY_POWER_BASE[c.rarity] || 100;
   };
 
   const totalFighterPower = teamCards.reduce((acc, c) => acc + getCardPower(c), 0);
@@ -228,6 +232,8 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
   const [enemyTeam, setEnemyTeam] = useState<BattleCombatantSnapshot[]>([]);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
   const [activeEnemyIndex, setActiveEnemyIndex] = useState(0);
+  const [battleFlash, setBattleFlash] = useState<string | null>(null);
+  const [battleNotice, setBattleNotice] = useState<'DEFEATED' | 'NEXT' | null>(null);
 
   const arenas = [
     { id: 'arena-1', name: 'Distrito Neon 07', difficulty: 'Normal', mult: '1.0x' },
@@ -250,6 +256,8 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
     const requestId = createBattleRequestId();
     setInBattle(true);
     setBattleResult(null);
+    setBattleFlash(null);
+    setBattleNotice(null);
     setBattleTeam([]);
     setEnemyTeam([]);
     setActivePlayerIndex(0);
@@ -267,8 +275,10 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
         let animatedEnemies = serverBattle.enemyTeam;
         setBattleTeam(animatedPlayers);
         setEnemyTeam(animatedEnemies);
+        const count = serverBattle.events.length;
+        const delay = count <= 20 ? 300 : count <= 40 ? 240 : count <= 60 ? 175 : 125;
         for (const event of serverBattle.events) {
-          await new Promise<void>((resolve) => setTimeout(resolve, 520));
+          await new Promise<void>((resolve) => setTimeout(resolve, delay));
           const attacker = [...animatedPlayers, ...animatedEnemies].find(
             (combatant) => combatant.id === event.attackerId
           );
@@ -292,10 +302,17 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
           } else {
             setActiveEnemyIndex(animatedEnemies.findIndex((combatant) => combatant.id === event.attackerId));
           }
-          if (event.defenderHpAfter <= 0) {
+          setBattleFlash(event.defenderId);
+          if (event.defeated) {
+            setBattleNotice('DEFEATED');
+            await new Promise<void>((resolve) => setTimeout(resolve, 300));
             const nextIndex = event.attackerSide === 'PLAYER'
               ? animatedEnemies.findIndex((combatant) => combatant.hp > 0)
               : animatedPlayers.findIndex((combatant) => combatant.hp > 0);
+            if (nextIndex >= 0) {
+              setBattleNotice('NEXT');
+              await new Promise<void>((resolve) => setTimeout(resolve, 200));
+            }
             if (event.attackerSide === 'PLAYER' && nextIndex >= 0) setActiveEnemyIndex(nextIndex);
             if (event.attackerSide === 'NPC' && nextIndex >= 0) setActivePlayerIndex(nextIndex);
           }
@@ -312,6 +329,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             }`,
           ]);
           soundService.playLaser();
+          setBattleNotice(null);
         }
       }
 
@@ -339,6 +357,8 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
         error instanceof Error ? error.message : 'Não foi possível confirmar a batalha.',
       ]);
     } finally {
+      setBattleFlash(null);
+      setBattleNotice(null);
       setInBattle(false);
     }
   };
@@ -347,11 +367,40 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
   const displayedCards = cardFilterMode === 'free' ? freeCards : userCards;
   const activePlayer = battleTeam[activePlayerIndex];
   const activeEnemy = enemyTeam[activeEnemyIndex];
+  const snapshotPower = (combatant: BattleCombatantSnapshot): number | null => {
+    // 5B2 does not require power: use confirmed power or known template data only.
+    if ('power' in combatant && typeof combatant.power === 'number' && Number.isFinite(combatant.power)) return combatant.power;
+    const template = combatant.templateId ? getTemplateById(combatant.templateId) : undefined;
+    return template ? (RARITY_POWER_BASE[combatant.rarity] || 100) + template.marketValue + template.synthesisRate * 10 : null;
+  };
+  const activePlayerImage = activePlayer ? userCards.find(card => card.id === activePlayer.id)?.image : mainCard?.image;
+  const renderBattleSlot = (snapshot: BattleCombatantSnapshot, side: 'PLAYER' | 'NPC') => {
+    const team = side === 'PLAYER' ? battleTeam : enemyTeam;
+    const active = snapshot === team[side === 'PLAYER' ? activePlayerIndex : activeEnemyIndex];
+    const defeated = snapshot.hp <= 0;
+    const percent = snapshot.maxHp > 0 ? Math.max(0, Math.min(100, snapshot.hp / snapshot.maxHp * 100)) : 0;
+    return (
+      <div key={snapshot.id} className={`rounded-lg border px-2.5 py-2 text-left transition-all ${defeated ? 'grayscale opacity-50 border-white/10' : active ? 'border-cyan-300 bg-cyan-950/50' : 'border-white/20'} ${battleFlash === snapshot.id ? 'ring-2 ring-rose-300' : ''}`}>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="font-semibold text-white text-xs truncate" title={snapshot.name}>{snapshot.name}</span>
+          {(side === 'NPC' || side === 'PLAYER') && (
+            <span className={`shrink-0 rounded-md border px-1 py-0.5 text-[8px] font-mono font-bold uppercase ${(RARITY_CONFIG[snapshot.rarity as keyof typeof RARITY_CONFIG] || RARITY_CONFIG.Comum).badge}`}>
+              {snapshot.rarity}
+            </span>
+          )}
+          {side === 'PLAYER' && (snapshot.leader || snapshot.id === mainCardId) && <span className="shrink-0 rounded bg-amber-400/10 px-1 py-0.5 text-[8px] font-bold text-amber-300">PRINCIPAL</span>}
+        </div>
+        <div className="mt-0.5 text-[9px] font-bold tracking-wide text-cyan-200">{defeated ? 'DERROTADO' : active ? 'ATIVO' : 'PRÓXIMO'}</div>
+        <div className="mt-1 h-1 rounded bg-black/60 overflow-hidden"><div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${percent}%` }} /></div>
+      </div>
+    );
+  };
+
   const activePlayerHp = activePlayer
-    ? Math.round((activePlayer.hp / activePlayer.maxHp) * 100)
+    ? (activePlayer.maxHp > 0 ? Math.max(0, Math.min(100, activePlayer.hp / activePlayer.maxHp * 100)) : 0)
     : playerHp;
   const activeEnemyHp = activeEnemy
-    ? Math.round((activeEnemy.hp / activeEnemy.maxHp) * 100)
+    ? (activeEnemy.maxHp > 0 ? Math.max(0, Math.min(100, activeEnemy.hp / activeEnemy.maxHp * 100)) : 0)
     : enemyHp;
 
   return (
@@ -388,48 +437,68 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
         </div>
       </div>
 
+      <style>{`@keyframes battle-notice-compact { 0%, 65% { opacity: 1; } 100% { opacity: 0; } }`}</style>
       {/* Main Battle Stage */}
-      <div className="relative rounded-3xl bg-[#0a0a12] border border-white/10 overflow-hidden shadow-2xl p-6 sm:p-10">
+      <div className="relative rounded-3xl bg-[#0a0a12] border border-white/10 overflow-hidden shadow-2xl p-4 sm:p-6">
         {/* Background Atmosphere */}
         <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 via-transparent to-black pointer-events-none" />
+        {battleNotice && (
+          <div className="absolute top-2 inset-x-3 z-30 flex justify-center pointer-events-none">
+            <div key={battleNotice} style={{ animation: 'battle-notice-compact 180ms ease-out forwards' }} className={`rounded-lg border px-3 py-1.5 text-center text-[10px] font-heading font-bold uppercase tracking-wide shadow-md ${
+              battleNotice === 'DEFEATED'
+                ? 'border-rose-400/70 bg-rose-950/85 text-rose-200'
+                : 'border-cyan-400/70 bg-cyan-950/85 text-cyan-200'
+            }`}>
+              {battleNotice === 'DEFEATED' ? 'COMBATENTE DERROTADO' : 'PRÓXIMO COMBATENTE'}
+            </div>
+          </div>
+        )}
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
           {/* Fighter 1: Player's Character + Battle Team Cards */}
-          <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white/5 border border-white/10 relative overflow-hidden">
+          <div className="flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 relative overflow-hidden">
             <div className="w-full flex items-center justify-between mb-4">
               <span className="text-xs font-mono text-cyan-400 font-bold uppercase">
                 Sua Formação
               </span>
               {mainCard && <RarityBadge rarity={mainCard.rarity} size="sm" />}
             </div>
+            {battleTeam.length > 0 && (
+              <div className="mb-5 grid w-full grid-cols-2 gap-1.5">
+                <span className="col-span-2 text-left text-[10px] font-mono font-bold uppercase text-cyan-300">MINHA FORMAÇÃO</span>
+                {battleTeam.map((snapshot) => renderBattleSlot(snapshot, 'PLAYER'))}
+              </div>
+            )}
 
-            {mainCard ? (
+            {(activePlayer || mainCard) ? (
               <>
                 <div className="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.3)] mb-4 bg-slate-950">
-                  <img
-                    src={mainCard.image}
-                    alt={mainCard.name}
+                  {activePlayerImage ? <img
+                    src={activePlayerImage}
+                    alt={activePlayer?.name || mainCard?.name}
                     className={`w-full h-full object-cover transition-transform duration-300 ${
-                      inBattle ? 'scale-110 animate-pulse' : ''
+                      activePlayer && activePlayer.hp <= 0 ? 'grayscale opacity-50' : inBattle ? 'scale-110 animate-pulse' : ''
                     }`}
-                  />
-                  {inBattle && (
+                  /> : <Shield className="w-20 h-20 text-cyan-300 mx-auto mt-10" />}
+                  {inBattle && activePlayer && activePlayer.hp > 0 && (
                     <div className="absolute inset-0 bg-cyan-500/20 mix-blend-overlay animate-ping" />
                   )}
                 </div>
 
                 <h3 className="font-heading text-xl font-bold text-white">
-                  {mainCard.name}
+                  {activePlayer?.name || mainCard?.name}
                 </h3>
                 <span className="text-xs font-mono text-slate-400 mt-0.5">
-                  Carta principal da formação
+                  {activePlayer
+                    ? `Posição ${activePlayer.position}/${battleTeam.length} • ${activePlayer.rarity} • ${snapshotPower(activePlayer) ?? 'Indisponível'} PWR`
+                    : 'Aguardando combatente ativo'}
                 </span>
 
                 {/* HP Bar */}
                 <div className="w-full mt-4">
                   <div className="flex justify-between text-[11px] font-mono mb-1">
                     <span className="text-slate-400">Integridade dos Escudos</span>
-                    <span className="text-cyan-400 font-bold">{activePlayerHp}%</span>
+                    <span className="text-cyan-400 font-bold">{activePlayer ? `${activePlayer.hp}/${activePlayer.maxHp} HP` : 'HP confirmado na batalha'}</span>
                   </div>
                   <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
                     <div
@@ -537,7 +606,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
           </div>
 
           {/* Fighter 2: Opponent returned by the server */}
-          <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white/5 border border-white/10 relative overflow-hidden">
+          <div className="flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 relative overflow-hidden">
             <div className="w-full flex items-center justify-between mb-4">
               <span className="text-xs font-mono text-rose-400 font-bold uppercase">
                 Adversário da Arena
@@ -546,23 +615,29 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                 IA DE COMBATE
               </span>
             </div>
+            {enemyTeam.length > 0 && (
+              <div className="mb-5 grid w-full grid-cols-2 gap-1.5">
+                <span className="col-span-2 text-left text-[10px] font-mono font-bold uppercase text-rose-300">INIMIGOS</span>
+                {enemyTeam.map((snapshot) => renderBattleSlot(snapshot, 'NPC'))}
+              </div>
+            )}
 
             <div className="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.3)] mb-4 bg-gradient-to-br from-rose-950 to-slate-950 flex items-center justify-center">
-              <Shield className={`w-20 h-20 text-rose-400/70 ${inBattle ? 'animate-pulse' : ''}`} />
+              <Shield className={`w-20 h-20 text-rose-400/70 ${activeEnemy && activeEnemy.hp <= 0 ? 'grayscale opacity-50' : inBattle ? 'animate-pulse' : ''}`} />
             </div>
 
             <h3 className="font-heading text-xl font-bold text-white">
               {activeEnemy?.name || 'Aguardando adversário confirmado'}
             </h3>
             <span className="text-xs font-mono text-slate-400 mt-0.5">
-              {activeEnemy ? `Raridade: ${activeEnemy.rarity}` : 'O servidor definirá a formação'}
+              {activeEnemy ? `Posição ${activeEnemy.position}/${enemyTeam.length} • ${activeEnemy.rarity}${snapshotPower(activeEnemy) !== null ? ` • ${snapshotPower(activeEnemy)} PWR` : ''}` : 'O servidor definirá a formação'}
             </span>
 
             {/* Enemy HP Bar */}
             <div className="w-full mt-4">
               <div className="flex justify-between text-[11px] font-mono mb-1">
                 <span className="text-slate-400">Escudos Adversários</span>
-                <span className="text-rose-400 font-bold">{activeEnemyHp}%</span>
+                <span className="text-rose-400 font-bold">{activeEnemy ? `${activeEnemy.hp}/${activeEnemy.maxHp} HP` : 'HP confirmado na batalha'}</span>
               </div>
               <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
                 <div
@@ -582,7 +657,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
         </div>
 
         {/* Action Controls & Battle Log */}
-        <div className="mt-8 pt-8 border-t border-white/10 flex flex-col items-center">
+        <div className="relative z-10 mt-5 pt-5 border-t border-white/10 flex flex-col items-center">
           {/* Logs */}
           <div className="w-full max-w-xl bg-slate-950/80 border border-white/10 rounded-2xl p-4 min-h-[90px] flex flex-col justify-center text-center mb-6">
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
