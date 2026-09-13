@@ -19,6 +19,7 @@ import {
   BoxHistoryRecord,
   UserPityState,
   LevelUpResult,
+  BattlePreferences,
 } from '../types';
 import { INITIAL_CHARACTERS } from '../data/mockCharacters';
 import { INITIAL_ITEMS } from '../data/mockItems';
@@ -115,6 +116,9 @@ interface GameStateContextType {
   setLevelUpData: (data: LevelUpResult | null) => void;
   unlockedSlots: number;
   activeSynthesizingCardsCount: number;
+  battlePreferences: BattlePreferences | null;
+  isCharacterPersistenceLoading: boolean;
+  saveBattlePreferences: (mainCharacterId: string | null, battleTeamCardIds: string[]) => Promise<void>;
 }
 
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
@@ -203,6 +207,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const [ledger, setLedger] = useState<LedgerEntry[]>(() => LedgerService.getEntries());
   const [notifications, setNotifications] = useState<ToastNotification[]>([]);
+  const [battlePreferences, setBattlePreferences] = useState<BattlePreferences | null>(null);
+  const [isCharacterPersistenceLoading, setIsCharacterPersistenceLoading] = useState(false);
 
   // Boxes & Fragments State
   const [boxes, setBoxes] = useState<PlayerBox[]>(() => {
@@ -248,6 +254,33 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // Online Sync from Supabase
       if (isSupabaseConfigured()) {
+        let cancelled = false;
+        setIsCharacterPersistenceLoading(true);
+        setBattlePreferences(null);
+
+        (async () => {
+          await SupabaseService.ensureStarterCharacter();
+          return Promise.all([
+            SupabaseService.fetchUserCharacters(user.id),
+            SupabaseService.fetchBattlePreferences(user.id),
+          ]);
+        })().then(([remoteCharacters, remotePreferences]) => {
+          if (cancelled) return;
+          if (remoteCharacters !== null) {
+            setAssets((prev) => [
+              ...prev.filter((asset) => !(asset.type === 'Character' && asset.ownerId === user.id)),
+              ...remoteCharacters,
+            ]);
+            setBattlePreferences(remotePreferences);
+          }
+        }).catch((err) => {
+          if (!cancelled) {
+            console.warn('[GameStateContext] Falha ao carregar personagens/preferências remotos:', err);
+          }
+        }).finally(() => {
+          if (!cancelled) setIsCharacterPersistenceLoading(false);
+        });
+
         SupabaseService.fetchUserCards(user.id).then((remoteCards) => {
           if (remoteCards && remoteCards.length > 0) {
             setAssets((prev) => {
@@ -270,9 +303,23 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setListings(remoteListings);
           }
         }).catch(() => {});
+
+        return () => {
+          cancelled = true;
+        };
       }
+      setIsCharacterPersistenceLoading(false);
     }
   }, [user?.id]);
+
+  const saveBattlePreferences = async (
+    mainCharacterId: string | null,
+    battleTeamCardIds: string[]
+  ): Promise<void> => {
+    if (!isSupabaseConfigured()) return;
+    const confirmed = await SupabaseService.saveBattlePreferences(mainCharacterId, battleTeamCardIds);
+    setBattlePreferences(confirmed);
+  };
 
   // Sync to localStorage
   useEffect(() => {
@@ -1140,6 +1187,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setLevelUpData,
         unlockedSlots,
         activeSynthesizingCardsCount,
+        battlePreferences,
+        isCharacterPersistenceLoading,
+        saveBattlePreferences,
       }}
     >
       {children}

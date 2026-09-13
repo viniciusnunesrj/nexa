@@ -51,6 +51,13 @@ export interface Character extends BaseAsset {
   maxExperience: number;
 }
 
+export interface BattlePreferences {
+  userId: string;
+  mainCharacterId: string | null;
+  battleTeamCardIds: string[];
+  updatedAt: string;
+}
+
 export interface GameItem extends BaseAsset {
   type: 'Weapon' | 'Armor' | 'Skin' | 'Artifact';
   level: number;

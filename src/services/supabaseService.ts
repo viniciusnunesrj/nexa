@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured, getSupabaseConfigurationError } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
-import { NexaUser, Card, PlayerBox, LedgerEntry, Listing } from '../types';
+import { NexaUser, Card, PlayerBox, LedgerEntry, Listing, Character, BattlePreferences } from '../types';
 import {
   mapProfileToNexaUser,
   mapRowToCard,
@@ -11,6 +11,8 @@ import {
   mapLedgerEntryToRow,
   mapRowToListing,
   mapListingToRow,
+  mapRowToCharacter,
+  mapRowToBattlePreferences,
 } from '../lib/supabaseMappers';
 import { MOCK_COMMUNITY_USERS, CURRENT_USER } from '../data/mockUsers';
 
@@ -249,6 +251,89 @@ class SupabaseServiceClass {
         console.warn('[SupabaseService] Exceção ao deletar carta:', err);
       }
     }
+  }
+
+  // ==========================================================================
+  // CHARACTERS & BATTLE PREFERENCES
+  // ==========================================================================
+
+  /** Returns null on an unavailable remote so callers can preserve offline state. */
+  public async fetchUserCharacters(userId: string): Promise<Character[] | null> {
+          if (!isSupabaseConfigured()) return null;
+
+          try {
+            const { data, error } = await supabase
+              .from('user_characters')
+              .select('*')
+              .eq('owner_id', userId)
+              .order('created_at', { ascending: true });
+
+            if (error) {
+              console.warn('[SupabaseService] Erro ao carregar personagens:', error.message);
+              return null;
+            }
+
+            return (data || []).map(mapRowToCharacter);
+          } catch (err) {
+            console.warn('[SupabaseService] Exceção ao carregar personagens:', err);
+            return null;
+          }
+        }
+
+  public async ensureStarterCharacter(): Promise<Character | null> {
+          if (!isSupabaseConfigured()) return null;
+
+          try {
+            const { data, error } = await supabase.rpc('ensure_starter_character');
+            if (error) {
+              console.warn('[SupabaseService] Erro ao garantir personagem inicial:', error.message);
+              return null;
+            }
+            if (!data || typeof data !== 'object' || !(data as any).id) return null;
+            return mapRowToCharacter(data);
+          } catch (err) {
+            console.warn('[SupabaseService] Exceção ao garantir personagem inicial:', err);
+            return null;
+          }
+        }
+
+  public async fetchBattlePreferences(userId: string): Promise<BattlePreferences | null> {
+          if (!isSupabaseConfigured()) return null;
+
+          try {
+            const { data, error } = await supabase
+              .from('battle_preferences')
+              .select('*')
+              .eq('user_id', userId)
+              .maybeSingle();
+
+            if (error) {
+              console.warn('[SupabaseService] Erro ao carregar preferências de batalha:', error.message);
+              return null;
+            }
+            return data ? mapRowToBattlePreferences(data) : null;
+          } catch (err) {
+            console.warn('[SupabaseService] Exceção ao carregar preferências de batalha:', err);
+            return null;
+          }
+        }
+
+  public async saveBattlePreferences(
+    mainCharacterId: string | null,
+    battleTeamCardIds: string[]
+  ): Promise<BattlePreferences> {
+          const configurationError = getSupabaseConfigurationError();
+          if (configurationError) throw new Error(configurationError);
+
+          const { data, error } = await supabase.rpc('save_battle_preferences', {
+            p_main_character_id: mainCharacterId,
+            p_battle_team_card_ids: battleTeamCardIds,
+          });
+          if (error) throw new Error('Falha ao salvar preferências de batalha: ' + error.message);
+          if (!data || typeof data !== 'object' || !(data as any).user_id) {
+            throw new Error('O Supabase não confirmou as preferências de batalha.');
+          }
+          return mapRowToBattlePreferences(data);
   }
 
   // ==========================================================================

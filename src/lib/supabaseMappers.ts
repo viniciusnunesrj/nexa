@@ -1,4 +1,4 @@
-import { NexaUser, Card, PlayerBox, LedgerEntry, Listing, NexaAsset } from '../types';
+import { NexaUser, Card, PlayerBox, LedgerEntry, Listing, NexaAsset, Character, BattlePreferences } from '../types';
 
 /**
  * Maps a Supabase `profiles` row to `NexaUser`
@@ -103,6 +103,42 @@ export function mapRowToCard(row: any): Card {
     exhaustedAt: row.exhausted_at ? new Date(row.exhausted_at).getTime() : null,
     lastClaimedAt: row.last_claimed_at || null,
     createdAt: row.created_at || new Date().toISOString(),
+  };
+}
+
+export function mapRowToCharacter(row: any): Character {
+  return {
+    id: row.id,
+    name: row.name,
+    type: 'Character',
+    class: row.class,
+    rarity: row.rarity,
+    image: row.image || '',
+    edition: row.edition || 'Gênese',
+    ownerId: row.owner_id,
+    ownerName: row.owner_name || 'Piloto NEXA',
+    createdAt: row.created_at || new Date().toISOString(),
+    description: row.description || '',
+    status: row.status || 'IDLE',
+    isEquipped: Boolean(row.is_equipped),
+    level: Number(row.level) || 1,
+    power: Number(row.power) || 0,
+    stats: {
+      strength: Number(row.strength) || 0,
+      defense: Number(row.defense) || 0,
+      speed: Number(row.speed) || 0,
+    },
+    experience: Number(row.experience) || 0,
+    maxExperience: Number(row.max_experience) || 500,
+  };
+}
+
+export function mapRowToBattlePreferences(row: any): BattlePreferences {
+  return {
+    userId: row.user_id,
+    mainCharacterId: row.main_character_id || null,
+    battleTeamCardIds: Array.isArray(row.battle_team_card_ids) ? row.battle_team_card_ids : [],
+    updatedAt: row.updated_at || row.created_at || new Date().toISOString(),
   };
 }
 

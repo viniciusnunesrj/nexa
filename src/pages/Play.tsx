@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
 import { Character, GameItem, PlayerBox, BoxRewardSummary, Card } from '../types';
@@ -8,6 +8,7 @@ import { RarityBadge } from '../components/common/RarityBadge';
 import { BoxOpeningModal } from '../components/boxes/BoxOpeningModal';
 import { soundService } from '../services/soundService';
 import { EconomyService } from '../services/economyService';
+import { isSupabaseConfigured } from '../lib/supabase';
 import confetti from 'canvas-confetti';
 import {
   Swords,
@@ -43,18 +44,23 @@ const CARD_POWER_MAP: Record<string, number> = {
 
 export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
   const { user } = useAuth();
-  const { assets, executeBattle, equipCharacter, openBox } = useGameState();
+  const {
+    assets,
+    executeBattle,
+    openBox,
+    battlePreferences,
+    isCharacterPersistenceLoading,
+    saveBattlePreferences,
+  } = useGameState();
 
   // User characters from inventory
   const characters = assets.filter(
     (a) => a.ownerId === user.id && a.type === 'Character'
   ) as Character[];
 
-  const [selectedCharId, setSelectedCharId] = useState<string>(
-    characters.find((c) => c.isEquipped)?.id || characters[0]?.id || ''
-  );
+  const [selectedCharId, setSelectedCharId] = useState<string>('');
 
-  const selectedChar = characters.find((c) => c.id === selectedCharId) || characters[0];
+  const selectedChar = characters.find((c) => c.id === selectedCharId);
 
   // ==========================================
   // PARTE 1: CARTAS DO INVENTÁRIO (FONTE ÚNICA)
@@ -70,14 +76,72 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
   const freeCards = userCards.filter((c) => c.state === 'FREE');
 
   // Seleção de cartas para o time da batalha (não altera card.state)
-  const [selectedTeamCardIds, setSelectedTeamCardIds] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem(`nexa_battle_team_${user.id}`);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
+  const [selectedTeamCardIds, setSelectedTeamCardIds] = useState<string[]>([]);
+  const hasHydratedBattlePreferences = useRef(false);
+  const lastPersistedBattlePreferences = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (isCharacterPersistenceLoading || hasHydratedBattlePreferences.current) return;
+
+    const fallbackMainCharacterId =
+      characters.find((c) => c.isEquipped)?.id || characters[0]?.id || '';
+    if (isSupabaseConfigured()) {
+      setSelectedCharId(battlePreferences?.mainCharacterId || fallbackMainCharacterId);
+      setSelectedTeamCardIds(
+        Array.from(new Set(battlePreferences?.battleTeamCardIds || [])).slice(0, 4)
+      );
+    } else {
+      let localTeam: string[] = [];
+      try {
+        const saved = localStorage.getItem(`nexa_battle_team_${user.id}`);
+        const parsed = saved ? JSON.parse(saved) : [];
+        if (Array.isArray(parsed)) localTeam = Array.from(new Set(parsed)).slice(0, 4);
+      } catch {
+        localTeam = [];
+      }
+      setSelectedCharId(fallbackMainCharacterId);
+      setSelectedTeamCardIds(localTeam);
     }
-  });
+    hasHydratedBattlePreferences.current = true;
+  }, [battlePreferences, characters, isCharacterPersistenceLoading, user.id]);
+
+  useEffect(() => {
+    if (isCharacterPersistenceLoading || !hasHydratedBattlePreferences.current) return;
+    const teamKey = JSON.stringify(selectedTeamCardIds);
+    const preferenceKey = JSON.stringify({
+      mainCharacterId: selectedCharId || null,
+      team: selectedTeamCardIds,
+    });
+
+    if (isSupabaseConfigured()) {
+      const serverKey = battlePreferences
+        ? JSON.stringify({
+            mainCharacterId: battlePreferences.mainCharacterId,
+            team: battlePreferences.battleTeamCardIds,
+          })
+        : null;
+      if (serverKey === preferenceKey || lastPersistedBattlePreferences.current === preferenceKey) return;
+      lastPersistedBattlePreferences.current = preferenceKey;
+      saveBattlePreferences(selectedCharId || null, selectedTeamCardIds).catch((error) => {
+        console.warn('[Play] Falha ao persistir preferências de batalha:', error);
+        lastPersistedBattlePreferences.current = null;
+      });
+      return;
+    }
+
+    try {
+      localStorage.setItem(`nexa_battle_team_${user.id}`, teamKey);
+    } catch {
+      // Offline storage is best effort.
+    }
+  }, [
+    battlePreferences,
+    isCharacterPersistenceLoading,
+    saveBattlePreferences,
+    selectedCharId,
+    selectedTeamCardIds,
+    user.id,
+  ]);
 
   // Filtro de cartas no time: apenas instâncias existentes com state === 'FREE'
   const teamCards = userCards.filter(
@@ -113,11 +177,6 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
           updated = [...prev, card.id];
         }
       }
-      try {
-        localStorage.setItem(`nexa_battle_team_${user.id}`, JSON.stringify(updated));
-      } catch {
-        // Ignore local storage error
-      }
       return updated;
     });
   };
@@ -127,9 +186,6 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
     soundService.playClick();
     setSelectedTeamCardIds((prev) => {
       const updated = prev.filter((id) => id !== cardId);
-      try {
-        localStorage.setItem(`nexa_battle_team_${user.id}`, JSON.stringify(updated));
-      } catch {}
       return updated;
     });
   };
