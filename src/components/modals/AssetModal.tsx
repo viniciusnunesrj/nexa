@@ -1,3 +1,4 @@
+import { CardImage } from '../common/CardImage';
 import React from 'react';
 import { NexaAsset, Character } from '../../types';
 import { RARITY_CONFIG } from '../../config/designTokens';
@@ -45,7 +46,7 @@ export const AssetModal: React.FC<AssetModalProps> = ({
 
         {/* Left: Media & Hologram Visual */}
         <div className="md:w-5/12 relative aspect-[3/4] md:aspect-auto overflow-hidden bg-slate-950 flex items-center justify-center">
-          <img
+          <CardImage asset={asset}
             src={asset.image}
             alt={asset.name}
             className="w-full h-full object-cover"

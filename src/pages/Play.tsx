@@ -1,3 +1,4 @@
+import { CardImage } from '../components/common/CardImage';
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -473,7 +474,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             {(activePlayer || mainCard) ? (
               <>
                 <div className="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.3)] mb-4 bg-slate-950">
-                  {activePlayerImage ? <img
+                  {activePlayerImage ? <CardImage asset={activePlayer || mainCard}
                     src={activePlayerImage}
                     alt={activePlayer?.name || mainCard?.name}
                     className={`w-full h-full object-cover transition-transform duration-300 ${
@@ -539,7 +540,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                           className="flex items-center justify-between p-2 rounded-xl bg-cyan-950/40 border border-cyan-500/40 text-xs font-mono"
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <img
+                            <CardImage asset={card}
                               src={card.image}
                               alt={card.name}
                               className="w-7 h-7 rounded-lg object-cover bg-slate-900 shrink-0"
@@ -774,7 +775,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
 
                     {/* Card Artwork */}
                     <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-slate-950 border border-white/10">
-                      <img
+                      <CardImage asset={card}
                         src={card.image}
                         alt={card.name}
                         className="w-full h-full object-cover"

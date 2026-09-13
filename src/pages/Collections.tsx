@@ -1,3 +1,4 @@
+import { CardImage } from '../components/common/CardImage';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
@@ -335,7 +336,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
               >
                 {/* Visual Card Image */}
                 <div className="relative aspect-[3/4] overflow-hidden bg-slate-950 group">
-                  <img
+                  <CardImage asset={template}
                     src={template.image}
                     alt={template.name}
                     className={`w-full h-full object-cover transition-transform duration-500 ${
@@ -593,7 +594,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
               </div>
 
               <div className="flex items-center gap-4 p-3 rounded-2xl bg-black/40 border border-white/10">
-                <img
+                <CardImage asset={sellingCard}
                   src={sellingCard.image}
                   alt={sellingCard.name}
                   className="w-16 h-20 rounded-xl object-cover border border-white/10"
@@ -700,7 +701,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
 
               {/* Card & Reward Details */}
               <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-black/50 border border-white/10">
-                <img
+                <CardImage asset={claimModalCard}
                   src={claimModalCard.image}
                   alt={claimModalCard.name}
                   className="w-16 h-20 rounded-xl object-cover border border-white/10 shrink-0"

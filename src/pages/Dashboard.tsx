@@ -1,3 +1,4 @@
+import { CardImage } from '../components/common/CardImage';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -505,7 +506,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 className="group p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-cyan-500/40 transition-all cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="aspect-square rounded-lg overflow-hidden bg-slate-950 relative">
-                  <img
+                  <CardImage asset={item}
                     src={item.image}
                     alt={item.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

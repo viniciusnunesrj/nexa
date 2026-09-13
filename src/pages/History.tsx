@@ -1,3 +1,4 @@
+import { CardImage } from '../components/common/CardImage';
 import React, { useState } from 'react';
 import { useGameState } from '../contexts/GameStateContext';
 import { PriceHistoryChart } from '../components/market/PriceHistoryChart';
@@ -135,8 +136,8 @@ export const HistoryPage: React.FC = () => {
                   <td className="py-3 px-4 text-slate-400">{safeText(tx.timestamp)}</td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
-                      {typeof tx.itemSnapshot?.image === 'string' && tx.itemSnapshot.image.trim() && <img
-                        src={tx.itemSnapshot.image}
+                      {tx.itemSnapshot && <CardImage asset={tx.itemSnapshot}
+                        src={typeof tx.itemSnapshot.image === 'string' ? tx.itemSnapshot.image : undefined}
                         alt={safeText(tx.itemSnapshot?.name, 'Ativo não identificado')}
                         className="w-6 h-6 rounded object-cover"
                       />}

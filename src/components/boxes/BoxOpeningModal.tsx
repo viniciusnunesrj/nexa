@@ -1,3 +1,5 @@
+import { getCardTemplateId } from '../../utils/cardImage';
+import { CardImage } from '../common/CardImage';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
@@ -31,6 +33,7 @@ interface BoxOpeningModalProps {
 }
 
 interface RouletteItem {
+  templateId?: string;
   id: string;
   name: string;
   rarity: Rarity;
@@ -90,6 +93,7 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
         name: 'Guardião da Chama',
         rarity: 'Incomum',
         image: GUARDIANS_TEMPLATES[0].image,
+        templateId: GUARDIANS_TEMPLATES[0].templateId,
         elementIcon: '🔥',
       },
       {
@@ -97,6 +101,7 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
         name: 'Guardião do Gelo',
         rarity: 'Raro',
         image: GUARDIANS_TEMPLATES[1].image,
+        templateId: GUARDIANS_TEMPLATES[1].templateId,
         elementIcon: '❄️',
       },
       {
@@ -104,6 +109,7 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
         name: 'Guardião da Tempestade',
         rarity: 'Épico',
         image: GUARDIANS_TEMPLATES[2].image,
+        templateId: GUARDIANS_TEMPLATES[2].templateId,
         elementIcon: '⚡',
       },
       {
@@ -111,6 +117,7 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
         name: 'Guardião do Abismo',
         rarity: 'Lendário',
         image: GUARDIANS_TEMPLATES[3].image,
+        templateId: GUARDIANS_TEMPLATES[3].templateId,
         elementIcon: '🌑',
       },
       {
@@ -142,6 +149,7 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
           name: winningAsset.name,
           rarity: winningRarity,
           image: winningAsset.image,
+          templateId: getCardTemplateId(winningAsset),
           elementIcon: (winningAsset as any).elementIcon || undefined,
           isWinner: true,
         });
@@ -360,7 +368,7 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
                       >
                         {/* Image */}
                         <div className="relative w-full h-24 rounded-xl overflow-hidden border border-white/10 mb-2">
-                          <img
+                          <CardImage asset={item}
                             src={item.image}
                             alt={item.name}
                             className="w-full h-full object-cover"
@@ -434,7 +442,7 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
                   className="relative w-40 h-52 sm:w-48 sm:h-64 rounded-2xl overflow-hidden border-2 shadow-2xl shrink-0"
                   style={{ borderColor: rarityColor }}
                 >
-                  <img
+                  <CardImage asset={winningAsset}
                     src={winningAsset.image}
                     alt={winningAsset.name}
                     className="w-full h-full object-cover"

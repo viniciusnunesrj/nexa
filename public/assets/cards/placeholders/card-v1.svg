@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500" role="img" aria-label="Carta NEXA">
+<rect width="400" height="500" rx="24" fill="#0b1020"/>
+<rect x="28" y="28" width="344" height="444" rx="18" fill="none" stroke="#334155" stroke-width="2"/>
+<path d="M200 150 275 250 200 350 125 250Z" fill="#122c3c" stroke="#22d3ee" stroke-width="3"/>
+<path d="M170 285V215L230 285V215" fill="none" stroke="#a5f3fc" stroke-width="8" stroke-linejoin="round"/>
+</svg>

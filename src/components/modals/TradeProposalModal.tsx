@@ -1,3 +1,4 @@
+import { CardImage } from '../common/CardImage';
 import React, { useState } from 'react';
 import { NexaAsset, NexaUser } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -169,7 +170,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2 truncate">
-                          <img src={item.image} alt={item.name} className="w-7 h-7 rounded object-cover" />
+                          <CardImage asset={item} src={item.image} alt={item.name} className="w-7 h-7 rounded object-cover" />
                           <span className="truncate font-medium">{item.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -225,7 +226,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2 truncate">
-                          <img src={item.image} alt={item.name} className="w-7 h-7 rounded object-cover" />
+                          <CardImage asset={item} src={item.image} alt={item.name} className="w-7 h-7 rounded object-cover" />
                           <span className="truncate font-medium">{item.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">

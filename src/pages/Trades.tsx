@@ -1,3 +1,4 @@
+import { CardImage } from '../components/common/CardImage';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -107,7 +108,7 @@ export const Trades: React.FC = () => {
                   className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/5 text-xs font-mono"
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <img src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" />
+                    <CardImage asset={item} src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" />
                     <span className="text-slate-200 truncate">{item.name}</span>
                   </div>
                   <RarityBadge rarity={item.rarity} size="sm" showDot={false} />
@@ -134,7 +135,7 @@ export const Trades: React.FC = () => {
                   className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/5 text-xs font-mono"
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <img src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" />
+                    <CardImage asset={item} src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" />
                     <span className="text-slate-200 truncate">{item.name}</span>
                   </div>
                   <RarityBadge rarity={item.rarity} size="sm" showDot={false} />

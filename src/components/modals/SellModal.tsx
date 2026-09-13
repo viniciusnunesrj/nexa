@@ -1,3 +1,4 @@
+import { CardImage } from '../common/CardImage';
 import React, { useState } from 'react';
 import { NexaAsset, MARKETPLACE_FEE } from '../../types';
 import { X, Tag, AlertCircle } from 'lucide-react';
@@ -49,7 +50,7 @@ export const SellModal: React.FC<SellModalProps> = ({ asset, onClose, onConfirmL
 
         {/* Item Preview Card */}
         <div className="my-4 p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-          <img
+          <CardImage asset={asset}
             src={asset.image}
             alt={asset.name}
             className="w-14 h-14 rounded-lg object-cover bg-slate-900 shrink-0"

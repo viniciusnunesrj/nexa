@@ -1,3 +1,4 @@
+import { CardImage } from '../common/CardImage';
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, Shield, Coins, Flame, Info, CheckCircle2 } from 'lucide-react';
@@ -143,7 +144,7 @@ export const BoxRewardsModal: React.FC<BoxRewardsModalProps> = ({ boxType, isOpe
                     className="p-3 rounded-2xl bg-[#141424] border border-white/10 flex items-center justify-between gap-4 hover:border-cyan-500/40 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <img
+                      <CardImage loading="lazy" asset={card}
                         src={card.image}
                         alt={card.name}
                         className="w-12 h-16 object-cover rounded-xl border border-white/10"

@@ -1,3 +1,4 @@
+import { CardImage } from '../components/common/CardImage';
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -288,7 +289,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
               className="p-3 rounded-xl bg-white/5 border border-white/5 flex flex-col justify-between gap-2"
             >
               <div className="aspect-square rounded-lg overflow-hidden bg-slate-950">
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                <CardImage asset={item} src={item.image} alt={item.name} className="w-full h-full object-cover" />
               </div>
               <div>
                 <h5 className="font-heading font-bold text-xs text-white truncate">
@@ -324,7 +325,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                   className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between text-xs font-mono"
                 >
                   <div className="flex items-center gap-3">
-                    <img
+                    <CardImage asset={tx.itemSnapshot}
                       src={tx.itemSnapshot.image}
                       alt={tx.itemSnapshot.name}
                       className="w-9 h-9 rounded-lg object-cover"

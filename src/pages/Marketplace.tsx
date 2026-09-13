@@ -1,3 +1,4 @@
+import { CardImage } from '../components/common/CardImage';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -247,7 +248,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
                   onClick={() => setInspectedAsset(asset)}
                   className="relative aspect-[4/3] w-full overflow-hidden bg-slate-950 cursor-pointer group"
                 >
-                  <img
+                  <CardImage asset={asset}
                     src={asset.image}
                     alt={asset.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -336,7 +337,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
             </p>
 
             <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 mb-4">
-              <img
+              <CardImage asset={buyingListing.itemSnapshot}
                 src={buyingListing.itemSnapshot.image}
                 alt={buyingListing.itemSnapshot.name}
                 className="w-14 h-14 rounded-lg object-cover"
@@ -426,7 +427,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
                     className="p-3 rounded-xl bg-white/5 hover:bg-amber-950/30 border border-white/5 hover:border-amber-500/40 transition-all cursor-pointer flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
+                      <CardImage asset={item} src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
                       <div>
                         <h4 className="font-heading font-bold text-sm text-white">{item.name}</h4>
                         <div className="flex items-center gap-2 mt-1">

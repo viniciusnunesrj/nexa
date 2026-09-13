@@ -1,3 +1,4 @@
+import { CardImage } from './CardImage';
 import React from 'react';
 import { NexaAsset, Character } from '../../types';
 import { RARITY_CONFIG } from '../../config/designTokens';
@@ -37,7 +38,7 @@ export const AssetCard: React.FC<AssetCardProps> = ({
     >
       {/* Top Media Container */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-950">
-        <img
+        <CardImage asset={asset}
           src={asset.image}
           alt={asset.name}
           className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"

@@ -1,3 +1,4 @@
+import { CardImage } from '../components/common/CardImage';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -143,7 +144,7 @@ export const Fusion: React.FC = () => {
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
-                      <img
+                      <CardImage asset={item}
                         src={item.image}
                         alt={item.name}
                         className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover mb-2"
@@ -257,7 +258,7 @@ export const Fusion: React.FC = () => {
                   }`}
                 >
                   <div className="aspect-square rounded-lg overflow-hidden bg-slate-950 relative">
-                    <img
+                    <CardImage asset={item}
                       src={item.image}
                       alt={item.name}
                       className="w-full h-full object-cover"
@@ -311,7 +312,7 @@ export const Fusion: React.FC = () => {
 
             {fusionResult.outputAsset && (
               <div className="my-6 p-4 rounded-2xl bg-white/5 border border-purple-500/40 text-left flex items-center gap-3">
-                <img
+                <CardImage asset={fusionResult.outputAsset}
                   src={fusionResult.outputAsset.image}
                   alt={fusionResult.outputAsset.name}
                   className="w-16 h-16 rounded-xl object-cover"
