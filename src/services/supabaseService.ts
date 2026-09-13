@@ -348,11 +348,97 @@ class SupabaseServiceClass {
     if (!data || typeof data !== 'object') {
       throw new Error('O Supabase não retornou o resultado da batalha.');
     }
-    const result = data as Partial<BattleRunResult>;
+    const raw = data as Record<string, unknown>;
+    const result = raw as Partial<BattleRunResult>;
     if (result.success !== true || typeof result.run_id !== 'string') {
       throw new Error('Resultado de batalha inválido retornado pelo servidor.');
     }
-    return data as BattleRunResult;
+    const mapSnapshot = (snapshot: unknown): BattleRunResult['playerTeam'] => {
+      if (!Array.isArray(snapshot)) return [];
+      return snapshot.map((entry) => {
+        if (!entry || typeof entry !== 'object') {
+          throw new Error('O Supabase retornou um combatente inválido.');
+        }
+        const row = entry as Record<string, unknown>;
+        return {
+          position: Number(row.position),
+          id: String(row.id),
+          name: String(row.name),
+          rarity: String(row.rarity),
+          attack: Number(row.attack),
+          defense: Number(row.defense),
+          speed: Number(row.speed),
+          maxHp: Number(row.max_hp ?? row.maxHp),
+          hp: Number(row.hp),
+          ...(row.leader === undefined ? {} : { leader: Boolean(row.leader) }),
+          ...(row.template_id === undefined && row.templateId === undefined
+            ? {}
+            : { templateId: String(row.template_id ?? row.templateId) }),
+        };
+      });
+    };
+    const snapshots = {
+      playerTeam: mapSnapshot(raw.player_snapshot ?? raw.playerTeam),
+      enemyTeam: mapSnapshot(raw.npc_snapshot ?? raw.enemyTeam),
+    };
+    const hpById = new Map<string, number>(
+      [...snapshots.playerTeam, ...snapshots.enemyTeam].map((combatant) => [combatant.id, combatant.hp])
+    );
+    const events = Array.isArray(raw.events)
+      ? raw.events.map((entry) => {
+          if (!entry || typeof entry !== 'object') {
+            throw new Error('O Supabase retornou um evento de combate inválido.');
+          }
+          const row = entry as Record<string, unknown>;
+          const defenderId = String(row.defender_id ?? row.defenderId);
+          const currentHp = hpById.get(defenderId);
+          if (currentHp === undefined) {
+            throw new Error('O evento de combate referencia um defensor desconhecido.');
+          }
+          const defenderHpAfter = Number(row.defender_hp_after ?? row.defenderHpAfter);
+          const defenderHpBefore = Number(row.defender_hp_before ?? row.defenderHpBefore ?? currentHp);
+          hpById.set(defenderId, defenderHpAfter);
+          return {
+            round: Number(row.round),
+            attackerSide: (row.attacker_side ?? row.attackerSide) as 'PLAYER' | 'NPC',
+            attackerId: String(row.attacker_id ?? row.attackerId),
+            defenderId,
+            defenderHpBefore,
+            defenderHpAfter,
+            damage: Number(row.damage),
+            defeated: defenderHpAfter <= 0,
+          };
+        })
+      : [];
+    const reward = (raw.rewards || {}) as Record<string, unknown>;
+    const resultingProfileRaw = reward.resulting_profile ?? reward.resultingProfile;
+    return {
+      success: true,
+      idempotent: Boolean(raw.idempotent),
+      run_id: String(raw.run_id),
+      formula_version: String(raw.formula_version),
+      rng_seed: raw.rng_seed as string | number,
+      outcome: raw.outcome as BattleRunResult['outcome'],
+      rounds: Number(raw.rounds),
+      events,
+      ...snapshots,
+      rewards: {
+        success: Boolean(reward.success),
+        outcome: reward.outcome as BattleRunResult['rewards']['outcome'],
+        xpGained: Number(reward.xp_gained ?? reward.xpGained),
+        nexGained: Number(reward.nex_gained ?? reward.nexGained),
+        nxaGained: Number(reward.nxa_gained ?? reward.nxaGained),
+        levelUps: Number(reward.level_ups ?? reward.levelUps),
+        ...(reward.balance_nex === undefined ? {} : { balanceNex: Number(reward.balance_nex) }),
+        ...(reward.balance_nxa === undefined ? {} : { balanceNxa: Number(reward.balance_nxa) }),
+        ...(reward.experience === undefined ? {} : { experience: Number(reward.experience) }),
+        ...(reward.level === undefined ? {} : { level: Number(reward.level) }),
+        ...(resultingProfileRaw && typeof resultingProfileRaw === 'object'
+          ? { resultingProfile: resultingProfileRaw as NexaUser }
+          : {}),
+      },
+      drops: Array.isArray(raw.drops) ? raw.drops : [],
+    };
   }
 
   // ==========================================================================

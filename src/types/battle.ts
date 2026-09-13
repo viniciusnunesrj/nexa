@@ -1,3 +1,44 @@
+import { NexaUser } from './user';
+
+export interface BattleCombatantSnapshot {
+  position: number;
+  id: string;
+  name: string;
+  rarity: string;
+  attack: number;
+  defense: number;
+  speed: number;
+  maxHp: number;
+  hp: number;
+  leader?: boolean;
+  templateId?: string;
+}
+
+export interface BattleEvent {
+  round: number;
+  attackerSide: 'PLAYER' | 'NPC';
+  attackerId: string;
+  defenderId: string;
+  defenderHpBefore: number;
+  defenderHpAfter: number;
+  damage: number;
+  defeated: boolean;
+}
+
+export interface BattleRewards {
+  success: boolean;
+  outcome: 'VICTORY' | 'DEFEAT' | 'DRAW';
+  xpGained: number;
+  nexGained: number;
+  nxaGained: number;
+  levelUps: number;
+  balanceNex?: number;
+  balanceNxa?: number;
+  experience?: number;
+  level?: number;
+  resultingProfile?: NexaUser;
+}
+
 export interface BattleRunResult {
   success: boolean;
   idempotent: boolean;
@@ -6,27 +47,9 @@ export interface BattleRunResult {
   rng_seed: string | number;
   outcome: 'VICTORY' | 'DEFEAT' | 'DRAW';
   rounds: number;
-  events: Array<{
-    round: number;
-    attacker_side: 'PLAYER' | 'NPC';
-    attacker_id: string;
-    defender_id: string;
-    damage: number;
-    defender_hp_after: number;
-  }>;
-  player_snapshot: unknown[];
-  npc_snapshot: unknown[];
-  rewards: {
-    success: boolean;
-    outcome: 'VICTORY' | 'DEFEAT' | 'DRAW';
-    xp_gained: number;
-    nex_gained: number;
-    nxa_gained: number;
-    level_ups: number;
-    balance_nex?: number;
-    balance_nxa?: number;
-    experience?: number;
-    level?: number;
-  };
+  events: BattleEvent[];
+  playerTeam: BattleCombatantSnapshot[];
+  enemyTeam: BattleCombatantSnapshot[];
+  rewards: BattleRewards;
   drops: unknown[];
 }

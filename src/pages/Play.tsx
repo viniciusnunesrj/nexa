@@ -9,6 +9,7 @@ import { BoxOpeningModal } from '../components/boxes/BoxOpeningModal';
 import { soundService } from '../services/soundService';
 import { EconomyService } from '../services/economyService';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { BattleCombatantSnapshot } from '../types/battle';
 import confetti from 'canvas-confetti';
 import {
   Swords,
@@ -210,7 +211,6 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
 
   // Battle state
   const [inBattle, setInBattle] = useState(false);
-  const [battleTurn, setBattleTurn] = useState<number>(0);
   const [playerHp, setPlayerHp] = useState<number>(100);
   const [enemyHp, setEnemyHp] = useState<number>(100);
   const [combatLogs, setCombatLogs] = useState<string[]>([]);
@@ -221,16 +221,13 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
     nxaGained: number;
     droppedItem: GameItem | null;
     droppedBox?: PlayerBox | null;
+    outcome: 'VICTORY' | 'DEFEAT' | 'DRAW';
   } | null>(null);
   const [activeOpeningSummary, setActiveOpeningSummary] = useState<BoxRewardSummary | null>(null);
-
-  // Bot opponent
-  const [enemyData, setEnemyData] = useState({
-    name: 'Androide Sentinela X-9',
-    power: 1400,
-    class: 'Guardião',
-    avatar: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&auto=format&fit=crop&q=80',
-  });
+  const [battleTeam, setBattleTeam] = useState<BattleCombatantSnapshot[]>([]);
+  const [enemyTeam, setEnemyTeam] = useState<BattleCombatantSnapshot[]>([]);
+  const [activePlayerIndex, setActivePlayerIndex] = useState(0);
+  const [activeEnemyIndex, setActiveEnemyIndex] = useState(0);
 
   const arenas = [
     { id: 'arena-1', name: 'Distrito Neon 07', difficulty: 'Normal', mult: '1.0x' },
@@ -239,97 +236,123 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
   ];
   const [selectedArena, setSelectedArena] = useState(arenas[0].id);
 
-  const startCombat = () => {
-    if (teamCards.length === 0) return;
+  const createBattleRequestId = (): string => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `battle-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  };
 
+  const startCombat = async () => {
+    if (teamCards.length === 0 || inBattle) return;
+
+    // A future retry must reuse this same requestId instead of generating a new run.
+    const requestId = createBattleRequestId();
     setInBattle(true);
     setBattleResult(null);
-    setCombatLogs([
-      `Iniciando combate na arena com formação de ${teamCards.length} carta(s).`,
-    ]);
+    setBattleTeam([]);
+    setEnemyTeam([]);
+    setActivePlayerIndex(0);
+    setActiveEnemyIndex(0);
     setPlayerHp(100);
     setEnemyHp(100);
-    setBattleTurn(1);
-
-    // Dynamic enemy power scaled to player's total power
-    const enemyPwr = Math.floor(totalFighterPower * (0.85 + Math.random() * 0.35));
-    setEnemyData({
-      name: ['Autômato de Plasma', 'Sentinela X-9', 'Ciborgue Renegado', 'Titã de Sucata'][
-        Math.floor(Math.random() * 4)
-      ],
-      power: enemyPwr,
-      class: 'Guerreiro',
-      avatar: 'https://images.unsplash.com/photo-1535223289827-42f1e9919769?w=400&auto=format&fit=crop&q=80',
-    });
-
+    setCombatLogs(['Solicitação de combate enviada ao servidor.']);
     soundService.playLaser();
 
-    // Simulated turns
-    setTimeout(() => {
-      setBattleTurn(2);
-      soundService.playLaser();
-      setEnemyHp((prev) => Math.max(25, prev - 45));
-
-      const randomCard = teamCards[Math.floor(Math.random() * teamCards.length)];
-      setCombatLogs((prev) => [
-        ...prev,
-        `${randomCard.name} liberou rajada elemental (+${getCardPower(randomCard)} PWR) causando 450 de dano!`,
-      ]);
-    }, 900);
-
-    setTimeout(() => {
-      setBattleTurn(3);
-      soundService.playLaser();
-      setPlayerHp((prev) => Math.max(30, prev - 35));
-      setCombatLogs((prev) => [
-        ...prev,
-        `O adversário contra-atacou com raio de pulso iônico! Escudos em 65%.`,
-      ]);
-    }, 1800);
-
-    setTimeout(async () => {
-      // Execute battle logic (updates victories, XP, currencies, and drops)
-      let rewards;
-      try {
-        rewards = await executeBattle(totalFighterPower);
-      } catch (error) {
-        setInBattle(false);
-        setCombatLogs((prev) => [...prev, error instanceof Error ? error.message : 'Não foi possível confirmar a batalha.']);
-        return;
+    try {
+      const result = await executeBattle(requestId);
+      const serverBattle = result.serverBattle;
+      if (serverBattle) {
+        let animatedPlayers = serverBattle.playerTeam;
+        let animatedEnemies = serverBattle.enemyTeam;
+        setBattleTeam(animatedPlayers);
+        setEnemyTeam(animatedEnemies);
+        for (const event of serverBattle.events) {
+          await new Promise<void>((resolve) => setTimeout(resolve, 520));
+          const attacker = [...animatedPlayers, ...animatedEnemies].find(
+            (combatant) => combatant.id === event.attackerId
+          );
+          const defender = [...animatedPlayers, ...animatedEnemies].find(
+            (combatant) => combatant.id === event.defenderId
+          );
+          if (event.attackerSide === 'PLAYER') {
+            animatedEnemies = animatedEnemies.map((combatant) =>
+              combatant.id === event.defenderId ? { ...combatant, hp: event.defenderHpAfter } : combatant
+            );
+          } else {
+            // The server calls the enemy side NPC; this is the ENEMY animation path.
+            animatedPlayers = animatedPlayers.map((combatant) =>
+              combatant.id === event.defenderId ? { ...combatant, hp: event.defenderHpAfter } : combatant
+            );
+          }
+          setBattleTeam(animatedPlayers);
+          setEnemyTeam(animatedEnemies);
+          if (event.attackerSide === 'PLAYER') {
+            setActivePlayerIndex(animatedPlayers.findIndex((combatant) => combatant.id === event.attackerId));
+          } else {
+            setActiveEnemyIndex(animatedEnemies.findIndex((combatant) => combatant.id === event.attackerId));
+          }
+          if (event.defenderHpAfter <= 0) {
+            const nextIndex = event.attackerSide === 'PLAYER'
+              ? animatedEnemies.findIndex((combatant) => combatant.hp > 0)
+              : animatedPlayers.findIndex((combatant) => combatant.hp > 0);
+            if (event.attackerSide === 'PLAYER' && nextIndex >= 0) setActiveEnemyIndex(nextIndex);
+            if (event.attackerSide === 'NPC' && nextIndex >= 0) setActivePlayerIndex(nextIndex);
+          }
+          const defenderHpPercent = defender ? Math.round((event.defenderHpAfter / defender.maxHp) * 100) : 0;
+          if (event.attackerSide === 'PLAYER') {
+            setEnemyHp(defenderHpPercent);
+          } else {
+            setPlayerHp(defenderHpPercent);
+          }
+          setCombatLogs((previous) => [
+            ...previous,
+            `${attacker?.name || event.attackerId} causou ${event.damage} de dano em ${defender?.name || event.defenderId}${
+              event.defeated ? ' e derrotou o combatente.' : ` (${event.defenderHpBefore} → ${event.defenderHpAfter} HP).`
+            }`,
+          ]);
+          soundService.playLaser();
+        }
       }
-      setBattleTurn(4);
-      setInBattle(false);
-      setBattleResult(rewards);
 
-      if (rewards.victory) {
-        setEnemyHp(0);
-        setCombatLogs((prev) => [
-          ...prev,
-          `Golpe Crítico fulminante! Vitória maiúscula na arena com espólios conquistados!`,
-        ]);
+      setBattleResult({
+        victory: result.outcome === 'VICTORY',
+        outcome: result.outcome,
+        xpGained: result.xpGained,
+        nexGained: result.nexGained,
+        nxaGained: result.nxaGained,
+        droppedItem: result.droppedItem,
+        droppedBox: result.droppedBox,
+      });
+      setCombatLogs((previous) => [...previous, `Combate encerrado: ${result.outcome}.`]);
+      if (result.outcome === 'VICTORY') {
         soundService.playVictory();
         try {
-          confetti({
-            particleCount: 120,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#22d3ee', '#a855f7', '#f59e0b', '#10b981'],
-          });
+          confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 }, colors: ['#22d3ee', '#a855f7', '#f59e0b', '#10b981'] });
         } catch {
-          // Ignore
+          // Visual effect is best effort.
         }
-      } else {
-        setPlayerHp(0);
-        setCombatLogs((prev) => [
-          ...prev,
-          `Defesa sobrecarregada! Vitória do adversário. Recompensas de consolação atribuídas.`,
-        ]);
       }
-    }, 2800);
+    } catch (error) {
+      setCombatLogs((previous) => [
+        ...previous,
+        error instanceof Error ? error.message : 'Não foi possível confirmar a batalha.',
+      ]);
+    } finally {
+      setInBattle(false);
+    }
   };
 
   // Cards to display in the arsenal picker
   const displayedCards = cardFilterMode === 'free' ? freeCards : userCards;
+  const activePlayer = battleTeam[activePlayerIndex];
+  const activeEnemy = enemyTeam[activeEnemyIndex];
+  const activePlayerHp = activePlayer
+    ? Math.round((activePlayer.hp / activePlayer.maxHp) * 100)
+    : playerHp;
+  const activeEnemyHp = activeEnemy
+    ? Math.round((activeEnemy.hp / activeEnemy.maxHp) * 100)
+    : enemyHp;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -406,12 +429,12 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                 <div className="w-full mt-4">
                   <div className="flex justify-between text-[11px] font-mono mb-1">
                     <span className="text-slate-400">Integridade dos Escudos</span>
-                    <span className="text-cyan-400 font-bold">{playerHp}%</span>
+                    <span className="text-cyan-400 font-bold">{activePlayerHp}%</span>
                   </div>
                   <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
                     <div
                       className="h-full bg-cyan-400 rounded-full transition-all duration-500"
-                      style={{ width: `${playerHp}%` }}
+                      style={{ width: `${activePlayerHp}%` }}
                     />
                   </div>
                 </div>
@@ -513,7 +536,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Fighter 2: Opponent Bot */}
+          {/* Fighter 2: Opponent returned by the server */}
           <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white/5 border border-white/10 relative overflow-hidden">
             <div className="w-full flex items-center justify-between mb-4">
               <span className="text-xs font-mono text-rose-400 font-bold uppercase">
@@ -524,42 +547,36 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
               </span>
             </div>
 
-            <div className="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.3)] mb-4 bg-slate-950">
-              <img
-                src={enemyData.avatar}
-                alt={enemyData.name}
-                className={`w-full h-full object-cover transition-transform duration-300 ${
-                  inBattle ? 'scale-110 animate-pulse' : ''
-                }`}
-              />
+            <div className="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.3)] mb-4 bg-gradient-to-br from-rose-950 to-slate-950 flex items-center justify-center">
+              <Shield className={`w-20 h-20 text-rose-400/70 ${inBattle ? 'animate-pulse' : ''}`} />
             </div>
 
             <h3 className="font-heading text-xl font-bold text-white">
-              {enemyData.name}
+              {activeEnemy?.name || 'Aguardando adversário confirmado'}
             </h3>
             <span className="text-xs font-mono text-slate-400 mt-0.5">
-              Classe: {enemyData.class} • Unidade de Teste
+              {activeEnemy ? `Raridade: ${activeEnemy.rarity}` : 'O servidor definirá a formação'}
             </span>
 
             {/* Enemy HP Bar */}
             <div className="w-full mt-4">
               <div className="flex justify-between text-[11px] font-mono mb-1">
                 <span className="text-slate-400">Escudos Adversários</span>
-                <span className="text-rose-400 font-bold">{enemyHp}%</span>
+                <span className="text-rose-400 font-bold">{activeEnemyHp}%</span>
               </div>
               <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
                 <div
                   className="h-full bg-rose-500 rounded-full transition-all duration-500"
-                  style={{ width: `${enemyHp}%` }}
+                  style={{ width: `${activeEnemyHp}%` }}
                 />
               </div>
             </div>
 
             <div className="mt-4 flex items-center gap-4 text-xs font-mono text-slate-300">
-              <span className="flex items-center gap-1 text-rose-400 font-bold">
-                <Zap className="w-3.5 h-3.5" /> {enemyData.power} PWR
+              <span className="text-rose-300 font-bold">
+                {activeEnemy ? `${activeEnemy.hp}/${activeEnemy.maxHp} HP` : 'HP confirmado na batalha'}
               </span>
-              <span>Dificuldade: Média</span>
+              <span>{activeEnemy ? `Defesa ${activeEnemy.defense}` : 'Sem dados locais'}</span>
             </div>
           </div>
         </div>
@@ -783,7 +800,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
           <div className="relative w-full max-w-md rounded-3xl bg-[#0e0e1a] border border-cyan-500/50 p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(6,182,212,0.3)]">
             {/* Header Icon */}
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 mb-4 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-              {battleResult.victory ? (
+              {battleResult.outcome === 'VICTORY' ? (
                 <Trophy className="w-8 h-8 text-cyan-400 animate-bounce" />
               ) : (
                 <Shield className="w-8 h-8 text-slate-400" />
@@ -791,12 +808,18 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             </div>
 
             <h2 className="font-heading text-3xl font-black text-white">
-              {battleResult.victory ? 'Vitória Esmagadora!' : 'Batalha Encerrada'}
+              {battleResult.outcome === 'VICTORY'
+                ? 'Vitória Esmagadora!'
+                : battleResult.outcome === 'DRAW'
+                ? 'Empate na Arena'
+                : 'Batalha Encerrada'}
             </h2>
             <p className="text-xs font-mono text-slate-300 mt-1">
-              {battleResult.victory
+              {battleResult.outcome === 'VICTORY'
                 ? 'Você dominou a arena e coletou espólios cibernéticos!'
-                : 'Você sobreviveu com honra. Recursos de consolação atribuídos.'}
+                : battleResult.outcome === 'DRAW'
+                ? 'O combate terminou sem vencedor. Recompensas confirmadas pelo servidor.'
+                : 'A formação adversária prevaleceu. Recompensas confirmadas pelo servidor.'}
             </p>
 
             {/* Currency Gains */}

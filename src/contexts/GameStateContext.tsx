@@ -20,6 +20,7 @@ import {
   UserPityState,
   LevelUpResult,
   BattlePreferences,
+  BattleRunResult,
 } from '../types';
 import { INITIAL_CHARACTERS } from '../data/mockCharacters';
 import { INITIAL_ITEMS } from '../data/mockItems';
@@ -89,13 +90,15 @@ interface GameStateContextType {
   cancelListing: (listingId: string) => void;
   buyListing: (listingId: string) => void;
   equipCharacter: (characterId: string) => void;
-  executeBattle: (battlePower: number) => Promise<{
+  executeBattle: (requestId: string) => Promise<{
     victory: boolean;
+    outcome: 'VICTORY' | 'DEFEAT' | 'DRAW';
     xpGained: number;
     nexGained: number;
     nxaGained: number;
     droppedItem: GameItem | null;
     droppedBox: PlayerBox | null;
+    serverBattle?: BattleRunResult;
   }>;
   executeFusion: (itemIds: string[]) => FusionExecutionResult;
   proposeTrade: (
@@ -518,28 +521,65 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // EXECUTE BATTLE
-  const executeBattle = async (battlePower: number) => {
+  const executeBattle = async (requestId: string) => {
     const userId = user.id;
     if (pendingBattles.current.has(userId)) throw new Error('Aguarde a confirmação da batalha em andamento.');
     pendingBattles.current.add(userId);
     try {
       setLevelUpData(null);
       const onlineBattle = isSupabaseConfigured();
-      const power = Math.max(0, battlePower);
+      if (onlineBattle) {
+        // Online is authoritative: RPC errors propagate and never fall through to demo logic.
+        const serverBattle = await SupabaseService.startBattleAtomic(requestId);
+        const rewards = serverBattle.rewards;
+        const profileFromServer = rewards.resultingProfile || await SupabaseService.fetchProfile(userId);
+        const confirmedProfile = {
+          ...(profileFromServer || user),
+          balanceNEX: rewards.balanceNex ?? profileFromServer?.balanceNEX ?? user.balanceNEX,
+          balanceNXA: rewards.balanceNxa ?? profileFromServer?.balanceNXA ?? user.balanceNXA,
+          experience: rewards.experience ?? profileFromServer?.experience ?? user.experience,
+          level: rewards.level ?? profileFromServer?.level ?? user.level,
+        };
+        EconomyService.hydrateProfileFromSupabase(confirmedProfile);
+        syncUser(confirmedProfile);
+        if (confirmedProfile.level > user.level) {
+          setLevelUpData({
+            leveledUp: true,
+            previousLevel: user.level,
+            newLevel: confirmedProfile.level,
+            levelsGained: Array.from(
+              { length: confirmedProfile.level - user.level },
+              (_, index) => user.level + index + 1
+            ),
+            rewardsGranted: [],
+            unlockedSlots: confirmedProfile.unlockedSlots || 3,
+            previousSlots: user.unlockedSlots || 3,
+            newSlotsUnlocked: (confirmedProfile.unlockedSlots || 3) > (user.unlockedSlots || 3),
+            leftoverXp: confirmedProfile.experience,
+            maxXpForNewLevel: confirmedProfile.maxExperience,
+          });
+        }
+        return {
+          // DRAW is a valid online outcome; victory is only the explicit VICTORY state.
+          victory: serverBattle.outcome === 'VICTORY',
+          outcome: serverBattle.outcome,
+          xpGained: rewards.xpGained,
+          nexGained: rewards.nexGained,
+          nxaGained: rewards.nxaGained,
+          droppedItem: null,
+          droppedBox: null,
+          serverBattle,
+        };
+      }
 
-      // Opponent difficulty generator
-      const opponentPower = Math.floor(power * (0.8 + Math.random() * 0.45));
-      const victory = Math.random() * power >= Math.random() * opponentPower;
-
-      // 2. Calcular a recompensa
-      const rewards = RewardService.calculateBattleRewards(victory, user.level, user.id, user.username);
-
-      // 3. Atualizar atomicamente o saldo persistido desse userId na base de dados
+      // OFFLINE/DEMO ONLY: simplified legacy economy, not server-authoritative.
+      // The offline fallback does not simulate DRAW; online start_battle_atomic does.
+      const rewards = RewardService.calculateBattleRewards(true, user.level, user.id, user.username);
       const updatedUser = await EconomyService.applyBattleReward(userId, {
         nexGained: rewards.nexGained,
         nxaGained: rewards.nxaGained,
         xpGained: rewards.xpGained,
-        victory,
+        victory: true,
       });
 
       // 4. Atualizar o estado global / currentUser e interface
@@ -574,7 +614,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           rewards.nexGained,
           updatedUser.balanceNEX,
           'BATTLE_REWARD',
-          victory
+          rewards.victory
             ? `Vitória na Arena vs Gladiador Bot (+${rewards.nexGained} NEX)`
             : `Recompensa de Consolação de Arena (+${rewards.nexGained} NEX)`
         );
@@ -605,6 +645,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       return {
         ...rewards,
+        outcome: 'VICTORY' as const,
         droppedItem: onlineBattle ? null : rewards.droppedItem,
         droppedBoxType: onlineBattle ? null : rewards.droppedBoxType,
         droppedBox,
