@@ -51,6 +51,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
     claimCollectionReward,
     craftCardWithFragments,
     listAsset,
+    marketplaceBusy,
     unlockedSlots,
     activeSynthesizingCardsCount,
   } = useGameState();
@@ -92,9 +93,9 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
   const isComplete = activeProgress.isComplete;
 
   // Handle marketplace listing
-  const handleConfirmListing = (e: React.FormEvent) => {
+  const handleConfirmListing = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sellingCard) return;
+    if (!sellingCard || marketplaceBusy) return;
 
     if (sellPrice <= 0 || isNaN(sellPrice)) {
       setSellError('O preço deve ser superior a 0.');
@@ -102,7 +103,10 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
     }
 
     try {
-      listAsset(sellingCard.id, sellPrice);
+      if (!await listAsset(sellingCard.id, sellPrice)) {
+        setSellError('Anúncio não confirmado. Verifique a notificação e tente novamente.');
+        return;
+      }
       soundService.playSuccess();
       setSellingCard(null);
     } catch (err: any) {
@@ -625,13 +629,16 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                   <div className="relative">
                     <input
                       type="number"
-                      min="1"
+                      min="0.01"
+                      step="0.01"
+                      max="1000000"
+                      disabled={marketplaceBusy}
                       value={sellPrice}
                       onChange={(e) => setSellPrice(Number(e.target.value))}
                       className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 text-white font-mono font-bold text-sm focus:outline-none focus:border-cyan-400 pr-16"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-amber-400">
-                      NEX
+                      NXA
                     </span>
                   </div>
                   <span className="text-[10px] font-mono text-slate-500 block">
@@ -642,6 +649,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <button
                     type="button"
+                    disabled={marketplaceBusy}
                     onClick={() => setSellingCard(null)}
                     className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono font-bold"
                   >
@@ -649,6 +657,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                   </button>
                   <button
                     type="submit"
+                    disabled={marketplaceBusy}
                     className="px-6 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading font-black text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/25 transition-all"
                   >
                     Confirmar Anúncio

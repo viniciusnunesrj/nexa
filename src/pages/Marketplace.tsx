@@ -1,5 +1,8 @@
+import { isSupabaseConfigured } from '../lib/supabase';
+import { canSellOnlineCard } from '../services/marketplaceOnlineService';
+import { getCardPower } from '../utils/cardPower';
 import { CardImage } from '../components/common/CardImage';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
 import { Listing, NexaAsset, Rarity, AssetType } from '../types';
@@ -27,7 +30,15 @@ interface MarketplaceProps {
 
 export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
   const { user } = useAuth();
-  const { listings, assets, marketStats, buyListing, cancelListing, listAsset } = useGameState();
+  const { listings, assets, marketStats, buyListing, cancelListing, listAsset, marketplaceBusy, refreshMarketplace } = useGameState();
+
+  useEffect(() => {
+    void refreshMarketplace();
+    const refresh = () => { void refreshMarketplace(); };
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, [user.id]);
+  const displayPower = (asset: NexaAsset) => asset.type === 'Card' ? getCardPower(asset) : asset.power;
 
   // Filters state
   const [search, setSearch] = useState('');
@@ -43,7 +54,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
 
   // User available items to list
   const userIdleAssets = assets.filter(
-    (a) => a.ownerId === user.id && a.status === 'IDLE'
+    (a) => a.ownerId === user.id && a.status === 'IDLE' && (!isSupabaseConfigured() || canSellOnlineCard(a))
   );
 
   // Filter listings
@@ -55,7 +66,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
       const q = search.toLowerCase();
       const matchName = l.itemSnapshot.name.toLowerCase().includes(q);
       const matchSeller = l.sellerName.toLowerCase().includes(q);
-      const matchDesc = l.itemSnapshot.description.toLowerCase().includes(q);
+      const matchDesc = (l.itemSnapshot.description || '').toLowerCase().includes(q);
       if (!matchName && !matchSeller && !matchDesc) return false;
     }
 
@@ -76,13 +87,12 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
   filteredListings.sort((a, b) => {
     if (sortBy === 'price_asc') return a.price - b.price;
     if (sortBy === 'price_desc') return b.price - a.price;
-    if (sortBy === 'power_desc') return b.itemSnapshot.power - a.itemSnapshot.power;
+    if (sortBy === 'power_desc') return (displayPower(b.itemSnapshot) ?? 0) - (displayPower(a.itemSnapshot) ?? 0);
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  const handleConfirmBuy = (listing: Listing) => {
-    buyListing(listing.id);
-    setBuyingListing(null);
+  const handleConfirmBuy = async (listing: Listing) => {
+    if (await buyListing(listing.id)) setBuyingListing(null);
   };
 
   return (
@@ -97,7 +107,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
             Marketplace NEXA
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-1">
-            Compre e venda personagens e itens diretamente entre jogadores. Taxa de corretagem de 2% para manutenção do ecossistema.
+            Compre e venda Cards diretamente entre jogadores. Taxa de corretagem de 2% para manutenção do ecossistema.
           </p>
         </div>
 
@@ -176,7 +186,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           {/* Type filters */}
           <div className="flex flex-wrap gap-1.5">
-            {['ALL', 'Character', 'Weapon', 'Armor', 'Artifact', 'Skin'].map((type) => (
+            {(isSupabaseConfigured() ? ['ALL', 'Card'] : ['ALL', 'Card', 'Character', 'Weapon', 'Armor', 'Artifact', 'Skin']).map((type) => (
               <button
                 key={type}
                 onClick={() => setSelectedType(type)}
@@ -263,7 +273,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
                     <span className="bg-black/70 px-2 py-0.5 rounded border border-white/10 uppercase">
                       {asset.type}
                     </span>
-                    <span className="text-cyan-400 font-bold">{asset.power} PWR</span>
+                    <span className="text-cyan-400 font-bold">{displayPower(asset)?.toLocaleString('pt-BR') ?? '—'} PWR</span>
                   </div>
                 </div>
 
@@ -304,6 +314,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
 
                     {isMine ? (
                       <button
+                        disabled={marketplaceBusy}
                         onClick={() => cancelListing(listing.id)}
                         className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-950 hover:text-rose-300 text-slate-300 font-mono text-xs transition-colors"
                       >
@@ -348,7 +359,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
                 </h4>
                 <div className="flex items-center gap-2 mt-1">
                   <RarityBadge rarity={buyingListing.itemSnapshot.rarity} size="sm" />
-                  <span className="text-xs font-mono text-cyan-400">{buyingListing.itemSnapshot.power} PWR</span>
+                  <span className="text-xs font-mono text-cyan-400">{displayPower(buyingListing.itemSnapshot)?.toLocaleString('pt-BR') ?? '—'} PWR</span>
                 </div>
               </div>
             </div>
@@ -364,10 +375,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Taxa da Plataforma (2% já inclusa):</span>
-                <span className="text-slate-400">{(buyingListing.price * 0.02).toFixed(1)} NXA</span>
+                <span className="text-slate-400">{(buyingListing.price * 0.02).toFixed(2)} NXA</span>
               </div>
               <div className="pt-2 border-t border-white/10 flex justify-between font-bold">
-                <span>Seu Saldo Restante:</span>
+                <span>Saldo estimado após compra:</span>
                 <span className={user.balanceNXA >= buyingListing.price ? 'text-emerald-400' : 'text-rose-400'}>
                   {(user.balanceNXA - buyingListing.price).toLocaleString()} NXA
                 </span>
@@ -383,6 +394,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
 
             <div className="flex gap-2.5">
               <button
+                disabled={marketplaceBusy}
                 onClick={() => setBuyingListing(null)}
                 className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs font-bold transition-colors"
               >
@@ -390,10 +402,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
               </button>
               <button
                 onClick={() => handleConfirmBuy(buyingListing)}
-                disabled={user.balanceNXA < buyingListing.price}
+                disabled={marketplaceBusy}
                 className="flex-1 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-mono text-xs font-bold transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
               >
-                Confirmar Compra
+                {marketplaceBusy ? 'Confirmando…' : 'Confirmar Compra'}
               </button>
             </div>
           </div>

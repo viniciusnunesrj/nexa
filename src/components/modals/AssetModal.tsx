@@ -1,3 +1,5 @@
+import { isSupabaseConfigured } from '../../lib/supabase';
+import { canSellOnlineCard } from '../../services/marketplaceOnlineService';
 import { getCardPower } from '../../utils/cardPower';
 import { CardImage } from '../common/CardImage';
 import React from 'react';
@@ -191,7 +193,7 @@ export const AssetModal: React.FC<AssetModalProps> = ({
               </span>
             )}
 
-            {isOwner && asset.status === 'IDLE' && !cardLocked && onSell && (
+            {isOwner && asset.status === 'IDLE' && !cardLocked && (!isSupabaseConfigured() || canSellOnlineCard(asset)) && onSell && (
               <button
                 onClick={() => {
                   onSell(asset);

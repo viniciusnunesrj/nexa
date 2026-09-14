@@ -1,3 +1,5 @@
+import { isSupabaseConfigured } from '../../lib/supabase';
+import { canSellOnlineCard } from '../../services/marketplaceOnlineService';
 import { CardImage } from '../common/CardImage';
 import React, { useState } from 'react';
 import { NexaAsset, MARKETPLACE_FEE } from '../../types';
@@ -7,11 +9,12 @@ import { RarityBadge } from '../common/RarityBadge';
 interface SellModalProps {
   asset: NexaAsset | null;
   onClose: () => void;
-  onConfirmList: (assetId: string, price: number) => void;
+  onConfirmList: (assetId: string, price: number) => Promise<boolean>;
 }
 
 export const SellModal: React.FC<SellModalProps> = ({ asset, onClose, onConfirmList }) => {
   const [price, setPrice] = useState<string>('250');
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>('');
 
   if (!asset) return null;
@@ -20,21 +23,29 @@ export const SellModal: React.FC<SellModalProps> = ({ asset, onClose, onConfirmL
   const fee = Math.round(numPrice * MARKETPLACE_FEE * 100) / 100;
   const netEarnings = Math.max(0, Math.round((numPrice - fee) * 100) / 100);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (numPrice <= 0) {
+    if (saving) return;
+    if (!Number.isFinite(numPrice) || numPrice <= 0) {
       setError('O valor de venda deve ser maior que zero NXA.');
       return;
     }
     setError('');
-    onConfirmList(asset.id, numPrice);
-    onClose();
+    setSaving(true);
+    try {
+      if (isSupabaseConfigured() && !canSellOnlineCard(asset)) throw new Error('Somente Cards livres e negociáveis.');
+      if (await onConfirmList(asset.id, numPrice)) onClose();
+      else setError('Anúncio não confirmado. Verifique a notificação e tente novamente.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao anunciar.');
+    } finally { setSaving(false); }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-md rounded-2xl bg-[#0d0d14] border border-amber-500/40 p-6 shadow-2xl">
         <button
+          disabled={saving}
           onClick={onClose}
           className="absolute top-4 right-4 p-1.5 rounded-lg bg-black/50 text-slate-400 hover:text-white"
         >
@@ -75,8 +86,10 @@ export const SellModal: React.FC<SellModalProps> = ({ asset, onClose, onConfirmL
             <div className="relative">
               <input
                 type="number"
-                min="1"
-                step="1"
+                min="0.01"
+                max="1000000"
+                step="0.01"
+                disabled={saving}
                 value={price}
                 onChange={(e) => {
                   setPrice(e.target.value);
@@ -107,7 +120,7 @@ export const SellModal: React.FC<SellModalProps> = ({ asset, onClose, onConfirmL
               <span className="text-amber-400">-{fee.toLocaleString()} NXA</span>
             </div>
             <div className="pt-2 border-t border-white/10 flex justify-between font-bold text-sm">
-              <span className="text-slate-300">Você Receberá:</span>
+              <span className="text-slate-300">Recebimento estimado:</span>
               <span className="text-cyan-300">{netEarnings.toLocaleString()} NXA</span>
             </div>
           </div>
@@ -115,6 +128,7 @@ export const SellModal: React.FC<SellModalProps> = ({ asset, onClose, onConfirmL
           <div className="flex items-center gap-3 pt-2">
             <button
               type="button"
+              disabled={saving}
               onClick={onClose}
               className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs font-bold transition-colors"
             >
@@ -122,9 +136,10 @@ export const SellModal: React.FC<SellModalProps> = ({ asset, onClose, onConfirmL
             </button>
             <button
               type="submit"
+              disabled={saving || (isSupabaseConfigured() && !canSellOnlineCard(asset))}
               className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-mono text-xs font-bold transition-colors shadow-[0_0_15px_rgba(245,158,11,0.35)]"
             >
-              Confirmar Anúncio
+              {saving ? 'Confirmando…' : 'Confirmar Anúncio'}
             </button>
           </div>
         </form>

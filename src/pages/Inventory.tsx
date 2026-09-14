@@ -1,3 +1,5 @@
+import { isSupabaseConfigured } from '../lib/supabase';
+import { canSellOnlineCard } from '../services/marketplaceOnlineService';
 import { getCardPower } from '../utils/cardPower';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -476,6 +478,7 @@ craftCardWithFragments,
 
                       {asset.status === 'IDLE' && (
                         <>
+                          {(!isSupabaseConfigured() || canSellOnlineCard(asset)) && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -485,6 +488,7 @@ craftCardWithFragments,
                           >
                             Vender
                           </button>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

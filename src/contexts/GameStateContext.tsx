@@ -28,6 +28,7 @@ import { INITIAL_CARDS } from '../data/mockCards';
 import { GUARDIANS_TEMPLATES } from '../config/collectionsData';
 import { INITIAL_LISTINGS, INITIAL_TRANSACTIONS, INITIAL_MARKET_STATS } from '../data/mockMarket';
 import { INITIAL_TRADES } from '../data/mockTrades';
+import { MarketplaceOnlineService, MarketplaceOperation, canSellOnlineCard } from '../services/marketplaceOnlineService';
 import { MarketplaceService } from '../services/marketplaceService';
 import { TradeService } from '../services/tradeService';
 import { FusionService, FusionExecutionResult } from '../services/fusionService';
@@ -86,9 +87,11 @@ interface GameStateContextType {
   refreshBoxes: () => void;
   dismissNotification: (id: string) => void;
   notify: (type: ToastNotification['type'], title: string, message: string) => void;
-  listAsset: (assetId: string, priceNXA: number) => void;
-  cancelListing: (listingId: string) => void;
-  buyListing: (listingId: string) => void;
+  marketplaceBusy: boolean;
+  refreshMarketplace: () => Promise<void>;
+  listAsset: (assetId: string, priceNXA: number) => Promise<boolean>;
+  cancelListing: (listingId: string) => Promise<boolean>;
+  buyListing: (listingId: string) => Promise<boolean>;
   equipCharacter: (characterId: string) => void;
   executeBattle: (requestId: string) => Promise<{
     victory: boolean;
@@ -133,13 +136,14 @@ const TRADES_KEY = 'nexa_trades_v1';
 const STATS_KEY = 'nexa_stats_v1';
 
 export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, allUsers, syncUser, updateUserBalance, addXP, addSeasonXP, claimSeasonReward } = useAuth();
+  const { user, currentUser, isAuthenticated, allUsers, syncUser, updateUserBalance, addXP, addSeasonXP, claimSeasonReward } = useAuth();
 
   const [assets, setAssets] = useState<NexaAsset[]>(() => {
     try {
       const stored = localStorage.getItem(ASSETS_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
+        if (isSupabaseConfigured()) return parsed.filter((a: NexaAsset) => a.type !== 'Card' && (a as any).type !== 'card');
         const hasCards = parsed.some((a: NexaAsset) => a.type === 'Card' || (a as any).type === 'card');
         const list = hasCards ? parsed : [...parsed, ...INITIAL_CARDS];
         return list.map((item: NexaAsset) => {
@@ -149,9 +153,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           return item;
         });
       }
-      return [...INITIAL_CHARACTERS, ...INITIAL_ITEMS, ...INITIAL_CARDS];
+      return [...INITIAL_CHARACTERS, ...INITIAL_ITEMS, ...(isSupabaseConfigured() ? [] : INITIAL_CARDS)];
     } catch {
-      return [...INITIAL_CHARACTERS, ...INITIAL_ITEMS, ...INITIAL_CARDS];
+      return [...INITIAL_CHARACTERS, ...INITIAL_ITEMS, ...(isSupabaseConfigured() ? [] : INITIAL_CARDS)];
     }
   });
 
@@ -162,6 +166,55 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isClaimingSynthesis, setIsClaimingSynthesis] = useState<boolean>(false);
   const [levelUpData, setLevelUpData] = useState<LevelUpResult | null>(null);
   const pendingBattles = useRef(new Set<string>());
+  const [marketplaceBusy, setMarketplaceBusy] = useState(false);
+  const marketPending = useRef(false);
+  const marketRevision = useRef(0);
+  const marketUser = useRef<string | null>(null);
+  marketUser.current = isAuthenticated ? currentUser?.id ?? null : null;
+
+  const refreshMarketplace = async () => {
+    if (!isSupabaseConfigured() || !isAuthenticated || !currentUser || marketPending.current) return;
+    const revision = ++marketRevision.current;
+    const userId = currentUser.id;
+    try {
+      const state = await MarketplaceOnlineService.refresh(userId);
+      if (revision !== marketRevision.current || marketUser.current !== userId) return;
+      ++marketRevision.current;
+      setAssets(prev => [...prev.filter(a => a.type !== 'Card' && (a as any).type !== 'card'), ...state.cards]);
+      setListings(state.listings);
+      SupabaseService.acceptConfirmedProfile(state.profile);
+      EconomyService.hydrateProfileFromSupabase(state.profile);
+      syncUser(state.profile);
+    } catch (error) {
+      if (marketUser.current === userId) notify('error', 'Marketplace indisponível', error instanceof Error ? error.message : 'Falha ao atualizar.');
+    }
+  };
+
+  const executeOnlineMarketplace = async (operation: MarketplaceOperation, subject: string, price?: number): Promise<boolean> => {
+    if (!isSupabaseConfigured() || !isAuthenticated || !currentUser || marketPending.current) return false;
+    marketPending.current = true;
+    setMarketplaceBusy(true);
+    ++marketRevision.current;
+    const userId = currentUser.id;
+    try {
+      const state = await MarketplaceOnlineService.execute(userId, operation, subject, price);
+      if (marketUser.current !== userId) return false;
+      setAssets(prev => [...prev.filter(a => a.type !== 'Card' && (a as any).type !== 'card'), ...state.cards]);
+      setListings(state.listings);
+      SupabaseService.acceptConfirmedProfile(state.profile);
+      EconomyService.hydrateProfileFromSupabase(state.profile);
+      syncUser(state.profile);
+      notify('success', 'Marketplace', 'Operação confirmada pelo servidor.');
+      return true;
+    } catch (error) {
+      if (marketUser.current === userId) notify('error', 'Falha no Marketplace', error instanceof Error ? error.message : 'Tente novamente com o mesmo pedido.');
+      return false;
+    } finally {
+      marketPending.current = false;
+      setMarketplaceBusy(false);
+      ++marketRevision.current;
+    }
+  };
 
   // Derived progression slot counters
   const unlockedSlots = ProgressionService.getUnlockedSlots(user.level);
@@ -174,6 +227,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const [listings, setListings] = useState<Listing[]>(() => {
     try {
+      if (isSupabaseConfigured()) return [];
       const stored = localStorage.getItem(LISTINGS_KEY);
       return stored ? JSON.parse(stored) : INITIAL_LISTINGS;
     } catch {
@@ -296,36 +350,28 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           if (!cancelled) setIsCharacterPersistenceLoading(false);
         });
 
-        SupabaseService.fetchUserCards(user.id).then((remoteCards) => {
-          if (remoteCards && remoteCards.length > 0) {
-            setAssets((prev) => {
-              const nonCards = prev.filter((a) => a.type !== 'Card' && (a as any).type !== 'card');
-              const existingCards = prev.filter(
-                (a): a is Card => a.type === 'Card' || (a as any).type === 'card'
-              );
-              const cardMap = new Map<string, Card>();
-              for (const c of existingCards) cardMap.set(c.id, c);
-              for (const rc of remoteCards) {
-                cardMap.set(rc.id, EconomyService.normalizeCardSynthesis(rc));
-              }
-              return [...nonCards, ...Array.from(cardMap.values())];
-            });
-          }
-        }).catch(() => {});
-
-        SupabaseService.fetchListings().then((remoteListings) => {
-          if (remoteListings && remoteListings.length > 0) {
-            setListings(remoteListings);
-          }
-        }).catch(() => {});
+        setAssets(prev => prev.filter(a => a.type !== 'Card' && (a as any).type !== 'card'));
+        setListings([]);
+        if (isAuthenticated && currentUser) {
+          void refreshMarketplace();
+          // Inventory remains readable even before the marketplace migration is deployed.
+          // This never falls back to cached Cards or to legacy listings.
+          const inventoryRevision = marketRevision.current;
+          const userId = currentUser.id;
+          MarketplaceOnlineService.fetchCards(userId).then(remoteCards => {
+            if (cancelled || inventoryRevision !== marketRevision.current || marketUser.current !== userId) return;
+            setAssets(prev => [...prev.filter(a => a.type !== 'Card' && (a as any).type !== 'card'), ...remoteCards]);
+          }).catch(() => {});
+        }
 
         return () => {
           cancelled = true;
+          ++marketRevision.current;
         };
       }
       setIsCharacterPersistenceLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, currentUser?.id, isAuthenticated]);
 
   const saveBattlePreferences = async (
     mainCardId: string | null,
@@ -381,7 +427,15 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // LIST ASSET
-  const listAsset = (assetId: string, priceNXA: number) => {
+  const listAsset = async (assetId: string, priceNXA: number): Promise<boolean> => {
+    if (isSupabaseConfigured()) {
+      const asset = assets.find(a => a.id === assetId);
+      if (!asset || asset.ownerId !== user.id || !canSellOnlineCard(asset)) {
+        notify('error', 'Falha ao Anunciar', 'Somente Cards próprias, livres e negociáveis.');
+        return false;
+      }
+      return executeOnlineMarketplace('CREATE', assetId, priceNXA);
+    }
     try {
       const asset = assets.find((a) => a.id === assetId);
       if (!asset) throw new Error('Ativo não encontrado.');
@@ -396,10 +450,6 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Add listing
       setListings((prev) => [newListing, ...prev]);
 
-      if (isSupabaseConfigured()) {
-        SupabaseService.createListing(newListing).catch(() => {});
-      }
-
       // Update market stats
       setMarketStats((prev) => ({
         ...prev,
@@ -409,13 +459,16 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       soundService.playClick();
       notify('success', 'Item Anunciado', `"${asset.name}" agora está à venda por ${priceNXA} NXA.`);
+      return true;
     } catch (err: any) {
       notify('error', 'Falha ao Anunciar', err.message || 'Erro desconhecido.');
+      return false;
     }
   };
 
   // CANCEL LISTING
-  const cancelListing = (listingId: string) => {
+  const cancelListing = async (listingId: string): Promise<boolean> => {
+    if (isSupabaseConfigured()) return executeOnlineMarketplace('CANCEL', listingId);
     try {
       const listing = listings.find((l) => l.id === listingId);
       if (!listing) throw new Error('Anúncio não encontrado.');
@@ -426,36 +479,21 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         prev.map((a) => (a.id === listing.itemId ? { ...a, status: 'IDLE' } : a))
       );
 
-      if (isSupabaseConfigured()) {
-        SupabaseService.updateListing(listingId, { status: 'CANCELLED' }).catch(() => {});
-      }
-
       soundService.playClick();
       notify('info', 'Anúncio Cancelado', `O item foi devolvido ao seu inventário ativo.`);
+      return true;
     } catch (err: any) {
       notify('error', 'Erro ao Cancelar', err.message || 'Erro desconhecido.');
+      return false;
     }
   };
 
   // BUY LISTING
-  const buyListing = async (listingId: string) => {
+  const buyListing = async (listingId: string): Promise<boolean> => {
+    if (isSupabaseConfigured()) return executeOnlineMarketplace('BUY', listingId);
     try {
       const listing = listings.find((l) => l.id === listingId);
       if (!listing) throw new Error('Anúncio não encontrado.');
-
-      // 0. Execução atômica no banco oficial Supabase via RPC
-      if (isSupabaseConfigured()) {
-        const atomicRes = await SupabaseService.buyMarketplaceListingAtomic({
-          listingId,
-          buyerId: user.id,
-        });
-        if (!atomicRes.success) {
-          throw new Error(atomicRes.error || 'Falha na liquidação atômica da compra no mercado.');
-        }
-        if (atomicRes.buyerBalanceNxa !== undefined) {
-          EconomyService.updateUserBalance(user.id, 'NXA', atomicRes.buyerBalanceNxa);
-        }
-      }
 
       const result = MarketplaceService.executeBuy(listing, user);
 
@@ -482,10 +520,6 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // 3. Mark listing as SOLD
       setListings((prev) => prev.filter((l) => l.id !== listingId));
-
-      if (isSupabaseConfigured()) {
-        SupabaseService.updateListing(listingId, { status: 'SOLD', buyerId: user.id } as any).catch(() => {});
-        }
 
       // 4. Add transaction
       setTransactions((prev) => [result.transaction, ...prev]);
@@ -524,8 +558,10 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         'Compra Realizada!',
         `Você adquiriu "${listing.itemSnapshot.name}" por ${listing.price} NXA (Taxa: ${result.feeAmount} NXA).`
       );
+      return true;
     } catch (err: any) {
       notify('error', 'Falha na Compra', err.message || 'Erro desconhecido.');
+      return false;
     }
   };
 
@@ -1232,6 +1268,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         refreshBoxes,
         dismissNotification,
         notify,
+        marketplaceBusy,
+        refreshMarketplace,
         listAsset,
         cancelListing,
         buyListing,
