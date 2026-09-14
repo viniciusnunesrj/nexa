@@ -1,3 +1,4 @@
+import { getCardPower } from '../utils/cardPower';
 import { CardImage } from '../components/common/CardImage';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -82,7 +83,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const pityCount = userPity?.premiumBoxPity || 0;
   const pityRemaining = Math.max(0, 5 - pityCount);
 
-  const totalPower = userItems.reduce((acc, curr) => acc + ('power' in curr ? curr.power : 0), 0);
+  const cardPowers = userItems.filter(a => a.type === 'Card').map(getCardPower);
+  const totalPower = cardPowers.some(power => power === null) ? null : cardPowers.reduce<number>((sum, power) => sum + power!, 0);
   const rareCount = userItems.filter((a) => ['Épico', 'Lendário', 'Mítico'].includes(a.rarity)).length;
   const winRate = user.victories + user.defeats > 0
     ? Math.round((user.victories / (user.victories + user.defeats)) * 100)
@@ -172,7 +174,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   <RarityBadge rarity={equippedChar.rarity} size="sm" />
                 </div>
                 <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-mono text-cyan-300">
-                  Herói Equipado
+                  Herói em Destaque
                 </div>
               </div>
 
@@ -417,15 +419,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-2xl bg-[#0b0b12] border border-white/10 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase">Poder Total da Frota</span>
+            <span className="text-xs font-mono uppercase">Poder Total das Cartas</span>
             <Zap className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="mt-3">
             <span className="font-heading text-3xl font-black text-cyan-300">
-              {totalPower.toLocaleString()}
+              {totalPower === null ? 'Indisponível' : totalPower.toLocaleString('pt-BR')}
             </span>
             <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
-              Distribuído em {userItems.length} ativos
+              Soma de {cardPowers.length} cartas • não representa a formação ativa
             </span>
           </div>
         </div>
@@ -486,7 +488,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 Seu Arsenal Recente
               </h3>
               <p className="text-xs text-slate-400 font-mono">
-                Seus itens e personagens ativos para combate e negociação
+                Suas cartas, equipamentos e personagens colecionáveis
               </p>
             </div>
             <button
@@ -521,7 +523,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   </h5>
                   <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-1">
                     <span>{item.type}</span>
-                    <span className="text-cyan-400 font-bold">{item.power} PWR</span>
+                    <span className="text-cyan-400 font-bold">{item.type === 'Card' ? getCardPower(item)?.toLocaleString('pt-BR') ?? 'Indisponível' : item.power} PWR</span>
                   </div>
                 </div>
               </div>

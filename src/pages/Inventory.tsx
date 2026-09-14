@@ -1,3 +1,4 @@
+import { getCardPower } from '../utils/cardPower';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -52,48 +53,19 @@ craftCardWithFragments,
   const [tradingAsset, setTradingAsset] = useState<NexaAsset | null>(null);
   const [activeOpeningSummary, setActiveOpeningSummary] = useState<BoxRewardSummary | null>(null);
 
-  const myAssets = assets.filter((a) => a.ownerId === user.id);
+  const myAssets = assets.filter((a) => a.ownerId === user.id && a.type !== 'Character');
+  const isEquipment = (asset: NexaAsset) => ['Weapon', 'Armor', 'Artifact', 'Skin'].includes(asset.type);
+  const displayPower = (asset: NexaAsset) => asset.type === 'Card' ? getCardPower(asset) : asset.power;
   const myBoxes = boxes.filter((b) => b.ownerId === user.id);
   const myFragments = cardFragments.filter((f) => f.ownerId === user.id);
 
   // Tab categories
   const tabs = [
     { id: 'ALL', label: 'Todos os Ativos', count: myAssets.length },
-    {
-      id: 'BOXES',
-      label: 'Caixas',
-      count: myBoxes.length,
-    },
-    {
-      id: 'Card',
-      label: 'Cartas',
-      count: myAssets.filter((a) => a.type === 'Card').length,
-    },
-    {
-      id: 'FRAGMENTS',
-      label: 'Fragmentos',
-      count: myFragments.length,
-    },
-    {
-      id: 'Character',
-      label: 'Personagens',
-      count: myAssets.filter((a) => a.type === 'Character').length,
-    },
-    {
-      id: 'Weapon',
-      label: 'Armas',
-      count: myAssets.filter((a) => a.type === 'Weapon').length,
-    },
-    {
-      id: 'Armor',
-      label: 'Armaduras',
-      count: myAssets.filter((a) => a.type === 'Armor').length,
-    },
-    {
-      id: 'Artifact',
-      label: 'Artefatos & Skins',
-      count: myAssets.filter((a) => a.type === 'Artifact' || a.type === 'Skin').length,
-    },
+    { id: 'Card', label: 'Cartas', count: myAssets.filter(a => a.type === 'Card').length },
+    { id: 'BOXES', label: 'Caixas', count: myBoxes.length },
+    { id: 'FRAGMENTS', label: 'Fragmentos', count: myFragments.length },
+    { id: 'EQUIPMENT', label: 'Equipamentos', count: myAssets.filter(isEquipment).length },
   ];
 
   const rarityRank: Record<Rarity, number> = {
@@ -106,8 +78,8 @@ craftCardWithFragments,
   };
 
   const filteredAssets = myAssets.filter((asset) => {
-    if (activeTab === 'Artifact') {
-      if (asset.type !== 'Artifact' && asset.type !== 'Skin') return false;
+    if (activeTab === 'EQUIPMENT') {
+      if (!isEquipment(asset)) return false;
     } else if (activeTab !== 'ALL' && asset.type !== activeTab) {
       return false;
     }
@@ -127,13 +99,20 @@ craftCardWithFragments,
   });
 
   filteredAssets.sort((a, b) => {
-    if (sortBy === 'power_desc') return b.power - a.power;
-    if (sortBy === 'power_asc') return a.power - b.power;
+    if (sortBy === 'power_desc' || sortBy === 'power_asc') {
+      const powerA = displayPower(a);
+      const powerB = displayPower(b);
+      if (powerA == null && powerB == null) return 0;
+      if (powerA == null) return 1;
+      if (powerB == null) return -1;
+      return sortBy === 'power_desc' ? powerB - powerA : powerA - powerB;
+    }
     if (sortBy === 'rarity') return (rarityRank[b.rarity] || 0) - (rarityRank[a.rarity] || 0);
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  const totalPower = myAssets.reduce((acc, curr) => acc + ('power' in curr ? curr.power : 0), 0);
+  const cardPowers = myAssets.filter(a => a.type === 'Card').map(getCardPower);
+  const totalPower = cardPowers.some(power => power === null) ? null : cardPowers.reduce<number>((sum, power) => sum + power!, 0);
 
   return (
     <div className="space-y-8">
@@ -147,7 +126,7 @@ craftCardWithFragments,
             Meu Inventário & Arsenal
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-1">
-            Gerencie seus personagens, armamentos e relíquias. Equipe heróis para a arena ou queime matérias no reator de fusão.
+            Gerencie suas cartas, caixas, fragmentos e equipamentos colecionáveis.
           </p>
         </div>
 
@@ -155,8 +134,8 @@ craftCardWithFragments,
         <div className="flex items-center gap-3">
           <div className="px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 font-mono text-xs flex items-center gap-3">
             <div>
-              <span className="text-slate-500 uppercase text-[10px] block">Poder Agregado</span>
-              <span className="font-bold text-base text-cyan-300">{totalPower.toLocaleString()} PWR</span>
+              <span className="text-slate-500 uppercase text-[10px] block">Poder das Cartas</span>
+              <span className="font-bold text-base text-cyan-300">{totalPower === null ? 'Indisponível' : `${totalPower.toLocaleString('pt-BR')} PWR`}</span>
             </div>
             <div className="w-px h-8 bg-white/10" />
             <div>

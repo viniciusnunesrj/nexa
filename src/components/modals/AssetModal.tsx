@@ -1,3 +1,4 @@
+import { getCardPower } from '../../utils/cardPower';
 import { CardImage } from '../common/CardImage';
 import React from 'react';
 import { NexaAsset, Character } from '../../types';
@@ -28,12 +29,33 @@ export const AssetModal: React.FC<AssetModalProps> = ({
   const isChar = asset.type === 'Character';
   const char = isChar ? (asset as Character) : null;
   const isCard = asset.type === 'Card';
-  const cardLocked = isCard && (((asset as any).state && (asset as any).state !== 'FREE') || (asset as any).cardStatus === 'ACTIVE' || (asset as any).cardStatus === 'EXHAUSTED' || !(asset as any).tradeable);
+  const card = asset.type === 'Card' ? asset : null;
+  const cardLocked = card && ((card.state && card.state !== 'FREE') || card.cardStatus === 'ACTIVE' || card.cardStatus === 'EXHAUSTED' || !card.tradeable);
+  const power = card ? getCardPower(card) : ('power' in asset ? asset.power : null);
+  const formatNumber = (value: number | undefined, unit: string) =>
+    Number.isFinite(value) ? `${value!.toLocaleString('pt-BR')} ${unit}` : 'Indisponível';
+  const elements = {
+    fire: 'Fogo', ice: 'Gelo', lightning: 'Raio', abyss: 'Abismo', nature: 'Natureza',
+    dark: 'Trevas', light: 'Luz', astral: 'Astral', celestial: 'Celestial', arcane: 'Arcano',
+    water: 'Água', earth: 'Terra', wind: 'Vento', lunar: 'Lunar', solar: 'Solar', void: 'Vazio', cosmic: 'Cósmico',
+  };
+  const states = { FREE: 'Disponível', ACTIVE: 'Em Síntese', EXHAUSTED: 'Esgotada', SYNTHESIZING: 'Em Síntese' };
+  const cardState = card ? card.state || card.cardStatus : undefined;
+  const cardDetails = card ? [
+    ['Coleção', card.collectionName || 'Indisponível'],
+    ['Elemento', elements[card.element] || 'Indisponível'],
+    ['Estado', cardState ? states[cardState] || 'Indisponível' : 'Indisponível'],
+    ['Valor de mercado', formatNumber(card.marketValue, 'NXA')],
+    ['Taxa de síntese', formatNumber(card.synthesisRate, 'NEX/h')],
+    ['Capacidade de síntese', formatNumber(card.synthesisCap, 'NEX')],
+  ] : [];
+  const createdDate = new Date(asset.createdAt);
+  const createdLabel = Number.isNaN(createdDate.getTime()) ? 'Indisponível' : createdDate.toLocaleDateString('pt-BR');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-2xl rounded-2xl bg-[#0b0b12] border overflow-hidden shadow-2xl flex flex-col md:flex-row"
+        className="relative w-full max-w-2xl rounded-2xl bg-[#0b0b12] border max-h-[90dvh] overflow-y-auto shadow-2xl flex flex-col md:flex-row"
         style={{ borderColor: rarity.color, boxShadow: `0 0 40px ${rarity.bgGlow}` }}
       >
         {/* Close Button */}
@@ -45,7 +67,7 @@ export const AssetModal: React.FC<AssetModalProps> = ({
         </button>
 
         {/* Left: Media & Hologram Visual */}
-        <div className="md:w-5/12 relative aspect-[3/4] md:aspect-auto overflow-hidden bg-slate-950 flex items-center justify-center">
+        <div className="md:w-5/12 shrink-0 relative aspect-[3/4] md:aspect-auto overflow-hidden bg-slate-950 flex items-center justify-center">
           <CardImage asset={asset}
             src={asset.image}
             alt={asset.name}
@@ -65,7 +87,7 @@ export const AssetModal: React.FC<AssetModalProps> = ({
         <div className="md:w-7/12 p-6 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-wider">
-              <span>{asset.type}</span>
+              <span>{card ? 'Carta de Coleção' : asset.type}</span>
               {char && <span>• Classe {char.class}</span>}
             </div>
 
@@ -84,9 +106,20 @@ export const AssetModal: React.FC<AssetModalProps> = ({
                 <span className="text-xs font-mono text-slate-400 uppercase font-semibold">Classificação de Poder</span>
               </div>
               <span className="font-heading text-xl font-bold text-cyan-300">
-                {asset.power} <span className="text-xs text-slate-500 font-mono">PWR</span>
+                {Number.isFinite(power) && power !== null ? power.toLocaleString('pt-BR') : 'Indisponível'} <span className="text-xs text-slate-500 font-mono">PWR</span>
               </span>
             </div>
+
+            {card && (
+              <dl className="grid grid-cols-2 gap-3 mb-4 text-xs font-mono">
+                {cardDetails.map(([label, value]) => (
+                  <div key={label} className="rounded-lg bg-white/5 p-2.5 min-w-0">
+                    <dt className="text-slate-400">{label}</dt>
+                    <dd className="text-slate-100 mt-1 break-words">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
 
             {/* Detailed Stats */}
             {char && (
@@ -131,9 +164,9 @@ export const AssetModal: React.FC<AssetModalProps> = ({
             )}
 
             {/* Ownership Meta */}
-            <div className="text-[11px] font-mono text-slate-400 border-t border-white/10 pt-3 flex items-center justify-between">
+            <div className="text-[11px] font-mono text-slate-400 border-t border-white/10 pt-3 flex flex-wrap gap-2 items-center justify-between">
               <span>Proprietário: <strong className="text-slate-200">{asset.ownerName}</strong></span>
-              <span>Criado em: {asset.createdAt}</span>
+              <span>Criado em: {card ? createdLabel : asset.createdAt}</span>
             </div>
           </div>
 

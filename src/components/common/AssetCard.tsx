@@ -1,3 +1,4 @@
+import { getCardPower } from '../../utils/cardPower';
 import { CardImage } from './CardImage';
 import React from 'react';
 import { NexaAsset, Character } from '../../types';
@@ -21,6 +22,8 @@ export const AssetCard: React.FC<AssetCardProps> = ({
   showOwner = false,
 }) => {
   const rarity = RARITY_CONFIG[asset.rarity] || RARITY_CONFIG.Comum;
+  const power = asset.type === 'Card' ? getCardPower(asset) : asset.power;
+  const cardState = asset.type === 'Card' ? asset.state || asset.cardStatus : undefined;
   const isCharacter = asset.type === 'Character';
   const char = isCharacter ? (asset as Character) : null;
 
@@ -51,12 +54,12 @@ export const AssetCard: React.FC<AssetCardProps> = ({
           <RarityBadge rarity={asset.rarity} size="sm" />
 
           {/* Status Indicator */}
-          {asset.type === 'Card' && (asset as any).state === 'ACTIVE' && (
+          {asset.type === 'Card' && (cardState === 'ACTIVE' || cardState === 'SYNTHESIZING') && (
             <span className="inline-flex items-center gap-1 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono px-2 py-0.5 font-bold animate-pulse">
-              <Zap className="w-3 h-3 text-emerald-400" /> SÍNTESE
+              <Zap className="w-3 h-3 text-emerald-400" /> EM SÍNTESE
             </span>
           )}
-          {asset.type === 'Card' && (asset as any).state === 'EXHAUSTED' && (
+          {asset.type === 'Card' && cardState === 'EXHAUSTED' && (
             <span className="inline-flex items-center gap-1 rounded bg-amber-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-mono px-2 py-0.5 font-bold">
               <Sparkles className="w-3 h-3 text-amber-400" /> ESGOTADA
             </span>
@@ -104,7 +107,7 @@ export const AssetCard: React.FC<AssetCardProps> = ({
             <Zap className="w-4 h-4 text-cyan-400" />
             <div className="flex flex-col">
               <span className="text-[10px] uppercase font-mono text-slate-500 font-semibold">Poder</span>
-              <span className="text-sm font-mono font-bold text-cyan-300">{asset.power}</span>
+              <span className="text-sm font-mono font-bold text-cyan-300">{Number.isFinite(power) && power !== null ? power.toLocaleString('pt-BR') : 'Indisponível'}</span>
             </div>
           </div>
 
@@ -119,7 +122,7 @@ export const AssetCard: React.FC<AssetCardProps> = ({
             </div>
           ) : (
             <div className="text-[11px] font-mono text-slate-400 bg-white/5 px-2 py-0.5 rounded">
-              Nv. {asset.level || 1}
+              {asset.type === 'Card' ? asset.collectionName : `Nv. ${asset.level || 1}`}
             </div>
           )}
         </div>
