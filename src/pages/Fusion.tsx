@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import { CardImage } from '../components/common/CardImage';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -183,7 +184,7 @@ export const Fusion: React.FC = () => {
             <div className="text-left sm:text-right">
               <span className="text-slate-400 block text-[10px] uppercase">Custo da Síntese:</span>
               <span className="font-bold text-amber-400 text-sm">
-                {rule ? `${rule.costNEX.toLocaleString()} NEX` : '—'}
+                {rule ? `${formatEconomicValue(rule.costNEX)} NEX` : '—'}
               </span>
             </div>
 

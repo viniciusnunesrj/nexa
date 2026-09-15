@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import { CardImage } from '../components/common/CardImage';
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -906,11 +907,11 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
               </div>
               <div className="text-center">
                 <span className="text-[10px] text-slate-500 block">MOEDAS NEX</span>
-                <span className="font-bold text-sm text-amber-400">+{battleResult.nexGained}</span>
+                <span className="font-bold text-sm text-amber-400">+{formatEconomicValue(battleResult.nexGained)}</span>
               </div>
               <div className="text-center">
                 <span className="text-[10px] text-slate-500 block">TOKENS NXA</span>
-                <span className="font-bold text-sm text-cyan-400">+{battleResult.nxaGained}</span>
+                <span className="font-bold text-sm text-cyan-400">+{formatEconomicValue(battleResult.nxaGained)}</span>
               </div>
             </div>
 

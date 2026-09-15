@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import {
   NexaAsset,
@@ -64,9 +65,10 @@ interface GameStateContextType {
   cards: Card[];
   cardFragments: CardFragment[];
   isClaimingSynthesis: boolean;
-  synthesizeCard: (cardId: string) => void;
-  claimCardSynthesis: (cardId: string) => number;
-  claimSynthesisReward: (cardId: string) => number;
+  isStartingSynthesis: boolean;
+  synthesizeCard: (cardId: string) => Promise<boolean>;
+  claimCardSynthesis: (cardId: string) => Promise<number>;
+  claimSynthesisReward: (cardId: string) => Promise<number>;
   stopCardSynthesis: (cardId: string) => void;
   advanceCardTime: (cardId: string, hours: number) => void;
   claimCollectionReward: (collectionId: string) => void;
@@ -164,6 +166,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     .map((c) => EconomyService.normalizeCardSynthesis(c));
   const [isPurchasing, setIsPurchasing] = useState<boolean>(false);
   const [isClaimingSynthesis, setIsClaimingSynthesis] = useState<boolean>(false);
+  const [isStartingSynthesis, setIsStartingSynthesis] = useState(false);
+  const synthesisPending = useRef(false);
   const [levelUpData, setLevelUpData] = useState<LevelUpResult | null>(null);
   const pendingBattles = useRef(new Set<string>());
   const [marketplaceBusy, setMarketplaceBusy] = useState(false);
@@ -173,7 +177,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   marketUser.current = isAuthenticated ? currentUser?.id ?? null : null;
 
   const refreshMarketplace = async () => {
-    if (!isSupabaseConfigured() || !isAuthenticated || !currentUser || marketPending.current) return;
+    if (!isSupabaseConfigured() || !isAuthenticated || !currentUser || marketPending.current || synthesisPending.current) return;
     const revision = ++marketRevision.current;
     const userId = currentUser.id;
     try {
@@ -191,7 +195,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const executeOnlineMarketplace = async (operation: MarketplaceOperation, subject: string, price?: number): Promise<boolean> => {
-    if (!isSupabaseConfigured() || !isAuthenticated || !currentUser || marketPending.current) return false;
+    if (!isSupabaseConfigured() || !isAuthenticated || !currentUser || marketPending.current || synthesisPending.current) return false;
     marketPending.current = true;
     setMarketplaceBusy(true);
     ++marketRevision.current;
@@ -458,7 +462,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }));
 
       soundService.playClick();
-      notify('success', 'Item Anunciado', `"${asset.name}" agora está à venda por ${priceNXA} NXA.`);
+      notify('success', 'Item Anunciado', `"${asset.name}" agora está à venda por ${formatEconomicValue(priceNXA)} NXA.`);
       return true;
     } catch (err: any) {
       notify('error', 'Falha ao Anunciar', err.message || 'Erro desconhecido.');
@@ -556,7 +560,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       notify(
         'success',
         'Compra Realizada!',
-        `Você adquiriu "${listing.itemSnapshot.name}" por ${listing.price} NXA (Taxa: ${result.feeAmount} NXA).`
+        `Você adquiriu "${listing.itemSnapshot.name}" por ${formatEconomicValue(listing.price)} NXA (Taxa: ${formatEconomicValue(result.feeAmount)} NXA).`
       );
       return true;
     } catch (err: any) {
@@ -980,10 +984,10 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       if (rewardType === 'NEX') {
         updateUserBalance(Number(rewardValue), 0);
-        notify('success', 'Recompensa Resgatada', `+${rewardValue} NEX adicionados.`);
+        notify('success', 'Recompensa Resgatada', `+${formatEconomicValue(Number(rewardValue))} NEX adicionados.`);
       } else if (rewardType === 'NXA') {
         updateUserBalance(0, Number(rewardValue));
-        notify('success', 'Recompensa Resgatada', `+${rewardValue} NXA adicionados.`);
+        notify('success', 'Recompensa Resgatada', `+${formatEconomicValue(Number(rewardValue))} NXA adicionados.`);
       } else if (rewardType === 'ITEM') {
         const item = RewardService.mintItem('Raro', user.id, user.username);
         item.name = `Item de Temporada [Nível ${level}]`;
@@ -1000,7 +1004,48 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // CARDS & SYNTHESIS ACTIONS
-  const synthesizeCard = (cardId: string) => {
+  const executeOnlineSynthesis = async (operation: 'START' | 'CLAIM', cardId: string) => {
+    if (!isAuthenticated || !currentUser) {
+      notify('error', 'Síntese indisponível', 'Aguarde a autenticação da sua conta.');
+      return null;
+    }
+    if (synthesisPending.current || marketPending.current) {
+      notify('info', 'Operação em andamento', 'Aguarde a confirmação antes de continuar.');
+      return null;
+    }
+    const userId = currentUser.id;
+    synthesisPending.current = true;
+    ++marketRevision.current;
+    if (operation === 'START') setIsStartingSynthesis(true);
+    else setIsClaimingSynthesis(true);
+    try {
+      const result = await EconomyService.executeSynthesisOnline(operation, userId, cardId);
+      if (marketUser.current !== userId) return null;
+      setAssets(prev => [...prev.filter(a => a.type !== 'Card' && (a as any).type !== 'card'), ...result.cards]);
+      SupabaseService.acceptConfirmedProfile(result.profile);
+      EconomyService.hydrateProfileFromSupabase(result.profile);
+      syncUser(result.profile);
+      if (operation === 'START') {
+        soundService.playSuccess();
+        notify('success', 'Síntese confirmada', 'O inventário foi atualizado com o estado do servidor.');
+      } else {
+        soundService.playVictory();
+        notify('success', 'Saque Concluído!', `Você sacou +${formatEconomicValue(result.claimedNEX)} NEX. A carta foi destruída permanentemente.`);
+      }
+      return result;
+    } catch (err) {
+      if (marketUser.current === userId) notify('error', 'Falha na Síntese', err instanceof Error ? err.message : 'Operação não confirmada.');
+      return null;
+    } finally {
+      synthesisPending.current = false;
+      ++marketRevision.current;
+      setIsStartingSynthesis(false);
+      setIsClaimingSynthesis(false);
+    }
+  };
+
+  const synthesizeCard = async (cardId: string): Promise<boolean> => {
+    if (isSupabaseConfigured()) return (await executeOnlineSynthesis('START', cardId)) !== null;
     try {
       const card = assets.find((a) => a.id === cardId) as Card | undefined;
       if (!card || card.type !== 'Card') {
@@ -1030,12 +1075,15 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         '⚡ Carta Sintetizada!',
         `"${card.name}" agora está sintetizando NEX ativamente (${activeSynthesizing.length + 1}/${allowedSlots} slots em uso).`
       );
+      return true;
     } catch (err: any) {
       notify('error', 'Falha na Síntese', err.message || 'Erro ao sintetizar carta.');
+      return false;
     }
   };
 
-  const claimCardSynthesis = (cardId: string): number => {
+  const claimCardSynthesis = async (cardId: string): Promise<number> => {
+    if (isSupabaseConfigured()) return (await executeOnlineSynthesis('CLAIM', cardId))?.claimedNEX ?? 0;
     if (isClaimingSynthesis) {
       return 0;
     }
@@ -1060,7 +1108,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       notify(
         'success',
         '💰 Saque Concluído!',
-        `Você sacou +${result.claimedNEX.toFixed(2)} NEX. A carta "${result.cardName}" foi destruída permanentemente.`
+        `Você sacou +${formatEconomicValue(result.claimedNEX)} NEX. A carta "${result.cardName}" foi destruída permanentemente.`
       );
 
       return result.claimedNEX;
@@ -1072,7 +1120,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const claimSynthesisReward = (cardId: string): number => {
+  const claimSynthesisReward = (cardId: string): Promise<number> => {
     return claimCardSynthesis(cardId);
   };
 
@@ -1107,7 +1155,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       notify(
         'success',
         '🏆 Coleção Completa!',
-        `Recompensa resgatada: ${result.rewardName}! (+${result.nexAwarded} NEX & +${result.fragmentsAwarded} Fragmentos)`
+        `Recompensa resgatada: ${result.rewardName}! (+${formatEconomicValue(result.nexAwarded)} NEX & +${result.fragmentsAwarded} Fragmentos)`
       );
     } catch (err: any) {
       notify('error', 'Resgate Indisponível', err.message || 'Erro ao resgatar recompensa.');
@@ -1240,6 +1288,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         cards,
         cardFragments,
         isClaimingSynthesis,
+        isStartingSynthesis,
         synthesizeCard,
         claimCardSynthesis,
         claimSynthesisReward,

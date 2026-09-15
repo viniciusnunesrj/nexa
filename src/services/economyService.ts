@@ -732,7 +732,52 @@ export class EconomyServiceClass {
    * Valida: posse, estado FREE, status IDLE.
    * Define: state = ACTIVE, accumulatedNex = 0, synthesizedAt = Date.now(), lastAccrualAt = Date.now()
    */
+  private pendingSynthesis = new Set<string>();
+  private confirmedSynthesis = new Map<string, { claimedNEX: number; newBalance?: number; cardName?: string }>();
+
+  /** Online commands never calculate rewards, write Cards, or record a second ledger. */
+  public async executeSynthesisOnline(operation: 'START' | 'CLAIM', userId: string, cardId: string) {
+    if (!isSupabaseConfigured() || !userId) throw new Error('Sessão online necessária para síntese.');
+    if (this.pendingSynthesis.has(userId)) throw new Error('Aguarde a operação de síntese em andamento.');
+    this.pendingSynthesis.add(userId);
+    const key = JSON.stringify([userId, operation, cardId]);
+    try {
+      let confirmed = this.confirmedSynthesis.get(key);
+      if (!confirmed) {
+        if (operation === 'START') {
+          const result = await SupabaseService.startSynthesisAtomic({ userId, cardId });
+          if (!result.success) throw new Error(result.error || 'Início de síntese não confirmado.');
+          confirmed = { claimedNEX: 0 };
+        } else {
+          const result = await SupabaseService.claimSynthesisAtomic({ userId, cardId });
+          if (!result.success) throw new Error(result.error || 'Saque não confirmado.');
+          if (typeof result.claimedNex !== 'number' || !Number.isFinite(result.claimedNex) || result.claimedNex <= 0
+            || typeof result.newBalance !== 'number' || !Number.isFinite(result.newBalance) || result.newBalance < 0) {
+            throw new Error('Valores de saque inválidos na resposta do servidor.');
+          }
+          confirmed = { claimedNEX: result.claimedNex, newBalance: result.newBalance, cardName: result.cardName };
+        }
+        // If refresh fails after confirmed success, retry only the reads, not the RPC.
+        this.confirmedSynthesis.set(key, confirmed);
+      }
+      const [cards, profile] = await Promise.all([
+        SupabaseService.fetchSynthesisCards(userId),
+        SupabaseService.fetchRemoteProfile(userId),
+      ]);
+      if (!profile || profile.id !== userId) throw new Error('Perfil remoto não encontrado.');
+      if (operation === 'CLAIM' && cards.some(card => card.id === cardId)) {
+        throw new Error('A remoção da carta ainda não foi confirmada. Atualize novamente.');
+      }
+      this.confirmedSynthesis.delete(key);
+      // The fresh profile may include a later operation; never add claimedNEX again.
+      return { ...confirmed, cards, profile };
+    } finally {
+      this.pendingSynthesis.delete(userId);
+    }
+  }
+
   public synthesizeCard(card: Card, userId: string, nowMs?: number): Card {
+    if (isSupabaseConfigured()) throw new Error('Use o fluxo online aguardado de síntese.');
     if (card.ownerId !== userId) {
       throw new Error('Você só pode sintetizar cartas que pertencem à sua conta.');
     }
@@ -770,14 +815,6 @@ export class EconomyServiceClass {
 
     this.saveCardToStorage(synthesizedCard);
 
-    if (isSupabaseConfigured()) {
-      SupabaseService.startSynthesisAtomic({
-        userId,
-        cardId: card.id,
-      }).catch((err) => {
-        console.warn('[EconomyService] Erro ao iniciar síntese atômica no Supabase:', err);
-      });
-    }
 
     return synthesizedCard;
   }
@@ -798,6 +835,7 @@ export class EconomyServiceClass {
     cardDestroyedId: string;
     cardName: string;
   } {
+    if (isSupabaseConfigured()) throw new Error('Use o fluxo online aguardado de saque.');
     if (card.ownerId !== userId) {
       throw new Error('Você não possui permissão para realizar o saque desta carta.');
     }
@@ -851,20 +889,6 @@ export class EconomyServiceClass {
     // 4. QUEIMA E REMOVE A CARTA DO STORAGE PERSISTENTE
     this.burnCardFromStorage(card.id);
 
-    // 5. Executa a transação atômica no Supabase para garantir integridade server-side
-    if (isSupabaseConfigured()) {
-      SupabaseService.claimSynthesisAtomic({
-        userId,
-        cardId: card.id,
-        nexReward: amountToCredit,
-      }).then((res) => {
-        if (res.success && res.newBalance !== undefined) {
-          this.updateUserBalance(userId, 'NEX', res.newBalance);
-        }
-      }).catch((err) => {
-        console.warn('[EconomyService] Erro ao sincronizar claimSynthesisAtomic no Supabase:', err);
-      });
-    }
 
     return {
       claimedNEX: amountToCredit,
@@ -913,6 +937,7 @@ export class EconomyServiceClass {
    * Avança o tempo de sintetização para simulação e testes (Requisito 16)
    */
   public advanceCardSynthesisTime(card: Card, additionalHours: number): Card {
+    if (isSupabaseConfigured()) throw new Error('O tempo de síntese online é controlado pelo servidor.');
     const normalized = this.normalizeCardSynthesis(card);
     if (normalized.state !== 'ACTIVE') return normalized;
     const addedMs = additionalHours * 3600000;

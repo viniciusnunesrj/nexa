@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -155,7 +156,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
               <span className="text-[10px] text-slate-400 block uppercase">Seu Saldo NEX</span>
               <span className="font-heading text-2xl font-black text-amber-400 flex items-center justify-center gap-1">
                 <Coins className="w-5 h-5 text-amber-400" />
-                {user.balanceNEX.toLocaleString()}
+                {formatEconomicValue(user.balanceNEX)}
               </span>
             </div>
 
@@ -369,7 +370,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                     {def.purchasableWithNEX ? (
                       <span className="inline-flex items-center gap-1.5 font-bold text-amber-400 text-sm">
                         <Coins className="w-4 h-4" />
-                        {def.priceNEX.toLocaleString()} NEX
+                        {formatEconomicValue(def.priceNEX)} NEX
                       </span>
                     ) : (
                       <span className="text-cyan-400 font-bold">
@@ -418,8 +419,8 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                           {isPurchasing
                             ? 'Processando...'
                             : canAfford
-                            ? `COMPRAR POR ${def.priceNEX.toLocaleString()} NEX`
-                            : `SALDO INSUFICIENTE (${def.priceNEX.toLocaleString()} NEX)`}
+                            ? `COMPRAR POR ${formatEconomicValue(def.priceNEX)} NEX`
+                            : `SALDO INSUFICIENTE (${formatEconomicValue(def.priceNEX)} NEX)`}
                         </span>
                       </button>
                     )}

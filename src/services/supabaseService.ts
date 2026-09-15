@@ -684,10 +684,17 @@ class SupabaseServiceClass {
     }));
   }
 
+  public async fetchSynthesisCards(userId: string): Promise<Card[]> {
+    if (!isSupabaseConfigured()) throw new Error('Supabase não configurado');
+    const { data, error } = await supabase.from('user_cards').select('*').eq('owner_id', userId);
+    if (error) throw new Error(error.message);
+    if (!Array.isArray(data) || data.some(row => row.owner_id !== userId)) throw new Error('Inventário remoto inválido.');
+    return data.map(mapRowToCard);
+  }
+
   public async claimSynthesisAtomic(params: {
     userId: string;
     cardId: string;
-    nexReward?: number;
   }): Promise<{ success: boolean; newBalance?: number; claimedNex?: number; cardName?: string; error?: string }> {
     if (!isSupabaseConfigured()) {
       return { success: false, error: 'Supabase não configurado' };
@@ -697,16 +704,18 @@ class SupabaseServiceClass {
       const { data, error } = await supabase.rpc('claim_synthesis_and_burn_atomic', {
         p_user_id: params.userId,
         p_card_id: params.cardId,
-        p_nex_reward: params.nexReward ?? null,
       });
 
       if (error) {
         return { success: false, error: error.message };
       }
 
-      if (data && typeof data === 'object') {
-        if ((data as any).success === false) {
-          return { success: false, error: (data as any).error || 'Falha ao sacar síntese' };
+      if (data && typeof data === 'object' && data.success === true) {
+        if (!['number', 'string'].includes(typeof data.new_balance) || !['number', 'string'].includes(typeof data.claimed_nex)
+          || String(data.new_balance).trim() === '' || String(data.claimed_nex).trim() === ''
+          || !Number.isFinite(Number(data.new_balance)) || Number(data.new_balance) < 0
+          || !Number.isFinite(Number(data.claimed_nex)) || Number(data.claimed_nex) <= 0) {
+          return { success: false, error: 'Valores de saque inválidos na resposta do servidor' };
         }
         return {
           success: true,
@@ -715,7 +724,7 @@ class SupabaseServiceClass {
           cardName: (data as any).card_name,
         };
       }
-      return { success: false, error: 'Resposta inválida do servidor' };
+      return { success: false, error: data?.error || 'Resposta inválida do servidor' };
     } catch (err: any) {
       return { success: false, error: err?.message || 'Erro de conexão ao resgatar síntese' };
     }
@@ -739,8 +748,8 @@ class SupabaseServiceClass {
         return { success: false, error: error.message };
       }
 
-      if (data && (data as any).success === false) {
-        return { success: false, error: (data as any).error || 'Falha ao iniciar síntese' };
+      if (!data || data.success !== true) {
+        return { success: false, error: data?.error || 'Resposta inválida ao iniciar síntese' };
       }
       return { success: true };
     } catch (err: any) {

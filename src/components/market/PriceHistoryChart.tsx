@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../../utils/formatEconomicValue';
 import React, { useState } from 'react';
 import { PricePoint } from '../../types';
 
@@ -59,7 +60,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floo
           <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">Histórico Econômico (30D)</span>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="font-heading text-2xl font-bold text-cyan-300">
-              {data[data.length - 1].price.toLocaleString()} NXA
+              {formatEconomicValue(data[data.length - 1].price)} NXA
             </span>
           </div>
         </div>
@@ -72,11 +73,11 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floo
             </div>
             <div>
               <span className="text-slate-400 block text-[10px]">Preço Médio</span>
-              <span className="text-cyan-300 font-bold">{hoveredPoint.price} NXA</span>
+              <span className="text-cyan-300 font-bold">{formatEconomicValue(hoveredPoint.price)} NXA</span>
             </div>
             <div>
               <span className="text-slate-400 block text-[10px]">Volume</span>
-              <span className="text-amber-400 font-bold">{typeof hoveredPoint.volume === 'number' && Number.isFinite(hoveredPoint.volume) && hoveredPoint.volume >= 0 ? hoveredPoint.volume.toLocaleString() + ' NXA' : 'Indisponível'}</span>
+              <span className="text-amber-400 font-bold">{typeof hoveredPoint.volume === 'number' && Number.isFinite(hoveredPoint.volume) && hoveredPoint.volume >= 0 ? formatEconomicValue(hoveredPoint.volume) + ' NXA' : 'Indisponível'}</span>
             </div>
           </div>
         ) : (
@@ -85,7 +86,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floo
               <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" /> Preço de Venda
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-0.5 bg-amber-400/80" /> Piso Mercado ({hasFloor ? floorPrice.toLocaleString() + ' NXA' : 'Indisponível'})
+              <span className="w-2.5 h-0.5 bg-amber-400/80" /> Piso Mercado ({hasFloor ? formatEconomicValue(floorPrice) + ' NXA' : 'Indisponível'})
             </span>
           </div>
         )}
@@ -134,7 +135,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({ data, floo
                   fontSize="11"
                   fontFamily="monospace"
                 >
-                  {priceVal}
+                  {formatEconomicValue(priceVal)}
                 </text>
               </g>
             );

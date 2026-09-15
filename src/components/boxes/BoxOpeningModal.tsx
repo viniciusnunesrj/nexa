@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../../utils/formatEconomicValue';
 import { getCardTemplateId } from '../../utils/cardImage';
 import { CardImage } from '../common/CardImage';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -490,13 +491,13 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
                       <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
                         <span className="text-[10px] text-slate-400 font-mono block uppercase">Taxa de Síntese</span>
                         <span className="text-sm font-black font-mono text-cyan-400">
-                          +{(winningAsset as any).synthesisRate || 8} NEX/h
+                          +{formatEconomicValue((winningAsset as any).synthesisRate || 8)} NEX/h
                         </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
                         <span className="text-[10px] text-slate-400 font-mono block uppercase">Teto Máximo</span>
                         <span className="text-sm font-black font-mono text-emerald-400">
-                          {((winningAsset as any).synthesisCap || 8000).toLocaleString('pt-BR')} NEX
+                          {formatEconomicValue((winningAsset as any).synthesisCap || 8000)} NEX
                         </span>
                       </div>
                     </div>
@@ -529,7 +530,7 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
                   {summary.nexGained > 0 && (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/50 border border-emerald-500/40 text-emerald-300 font-bold">
                       <Coins className="w-3.5 h-3.5" />
-                      +{summary.nexGained} NEX
+                      +{formatEconomicValue(summary.nexGained)} NEX
                     </span>
                   )}
                   {summary.items && summary.items.length > 0 && (

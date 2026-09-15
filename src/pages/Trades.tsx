@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import { CardImage } from '../components/common/CardImage';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -117,7 +118,7 @@ export const Trades: React.FC = () => {
               {trade.offeredNXA > 0 && (
                 <div className="p-1.5 rounded-lg bg-cyan-950/40 border border-cyan-500/20 text-xs font-mono text-cyan-300 font-bold flex items-center justify-between">
                   <span>Tokens NXA:</span>
-                  <span>+{trade.offeredNXA} NXA</span>
+                  <span>+{formatEconomicValue(trade.offeredNXA)} NXA</span>
                 </div>
               )}
             </div>
@@ -144,7 +145,7 @@ export const Trades: React.FC = () => {
               {trade.requestedNXA > 0 && (
                 <div className="p-1.5 rounded-lg bg-purple-950/40 border border-purple-500/20 text-xs font-mono text-purple-300 font-bold flex items-center justify-between">
                   <span>Tokens NXA:</span>
-                  <span>+{trade.requestedNXA} NXA</span>
+                  <span>+{formatEconomicValue(trade.requestedNXA)} NXA</span>
                 </div>
               )}
             </div>

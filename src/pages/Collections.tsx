@@ -1,3 +1,5 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
+import { isSupabaseConfigured } from '../lib/supabase';
 import { CardImage } from '../components/common/CardImage';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -44,6 +46,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
     cards,
     cardFragments,
     isClaimingSynthesis,
+    isStartingSynthesis,
     synthesizeCard,
     claimCardSynthesis,
     stopCardSynthesis,
@@ -383,7 +386,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                             Produção Esgotada
                           </span>
                           <span className="text-amber-200 font-bold">
-                            {accumulatedNEX.toFixed(2)} NEX
+                            {formatEconomicValue(accumulatedNEX)} NEX
                           </span>
                         </div>
                       ) : isSynthesizing ? (
@@ -393,7 +396,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                             Sintetizando
                           </span>
                           <span className="text-amber-300 font-bold">
-                            +{accumulatedNEX.toFixed(2)} NEX
+                            +{formatEconomicValue(accumulatedNEX)} NEX
                           </span>
                         </div>
                       ) : (
@@ -424,17 +427,17 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                   <div className="p-3 rounded-2xl bg-black/40 border border-white/5 space-y-2 font-mono text-xs">
                     <div className="flex items-center justify-between text-slate-400">
                       <span>Taxa de Geração:</span>
-                      <span className="font-bold text-cyan-400">+{rate} NEX/h</span>
+                      <span className="font-bold text-cyan-400">+{formatEconomicValue(rate)} NEX/h</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-400">
                       <span>NEX Acumulado:</span>
                       <span className={`font-bold ${accumulatedNEX > 0 ? 'text-amber-300' : 'text-slate-400'}`}>
-                        {accumulatedNEX.toFixed(2)} NEX
+                        {formatEconomicValue(accumulatedNEX)} NEX
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-slate-400">
                       <span>Capacidade Máxima:</span>
-                      <span className="font-bold text-slate-200">{cap.toLocaleString()} NEX</span>
+                      <span className="font-bold text-slate-200">{formatEconomicValue(cap)} NEX</span>
                     </div>
 
                     {/* Progress to Cap */}
@@ -477,15 +480,15 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                           <div className="space-y-2">
                             <button
                               onClick={() => setClaimModalCard(card)}
-                              disabled={accumulatedNEX <= 0 || isClaimingSynthesis}
+                              disabled={(!isSupabaseConfigured() && accumulatedNEX <= 0) || isClaimingSynthesis || isStartingSynthesis}
                               className={`w-full py-2.5 rounded-xl font-heading text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
-                                accumulatedNEX > 0 && !isClaimingSynthesis
+                                (isSupabaseConfigured() || accumulatedNEX > 0) && !isClaimingSynthesis && !isStartingSynthesis
                                   ? 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 shadow-lg shadow-amber-500/25'
                                   : 'bg-white/5 border border-white/10 text-slate-500 cursor-not-allowed'
                               }`}
                             >
                               <Coins className="w-3.5 h-3.5" />
-                              <span>Sacar {accumulatedNEX.toFixed(2)} NEX</span>
+                              <span>{isSupabaseConfigured() ? 'Sacar NEX' : `Sacar ${formatEconomicValue(accumulatedNEX)} NEX`}</span>
                             </button>
 
                             <p className="text-[10px] font-mono text-center text-red-400 font-bold">
@@ -493,7 +496,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                             </p>
 
                             {/* Testing Advance Time Buttons */}
-                            <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-white/5">
+                            {!isSupabaseConfigured() && <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-white/5">
                               <span className="text-[10px] font-mono text-slate-500">Avanço rápido:</span>
                               <div className="flex items-center gap-1">
                                 <button
@@ -521,16 +524,17 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                                   +24h
                                 </button>
                               </div>
-                            </div>
+                            </div>}
                           </div>
                         ) : (
                           <div className="space-y-2">
                             <button
                               onClick={() => synthesizeCard(card.id)}
+                              disabled={isStartingSynthesis || isClaimingSynthesis || marketplaceBusy}
                               className="w-full py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-cyan-500/20"
                             >
                               <Zap className="w-3.5 h-3.5 fill-current" />
-                              <span>Sintetizar Carta</span>
+                              <span>{isStartingSynthesis ? 'Confirmando…' : 'Sintetizar Carta'}</span>
                             </button>
 
                             {cardState === 'FREE' && (
@@ -609,7 +613,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                   </h4>
                   <RarityBadge rarity={sellingCard.rarity} size="xs" />
                   <p className="text-[11px] font-mono text-cyan-400 mt-1">
-                    +{sellingCard.synthesisRate || 8} NEX/h de taxa base
+                    +{formatEconomicValue(sellingCard.synthesisRate || 8)} NEX/h de taxa base
                   </p>
                 </div>
               </div>
@@ -708,6 +712,9 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                 </p>
               </div>
 
+              {isSupabaseConfigured() && (
+                <p className="text-xs text-slate-400">Valores exibidos são estimativas. O saque será calculado e confirmado pelo servidor.</p>
+              )}
               {/* Card & Reward Details */}
               <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-black/50 border border-white/10">
                 <CardImage asset={claimModalCard}
@@ -724,7 +731,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                     <Coins className="w-4 h-4 text-amber-400 shrink-0" />
                     <span>
                       +
-                      {EconomyService.calculateAccumulatedNEX(claimModalCard).toFixed(2)}{' '}
+                      {formatEconomicValue(EconomyService.calculateAccumulatedNEX(claimModalCard))}{' '}
                       NEX
                     </span>
                   </div>
@@ -743,10 +750,10 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   disabled={isClaimingSynthesis}
-                  onClick={() => {
+                  onClick={async () => {
                     if (!claimModalCard) return;
-                    claimCardSynthesis(claimModalCard.id);
-                    setClaimModalCard(null);
+                    const claimed = await claimCardSynthesis(claimModalCard.id);
+                    if (claimed > 0) setClaimModalCard(null);
                   }}
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-heading font-black text-xs uppercase tracking-wider shadow-lg shadow-red-600/30 transition-all flex items-center gap-1.5"
                 >

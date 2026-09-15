@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import React, { useState } from 'react';
 import { Menu, Volume2, VolumeX, ChevronDown, UserCheck, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -129,7 +130,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileMenu, onNavigate }) 
                               {u.username}
                             </span>
                             <span className="text-[10px] font-mono text-slate-400">
-                              {u.balanceNXA} NXA • Nv. {u.level}
+                              {formatEconomicValue(u.balanceNXA)} NXA • Nv. {u.level}
                             </span>
                           </div>
                         </div>

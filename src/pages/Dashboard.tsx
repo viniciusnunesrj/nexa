@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import { getCardPower } from '../utils/cardPower';
 import { CardImage } from '../components/common/CardImage';
 import React, { useState } from 'react';
@@ -469,7 +470,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
           <div className="mt-3">
             <span className="font-heading text-3xl font-black text-amber-400">
-              {marketStats.totalVolumeNXA.toLocaleString()}
+              {formatEconomicValue(marketStats.totalVolumeNXA)}
             </span>
             <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
               Tokens NXA transacionados
@@ -563,10 +564,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   </div>
                   <div className="text-right shrink-0">
                     <span className="font-bold text-cyan-400 block">
-                      +{tx.amount} NXA
+                      +{formatEconomicValue(tx.amount)} NXA
                     </span>
                     <span className="text-[9px] text-slate-500">
-                      Taxa: {tx.fee} NXA
+                      Taxa: {formatEconomicValue(tx.fee)} NXA
                     </span>
                   </div>
                 </div>

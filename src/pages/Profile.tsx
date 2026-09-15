@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import { CardImage } from '../components/common/CardImage';
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -344,7 +345,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                         isBuyer ? 'text-rose-400' : 'text-emerald-400'
                       }`}
                     >
-                      {isBuyer ? `-${tx.amount}` : `+${tx.amount - tx.fee}`} NXA
+                      {isBuyer ? `-${formatEconomicValue(tx.amount)}` : `+${formatEconomicValue(tx.amount - tx.fee)}`} NXA
                     </span>
                     <span className="text-[10px] text-slate-500">{tx.timestamp}</span>
                   </div>

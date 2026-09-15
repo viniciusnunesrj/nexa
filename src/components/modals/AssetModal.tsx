@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../../utils/formatEconomicValue';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { canSellOnlineCard } from '../../services/marketplaceOnlineService';
 import { getCardPower } from '../../utils/cardPower';
@@ -35,7 +36,7 @@ export const AssetModal: React.FC<AssetModalProps> = ({
   const cardLocked = card && ((card.state && card.state !== 'FREE') || card.cardStatus === 'ACTIVE' || card.cardStatus === 'EXHAUSTED' || !card.tradeable);
   const power = card ? getCardPower(card) : ('power' in asset ? asset.power : null);
   const formatNumber = (value: number | undefined, unit: string) =>
-    Number.isFinite(value) ? `${value!.toLocaleString('pt-BR')} ${unit}` : 'Indisponível';
+    Number.isFinite(value) ? `${formatEconomicValue(value!)} ${unit}` : 'Indisponível';
   const elements = {
     fire: 'Fogo', ice: 'Gelo', lightning: 'Raio', abyss: 'Abismo', nature: 'Natureza',
     dark: 'Trevas', light: 'Luz', astral: 'Astral', celestial: 'Celestial', arcane: 'Arcano',

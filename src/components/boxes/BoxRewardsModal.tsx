@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../../utils/formatEconomicValue';
 import { CardImage } from '../common/CardImage';
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -157,14 +158,14 @@ export const BoxRewardsModal: React.FC<BoxRewardsModalProps> = ({ boxType, isOpe
                         <div className="flex items-center gap-2 mt-1">
                           <RarityBadge rarity={card.rarity} size="xs" />
                           <span className="text-[11px] text-cyan-300 font-mono">
-                            +{card.synthesisRate} NEX/h
+                            +{formatEconomicValue(card.synthesisRate)} NEX/h
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <span className="text-xs font-mono text-slate-300 block">{card.element}</span>
-                      <span className="text-[10px] text-slate-500 block">Cap: {card.synthesisCap} NEX</span>
+                      <span className="text-[10px] text-slate-500 block">Cap: {formatEconomicValue(card.synthesisCap)} NEX</span>
                     </div>
                   </div>
                 ))}

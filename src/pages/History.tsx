@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import { CardImage } from '../components/common/CardImage';
 import React, { useState } from 'react';
 import { useGameState } from '../contexts/GameStateContext';
@@ -14,7 +15,7 @@ import {
 } from 'lucide-react';
 
 const safeText = (value: unknown, fallback = 'Indisponível'): string => typeof value === 'string' && value.trim() ? value : fallback;
-const formatNXA = (value: unknown): string => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value.toLocaleString() + ' NXA' : 'Indisponível';
+const formatNXA = (value: unknown): string => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? formatEconomicValue(value) + ' NXA' : 'Indisponível';
 
 export const HistoryPage: React.FC = () => {
   const { transactions, marketStats } = useGameState();

@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../../utils/formatEconomicValue';
 import { CardImage } from '../common/CardImage';
 import React, { useState } from 'react';
 import { NexaAsset, NexaUser } from '../../types';
@@ -186,7 +187,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
               {/* Extra NXA */}
               <div className="mt-3 pt-3 border-t border-white/10">
                 <label className="text-[11px] font-mono text-slate-400 block mb-1">
-                  Adicionar Tokens NXA à oferta (Saldo: {user.balanceNXA}):
+                  Adicionar Tokens NXA à oferta (Saldo: {formatEconomicValue(user.balanceNXA)}):
                 </label>
                 <input
                   type="number"

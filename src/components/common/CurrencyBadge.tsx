@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../../utils/formatEconomicValue';
 import React from 'react';
 import { Coins, Zap } from 'lucide-react';
 
@@ -41,7 +42,7 @@ export const CurrencyBadge: React.FC<CurrencyBadgeProps> = ({
       ) : (
         <Zap className={`${iconSizes[size]} text-cyan-400`} />
       )}
-      <span>{Number(amount || 0).toLocaleString()}</span>
+      <span>{formatEconomicValue(Number(amount || 0))}</span>
       {showLabel && (
         <span className={`text-[10px] font-sans opacity-75 uppercase tracking-wider ${isNEX ? 'text-amber-400' : 'text-cyan-400'}`}>
           {type}

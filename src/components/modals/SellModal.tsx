@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../../utils/formatEconomicValue';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { canSellOnlineCard } from '../../services/marketplaceOnlineService';
 import { CardImage } from '../common/CardImage';
@@ -113,15 +114,15 @@ export const SellModal: React.FC<SellModalProps> = ({ asset, onClose, onConfirmL
           <div className="p-3.5 rounded-xl bg-slate-950/70 border border-white/5 space-y-2 text-xs font-mono">
             <div className="flex justify-between text-slate-400">
               <span>Preço Bruto:</span>
-              <span className="text-slate-200">{numPrice.toLocaleString()} NXA</span>
+              <span className="text-slate-200">{formatEconomicValue(numPrice)} NXA</span>
             </div>
             <div className="flex justify-between text-slate-400">
               <span>Taxa da Plataforma (2%):</span>
-              <span className="text-amber-400">-{fee.toLocaleString()} NXA</span>
+              <span className="text-amber-400">-{formatEconomicValue(fee)} NXA</span>
             </div>
             <div className="pt-2 border-t border-white/10 flex justify-between font-bold text-sm">
               <span className="text-slate-300">Recebimento estimado:</span>
-              <span className="text-cyan-300">{netEarnings.toLocaleString()} NXA</span>
+              <span className="text-cyan-300">{formatEconomicValue(netEarnings)} NXA</span>
             </div>
           </div>
 

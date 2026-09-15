@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { canSellOnlineCard } from '../services/marketplaceOnlineService';
 import { getCardPower } from '../utils/cardPower';
@@ -128,19 +129,19 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
         <div className="p-2 border-r border-white/5">
           <span className="text-slate-500 uppercase text-[10px] block">Piso do Mercado</span>
           <span className="font-bold text-base text-amber-400">
-            {marketStats.currentFloorPrice.toLocaleString()} NXA
+            {formatEconomicValue(marketStats.currentFloorPrice)} NXA
           </span>
         </div>
         <div className="p-2 sm:border-r border-white/5">
           <span className="text-slate-500 uppercase text-[10px] block">Última Venda</span>
           <span className="font-bold text-base text-cyan-400">
-            {marketStats.lastSalePrice.toLocaleString()} NXA
+            {formatEconomicValue(marketStats.lastSalePrice)} NXA
           </span>
         </div>
         <div className="p-2 border-r border-white/5">
           <span className="text-slate-500 uppercase text-[10px] block">Volume Global</span>
           <span className="font-bold text-base text-purple-400">
-            {marketStats.totalVolumeNXA.toLocaleString()} NXA
+            {formatEconomicValue(marketStats.totalVolumeNXA)} NXA
           </span>
         </div>
         <div className="p-2">
@@ -308,7 +309,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
                     <div>
                       <span className="text-[10px] font-mono text-slate-500 uppercase block">Preço</span>
                       <span className="font-heading text-lg font-black text-cyan-300">
-                        {listing.price.toLocaleString()} <span className="text-xs font-mono">NXA</span>
+                        {formatEconomicValue(listing.price)} <span className="text-xs font-mono">NXA</span>
                       </span>
                     </div>
 
@@ -371,16 +372,16 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Preço do Item:</span>
-                <span className="text-white font-bold">{buyingListing.price.toLocaleString()} NXA</span>
+                <span className="text-white font-bold">{formatEconomicValue(buyingListing.price)} NXA</span>
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Taxa da Plataforma (2% já inclusa):</span>
-                <span className="text-slate-400">{(buyingListing.price * 0.02).toFixed(2)} NXA</span>
+                <span className="text-slate-400">{formatEconomicValue(buyingListing.price * 0.02)} NXA</span>
               </div>
               <div className="pt-2 border-t border-white/10 flex justify-between font-bold">
                 <span>Saldo estimado após compra:</span>
                 <span className={user.balanceNXA >= buyingListing.price ? 'text-emerald-400' : 'text-rose-400'}>
-                  {(user.balanceNXA - buyingListing.price).toLocaleString()} NXA
+                  {formatEconomicValue((user.balanceNXA - buyingListing.price))} NXA
                 </span>
               </div>
             </div>
@@ -388,7 +389,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
             {user.balanceNXA < buyingListing.price ? (
               <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-mono flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>Saldo insuficiente! Você possui apenas {user.balanceNXA} NXA.</span>
+                <span>Saldo insuficiente! Você possui apenas {formatEconomicValue(user.balanceNXA)} NXA.</span>
               </div>
             ) : null}
 

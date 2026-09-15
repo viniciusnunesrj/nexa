@@ -1,3 +1,4 @@
+import { formatEconomicValue } from '../utils/formatEconomicValue';
 import React from 'react';
 import {
   LayoutDashboard,
@@ -186,11 +187,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-white/5 font-mono text-[11px]">
               <div className="px-2 py-1 rounded-lg bg-cyan-950/40 border border-cyan-500/20 text-cyan-300 flex items-center justify-between">
                 <span className="text-[9px] text-cyan-500">NEX</span>
-                <span className="font-bold">{user.balanceNEX.toLocaleString()}</span>
+                <span className="font-bold">{formatEconomicValue(user.balanceNEX)}</span>
               </div>
               <div className="px-2 py-1 rounded-lg bg-amber-950/40 border border-amber-500/20 text-amber-300 flex items-center justify-between">
                 <span className="text-[9px] text-amber-500">NXA</span>
-                <span className="font-bold">{user.balanceNXA.toLocaleString()}</span>
+                <span className="font-bold">{formatEconomicValue(user.balanceNXA)}</span>
               </div>
             </div>
           </div>
