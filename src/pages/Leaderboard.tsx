@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { RankingService, RankingEntry } from '../services/rankingService';
+import { RankingService, GlobalRankingResult } from '../services/rankingService';
 import {
   Trophy,
   Crown,
@@ -16,55 +16,48 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
-export const Leaderboard: React.FC = () => {
-  const { user, allUsers } = useAuth();
+export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> = ({ onOpenProfile }) => {
+  const { currentUser, isAuthenticated } = useAuth();
   const [search, setSearch] = useState('');
-  const [tick, setTick] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [retry, setRetry] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [snapshot, setSnapshot] = useState<{ userId: string; search: string; offset: number; data: GlobalRankingResult } | null>(null);
+  const userId = isAuthenticated ? currentUser?.id : undefined;
 
-  // Auto-refresh and event listener for real-time reactivity directly from Supabase
   useEffect(() => {
-    RankingService.fetchOnlineGlobalRanking(user?.id).then(() => setTick((t) => t + 1));
-
-    const handleRankingUpdate = () => {
-      setTick((t) => t + 1);
+    let disposed = false;
+    let running = false;
+    setLoading(true);
+    setError('');
+    const load = async () => {
+      if (disposed || running || !userId) return;
+      running = true;
+      try {
+        const data = await RankingService.fetchOnlineGlobalRanking(userId, { offset, search });
+        if (!disposed) { setSnapshot({ userId, search, offset, data }); setError(''); }
+      } catch (err) {
+        if (!disposed) setError(err instanceof Error ? err.message : 'Ranking indisponível.');
+      } finally {
+        running = false;
+        if (!disposed) setLoading(false);
+      }
     };
+    // Debounce search and prevent overlap. No query uses the fallback user.
+    const timeout = setTimeout(() => { void load(); }, 250);
+    const interval = setInterval(() => { void load(); }, 4000);
+    return () => { disposed = true; clearTimeout(timeout); clearInterval(interval); };
+  }, [userId, search, offset, retry]);
 
-    window.addEventListener('storage', handleRankingUpdate);
-    window.addEventListener('nexa_ranking_updated', handleRankingUpdate);
+  const visible = snapshot && snapshot.userId === userId && snapshot.search === search && snapshot.offset === offset;
+  const { top100, myPosition, totalUsers } = visible ? snapshot.data : { top100: [], myPosition: null, totalUsers: 0 };
+  const filteredList = top100;
+  const openProfile = (id: string) => {
+    if (userId) onOpenProfile(id);
+  };
 
-    // Periodic safety poll from Supabase
-    const interval = setInterval(() => {
-      RankingService.fetchOnlineGlobalRanking(user?.id).then(() => setTick((t) => t + 1));
-    }, 4000);
-
-    return () => {
-      window.removeEventListener('storage', handleRankingUpdate);
-      window.removeEventListener('nexa_ranking_updated', handleRankingUpdate);
-      clearInterval(interval);
-    };
-  }, [user?.id]);
-
-  // Compute live ranking dynamically from real database
-  const rankingData = useMemo(() => {
-    return RankingService.getGlobalRanking(user?.id);
-    // tick, user, and allUsers trigger recomputation instantly
-  }, [user?.id, user?.level, user?.experience, user?.victories, allUsers, tick]);
-
-  const { top100, myPosition, totalUsers, all } = rankingData;
-
-  // Filter top 100 if user searches
-  const filteredList = useMemo(() => {
-    if (!search.trim()) return top100;
-    const q = search.toLowerCase();
-    return all.filter(
-      (entry) =>
-        entry.username.toLowerCase().includes(q) ||
-        (entry.title && entry.title.toLowerCase().includes(q)) ||
-        entry.rank.toString() === q
-    );
-  }, [search, top100, all]);
-
-  const top1 = top100[0];
+  const top1 = !search && offset === 0 ? top100[0] : undefined;
   const top2 = top100[1];
   const top3 = top100[2];
 
@@ -72,6 +65,9 @@ export const Leaderboard: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
+      {!userId && <p role="alert">Entre na sua conta para acessar o ranking.</p>}
+      {loading && userId && <p role="status" className="text-slate-400">Carregando ranking...</p>}
+      {error && <div role="alert" className="text-rose-300">{error} <button type="button" className="underline" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -82,7 +78,7 @@ export const Leaderboard: React.FC = () => {
             🏆 RANKING GLOBAL
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-1 max-w-xl">
-            Calculado em tempo real. Pontuação: <span className="text-amber-300 font-bold">(Level × 100) + (Vitórias × 50) + ⌊XP ÷ 10⌋</span>.
+            Classificação calculada no servidor. Pontuação: <span className="text-amber-300 font-bold">(Level × 100) + (Vitórias × 50) + ⌊XP ÷ 10⌋</span>.
           </p>
         </div>
 
@@ -116,7 +112,7 @@ export const Leaderboard: React.FC = () => {
                     VOCÊ
                   </span>
                   <h3 className="font-heading text-lg font-bold text-white">
-                    {myPosition.username}
+                    <button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(myPosition.userId)} aria-label={`Ver perfil de ${myPosition.username}`}>{myPosition.username}</button>
                   </h3>
                   <span className="text-xs text-slate-400 font-mono hidden sm:inline">
                     • {myPosition.title}
@@ -146,8 +142,8 @@ export const Leaderboard: React.FC = () => {
                 <span className="text-sm font-bold text-cyan-400">Nv. {myPosition.level}</span>
               </div>
               <div className="bg-black/50 border border-white/5 p-2.5 rounded-xl">
-                <span className="text-[10px] text-slate-500 block uppercase">XP</span>
-                <span className="text-sm font-bold text-slate-200">{myPosition.xp.toLocaleString()}</span>
+                <span className="text-[10px] text-slate-500 block uppercase">Derrotas</span>
+                <span className="text-sm font-bold text-slate-200">{myPosition.losses.toLocaleString()}</span>
               </div>
               <div className="bg-black/50 border border-white/5 p-2.5 rounded-xl">
                 <span className="text-[10px] text-slate-500 block uppercase">Vitórias</span>
@@ -175,13 +171,13 @@ export const Leaderboard: React.FC = () => {
             <div className="relative mb-3">
               <img
                 src={top2.avatar}
-                alt={top2.username}
+                alt=<button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(top2.userId)} aria-label={`Ver perfil de ${top2.username}`}>{top2.username}</button>
                 className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-300 shadow-[0_0_20px_rgba(203,213,225,0.3)] bg-slate-900"
               />
               <Medal className="w-6 h-6 text-slate-300 absolute -bottom-2 -right-2 drop-shadow" />
             </div>
             <h4 className="font-heading font-bold text-white text-base truncate w-full flex items-center justify-center gap-1.5">
-              {top2.username}
+              <button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(top2.userId)} aria-label={`Ver perfil de ${top2.username}`}>{top2.username}</button>
               {top2.isCurrentUser && (
                 <span className="px-1.5 py-0.5 rounded bg-cyan-400 text-slate-950 font-mono text-[9px] font-black">
                   VOCÊ
@@ -189,7 +185,7 @@ export const Leaderboard: React.FC = () => {
               )}
             </h4>
             <span className="text-[11px] font-mono text-slate-400">
-              Level {top2.level} • {top2.xp.toLocaleString()} XP • {top2.wins} vitórias
+              Level {top2.level} • {top2.wins} vitórias
             </span>
             <div className="mt-3 font-heading font-black text-slate-200 text-lg">
               {top2.rankingScore.toLocaleString()} pontos
@@ -205,12 +201,12 @@ export const Leaderboard: React.FC = () => {
             <div className="relative mb-3">
               <img
                 src={top1.avatar}
-                alt={top1.username}
+                alt=<button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(top1.userId)} aria-label={`Ver perfil de ${top1.username}`}>{top1.username}</button>
                 className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.5)] bg-slate-900"
               />
             </div>
             <h3 className="font-heading font-black text-white text-lg truncate w-full flex items-center justify-center gap-1.5">
-              {top1.username}
+              <button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(top1.userId)} aria-label={`Ver perfil de ${top1.username}`}>{top1.username}</button>
               {top1.isCurrentUser && (
                 <span className="px-1.5 py-0.5 rounded bg-cyan-400 text-slate-950 font-mono text-[9px] font-black">
                   VOCÊ
@@ -218,7 +214,7 @@ export const Leaderboard: React.FC = () => {
               )}
             </h3>
             <span className="text-xs font-mono text-amber-300 font-semibold">
-              Level {top1.level} • {top1.xp.toLocaleString()} XP • {top1.wins} vitórias
+              Level {top1.level} • {top1.wins} vitórias
             </span>
             <div className="mt-4 font-heading font-black text-amber-400 text-2xl">
               {top1.rankingScore.toLocaleString()} pontos
@@ -234,13 +230,13 @@ export const Leaderboard: React.FC = () => {
               <div className="relative mb-3">
                 <img
                   src={top3.avatar}
-                  alt={top3.username}
+                  alt=<button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(top3.userId)} aria-label={`Ver perfil de ${top3.username}`}>{top3.username}</button>
                   className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-600 shadow-[0_0_20px_rgba(217,119,6,0.3)] bg-slate-900"
                 />
                 <Award className="w-6 h-6 text-amber-600 absolute -bottom-2 -right-2 drop-shadow" />
               </div>
               <h4 className="font-heading font-bold text-white text-base truncate w-full flex items-center justify-center gap-1.5">
-                {top3.username}
+                <button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(top3.userId)} aria-label={`Ver perfil de ${top3.username}`}>{top3.username}</button>
                 {top3.isCurrentUser && (
                   <span className="px-1.5 py-0.5 rounded bg-cyan-400 text-slate-950 font-mono text-[9px] font-black">
                     VOCÊ
@@ -248,7 +244,7 @@ export const Leaderboard: React.FC = () => {
                 )}
               </h4>
               <span className="text-[11px] font-mono text-slate-400">
-                Level {top3.level} • {top3.xp.toLocaleString()} XP • {top3.wins} vitórias
+                Level {top3.level} • {top3.wins} vitórias
               </span>
               <div className="mt-3 font-heading font-black text-amber-600 text-lg">
                 {top3.rankingScore.toLocaleString()} pontos
@@ -264,7 +260,7 @@ export const Leaderboard: React.FC = () => {
         <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02]">
           <div className="flex items-center gap-2">
             <span className="font-heading font-bold text-white text-sm">
-              Top 100 Pilotos Oficiais
+              Ranking de Pilotos
             </span>
             <span className="text-xs font-mono text-slate-400">
               ({filteredList.length} exibidos)
@@ -275,8 +271,9 @@ export const Leaderboard: React.FC = () => {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              maxLength={100}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
               placeholder="Buscar jogador ou posição..."
               className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
             />
@@ -291,7 +288,7 @@ export const Leaderboard: React.FC = () => {
                 <th className="py-3.5 px-4">POSIÇÃO</th>
                 <th className="py-3.5 px-4">JOGADOR</th>
                 <th className="py-3.5 px-4">LEVEL</th>
-                <th className="py-3.5 px-4">XP</th>
+                <th className="py-3.5 px-4">DERROTAS</th>
                 <th className="py-3.5 px-4">VITÓRIAS</th>
                 <th className="py-3.5 px-4 text-right">SCORE</th>
               </tr>
@@ -344,7 +341,7 @@ export const Leaderboard: React.FC = () => {
                       <div className="flex items-center gap-2.5">
                         <img
                           src={rankedUser.avatar}
-                          alt={rankedUser.username}
+                          alt=<button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(rankedUser.userId)} aria-label={`Ver perfil de ${rankedUser.username}`}>{rankedUser.username}</button>
                           className={`w-8 h-8 rounded-lg object-cover bg-slate-900 shrink-0 ${
                             isCurrent ? 'border-2 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.4)]' : ''
                           }`}
@@ -356,7 +353,7 @@ export const Leaderboard: React.FC = () => {
                                 isCurrent ? 'text-white' : 'text-slate-200'
                               }`}
                             >
-                              {rankedUser.username}
+                              <button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(rankedUser.userId)} aria-label={`Ver perfil de ${rankedUser.username}`}>{rankedUser.username}</button>
                             </span>
                             {isCurrent && (
                               <span className="px-1.5 py-0.2 rounded bg-cyan-400 text-slate-950 font-mono text-[9px] font-black uppercase">
@@ -378,7 +375,7 @@ export const Leaderboard: React.FC = () => {
 
                     {/* XP */}
                     <td className="py-3.5 px-4 text-slate-300">
-                      {rankedUser.xp.toLocaleString()} XP
+                      {rankedUser.losses.toLocaleString()} derrotas
                     </td>
 
                     {/* VITÓRIAS */}
@@ -414,7 +411,12 @@ export const Leaderboard: React.FC = () => {
           </table>
         </div>
 
-        {/* Highlight sticky / banner row if current user is outside Top 100 */}
+        <div className="flex justify-between items-center p-4 text-sm text-slate-300">
+        <button type="button" disabled={!userId || loading || offset === 0} className="disabled:opacity-40" onClick={() => setOffset(value => Math.max(0, value - 100))}>Anterior</button>
+        <span>Página {Math.floor(offset / 100) + 1}</span>
+        <button type="button" disabled={!userId || loading || !!error || filteredList.length < 100 || offset >= 1000000 || (!search && offset + 100 >= totalUsers)} className="disabled:opacity-40" onClick={() => setOffset(value => value + 100)}>Próxima</button>
+      </div>
+      {/* Highlight sticky / banner row if current user is outside Top 100 */}
         {myPosition && !isUserInFilteredList && !search && (
           <div className="p-4 bg-cyan-950/40 border-t-2 border-cyan-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs">
             <div className="flex items-center gap-2">
@@ -422,13 +424,13 @@ export const Leaderboard: React.FC = () => {
                 SUA POSIÇÃO
               </span>
               <span className="text-white font-bold">
-                {myPosition.username} (Você)
+                <button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(myPosition.userId)} aria-label={`Ver perfil de ${myPosition.username}`}>{myPosition.username}</button> (Você)
               </span>
               <span className="text-slate-400">• Posição #{myPosition.rank}</span>
             </div>
             <div className="flex items-center gap-4 text-slate-300">
               <span>Level {myPosition.level}</span>
-              <span>{myPosition.xp.toLocaleString()} XP</span>
+              <span>{myPosition.losses.toLocaleString()} derrotas</span>
               <span className="text-emerald-400">{myPosition.wins} vitórias</span>
               <span className="text-amber-400 font-black text-sm">
                 {myPosition.rankingScore.toLocaleString()} pontos

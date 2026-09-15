@@ -15,6 +15,7 @@ import { Leaderboard } from './pages/Leaderboard';
 import { Seasons } from './pages/Seasons';
 import { HistoryPage } from './pages/History';
 import { Profile } from './pages/Profile';
+import { PublicProfile } from './pages/PublicProfile';
 import { Boxes } from './pages/Boxes';
 import { Collections } from './pages/Collections';
 import { Progression } from './pages/Progression';
@@ -22,8 +23,9 @@ import { LevelUpModal } from './components/progression/LevelUpModal';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { currentUser, isAuthenticated } = useAuth();
   const { levelUpData, setLevelUpData } = useGameState();
+  const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState<string>(() => {
     // Check initial window location if user typed /register, /login, /boxes, /collections, /progression, /ranking or /play
@@ -41,6 +43,7 @@ const AppContent: React.FC = () => {
   // Keep state in sync with authentication status
   useEffect(() => {
     if (!isAuthenticated) {
+      setPublicProfileId(null);
       if (currentPage !== 'register' && currentPage !== 'login') {
         setCurrentPage('login');
       }
@@ -54,6 +57,12 @@ const AppContent: React.FC = () => {
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openPublicProfile = (userId: string) => {
+    if (!isAuthenticated || !currentUser) return;
+    setPublicProfileId(userId);
+    handleNavigate('public-profile');
   };
 
   // Public unauthenticated screens
@@ -87,7 +96,7 @@ const AppContent: React.FC = () => {
         return <Trades />;
       case 'ranking':
       case 'leaderboard':
-        return <Leaderboard />;
+        return <Leaderboard onOpenProfile={openPublicProfile} />;
       case 'season':
       case 'seasons':
         return <Seasons />;
@@ -95,6 +104,10 @@ const AppContent: React.FC = () => {
         return <HistoryPage />;
       case 'profile':
         return <Profile onNavigate={handleNavigate} />;
+      case 'public-profile':
+        return publicProfileId
+          ? <PublicProfile userId={publicProfileId} onBack={() => handleNavigate('ranking')} />
+          : <Leaderboard onOpenProfile={openPublicProfile} />;
       case 'progression':
       case 'progressao':
       case 'levels':

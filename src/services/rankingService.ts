@@ -1,6 +1,6 @@
 import { NexaUser } from '../types';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { mapProfileToNexaUser } from '../lib/supabaseMappers';
+import { isSupabaseConfigured } from '../lib/supabase';
+import { PublicProfileService } from './publicProfileService';
 import { EconomyService } from './economyService';
 import { authService } from './authService';
 
@@ -9,11 +9,11 @@ export interface RankingEntry {
   username: string;
   avatar: string;
   level: number;
-  xp: number;
+  xp?: number; // Offline only; never populated by the public RPC.
   wins: number;
   losses: number;
   rankingScore: number;
-  updatedAt: number;
+  updatedAt?: number; // Offline only.
   rank: number;
   title?: string;
   isCurrentUser: boolean;
@@ -73,61 +73,33 @@ export function sortRankingEntries(a: RankingEntry, b: RankingEntry): number {
 }
 
 class RankingServiceClass {
-  private cachedOnlineProfiles: NexaUser[] = [];
-  private isFetching = false;
+  private cachedOnlineRanking: GlobalRankingResult = { top100: [], myPosition: null, totalUsers: 0, all: [] };
+  private cachedUserId: string | undefined;
 
-  constructor() {
-    if (typeof window !== 'undefined' && isSupabaseConfigured()) {
-      this.fetchOnlineGlobalRanking().catch(() => {});
-    }
+  public async fetchOnlineGlobalRanking(currentUserId?: string, options: { offset?: number; search?: string } = {}): Promise<GlobalRankingResult> {
+    if (!isSupabaseConfigured()) return this.getLocalRanking(currentUserId);
+    if (!currentUserId) throw new Error('Sessão autenticada necessária para o ranking.');
+    const [page, own] = await Promise.all([
+      PublicProfileService.fetchRanking(currentUserId, options),
+      PublicProfileService.fetchRanking(currentUserId, { userId: currentUserId, limit: 1 }),
+    ]);
+    const mapEntry = (entry: (typeof page.entries)[number]): RankingEntry => ({
+      userId: entry.userId, username: entry.username, avatar: entry.avatar || '',
+      title: entry.title || '', level: entry.level, wins: entry.victories, losses: entry.defeats,
+      rankingScore: entry.rankingScore, rank: entry.rank, isCurrentUser: entry.userId === currentUserId,
+    });
+    const entries = page.entries.map(mapEntry);
+    const result = { top100: entries, myPosition: own.entries[0] ? mapEntry(own.entries[0]) : null,
+      totalUsers: Math.max(page.totalUsers, own.totalUsers), all: entries };
+    this.cachedUserId = currentUserId;
+    this.cachedOnlineRanking = result;
+    return result;
   }
 
-  /**
-   * Busca diretamente os perfis oficiais da tabela public.profiles no Supabase
-   * e ordena todos os jogadores globalmente (fonte única de verdade online).
-   */
-  public async fetchOnlineGlobalRanking(currentUserId?: string): Promise<GlobalRankingResult> {
-    if (isSupabaseConfigured()) {
-      try {
-        this.isFetching = true;
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('level', { ascending: false });
-
-        if (error) {
-          console.warn('[RankingService] Erro ao consultar public.profiles no Supabase:', error.message);
-        } else {
-          this.cachedOnlineProfiles = (data || []).map(mapProfileToNexaUser);
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new Event('nexa_ranking_updated'));
-          }
-          return this.computeRankingFromUsers(this.cachedOnlineProfiles, currentUserId);
-        }
-      } catch (err) {
-        console.warn('[RankingService] Exceção ao consultar ranking Supabase:', err);
-      } finally {
-        this.isFetching = false;
-      }
-      // Errors retain only the last remote snapshot (empty on first access).
-      // Never re-enter a getter that could initiate another request.
-      return this.computeRankingFromUsers(this.cachedOnlineProfiles, currentUserId);
-    }
-
-    return this.getLocalRanking(currentUserId);
-  }
-
-  /**
-   * Calcula o ranking global com os dados em cache do Supabase ou fallback offline.
-   */
   public getGlobalRanking(currentUserId?: string): GlobalRankingResult {
-    // Online reads are side-effect free, including an empty remote snapshot.
-    // The constructor and Leaderboard's existing poll initiate remote requests.
-    if (isSupabaseConfigured()) {
-      return this.computeRankingFromUsers(this.cachedOnlineProfiles, currentUserId);
-    }
-
-    return this.getLocalRanking(currentUserId);
+    if (!isSupabaseConfigured()) return this.getLocalRanking(currentUserId);
+    return currentUserId && currentUserId === this.cachedUserId ? this.cachedOnlineRanking
+      : { top100: [], myPosition: null, totalUsers: 0, all: [] };
   }
 
   private getLocalRanking(currentUserId?: string): GlobalRankingResult {
