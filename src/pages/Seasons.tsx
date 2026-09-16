@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useGameState } from '../contexts/GameStateContext';
 import { CURRENT_SEASON } from '../config/seasons';
-import { soundService } from '../services/soundService';
 import {
   Calendar,
   Sparkles,
@@ -16,63 +14,41 @@ import {
 
 export const Seasons: React.FC = () => {
   const { user } = useAuth();
-  const { notify } = useGameState();
 
-  const [claimedTiers, setClaimedTiers] = useState<number[]>([1]);
-  const [challenges, setChallenges] = useState(CURRENT_SEASON.challenges);
+  const challenges = CURRENT_SEASON.challenges;
 
-  // Compute current season tier based on user experience
+  // Temporada em modo de prévia durante os testes online.
+  // O progresso é exibido, mas recompensas ainda não são creditadas.
   const currentTier = Math.min(20, Math.max(1, Math.floor(user.level * 1.5)));
 
-  const handleClaimTier = (tierNum: number, rewardLabel: string) => {
-    if (claimedTiers.includes(tierNum)) return;
-    soundService.playVictory();
-    setClaimedTiers((prev) => [...prev, tierNum]);
-    notify({
-      type: 'SUCCESS',
-      message: `Recompensa do Nível ${tierNum} resgatada: ${rewardLabel}!`,
-    });
-  };
-
-  const handleClaimChallenge = (challengeId: string, rewardXp: number) => {
-    soundService.playVictory();
-    setChallenges((prev) =>
-      prev.map((c) => (c.id === challengeId ? { ...c, isCompleted: true } : c))
-    );
-    notify({
-      type: 'SUCCESS',
-      message: `Desafio cumprido! +${rewardXp} XP de Temporada creditados!`,
-    });
-  };
-
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-7 max-w-6xl mx-auto pb-10">
       {/* Banner */}
-      <div className="relative rounded-3xl overflow-hidden border border-cyan-500/30 bg-gradient-to-r from-[#0d131f] via-[#090b14] to-[#120a1c] p-6 sm:p-10 shadow-2xl">
+      <div className="relative rounded-[28px] overflow-hidden border border-cyan-400/20 bg-gradient-to-br from-[#0d1624] via-[#090d17] to-[#100b18] p-6 sm:p-9 shadow-[0_18px_60px_rgba(0,0,0,0.32)]">
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-wider">
               <Calendar className="w-4 h-4" /> {CURRENT_SEASON.editionLabel}
             </div>
-            <h1 className="font-heading text-3xl sm:text-5xl font-black text-white mt-1">
-              Temporada: {CURRENT_SEASON.name}
+            <h1 className="font-heading text-4xl sm:text-5xl font-black text-white mt-2 tracking-[-0.035em]">
+              Ciclo: {CURRENT_SEASON.name}
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-xl font-mono mt-2 leading-relaxed">
-              {CURRENT_SEASON.slogan}
+              {CURRENT_SEASON.slogan} Este ciclo é complementar à progressão permanente do piloto.
             </p>
 
             <div className="flex items-center gap-4 mt-4 text-xs font-mono">
               <span className="flex items-center gap-1.5 text-cyan-300">
                 <Clock className="w-4 h-4 text-cyan-400" />
-                Vigência: {CURRENT_SEASON.startDate} até {CURRENT_SEASON.endDate}
+                Ciclo ativo: {CURRENT_SEASON.startDate} — {CURRENT_SEASON.endDate}
               </span>
               <span className="text-slate-600">•</span>
-              <span className="text-purple-300">Passe Nível {currentTier} / {CURRENT_SEASON.maxLevel}</span>
+              <span className="text-purple-300">Progresso {currentTier} / {CURRENT_SEASON.maxLevel}</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/30 text-center shrink-0 w-full md:w-auto">
-            <span className="text-[10px] font-mono text-slate-400 uppercase block">Seu Progresso Atual</span>
+          <div className="p-5 rounded-2xl bg-black/30 backdrop-blur-sm border border-cyan-400/20 text-center shrink-0 w-full md:w-auto">
+            <span className="text-[10px] font-mono text-slate-400 uppercase block">Progresso do Ciclo</span>
             <span className="font-heading font-black text-3xl text-cyan-400">
               Nv. {currentTier}
             </span>
@@ -87,27 +63,26 @@ export const Seasons: React.FC = () => {
       </div>
 
       {/* Season Pass Tracks */}
-      <div className="rounded-2xl bg-[#0b0b12] border border-white/10 p-6">
+      <div className="rounded-[24px] bg-[#0a0d14] border border-white/10 p-5 sm:p-6 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-heading text-xl font-bold text-white flex items-center gap-2">
             <Gift className="w-5 h-5 text-cyan-400" />
-            <span>Trilha de Recompensas do Passe de Temporada</span>
+            <span>Trilha de Recompensas</span>
           </h3>
-          <span className="text-xs font-mono text-slate-400">
-            {claimedTiers.length} de {CURRENT_SEASON.maxLevel} níveis resgatados
+          <span className="text-xs font-mono text-amber-300">
+            Prévia de recompensas — resgate ainda não disponível
           </span>
         </div>
 
         {/* Horizontal scrollable track */}
-        <div className="flex gap-4 overflow-x-auto pb-4 pt-2">
+        <div className="flex gap-3 overflow-x-auto pb-4 pt-2 snap-x">
           {CURRENT_SEASON.rewards.map((reward) => {
             const isUnlocked = currentTier >= reward.level;
-            const isClaimed = claimedTiers.includes(reward.level);
 
             return (
               <div
                 key={reward.level}
-                className={`min-w-[175px] rounded-2xl p-4 border flex flex-col justify-between transition-all ${
+                className={`min-w-[175px] rounded-2xl p-4 border flex flex-col justify-between transition-all snap-start ${
                   isUnlocked
                     ? 'bg-white/5 border-cyan-500/40 text-white'
                     : 'bg-black/40 border-white/5 opacity-60 text-slate-500'
@@ -118,10 +93,8 @@ export const Seasons: React.FC = () => {
                     <span className="font-heading font-black text-sm text-cyan-400">
                       Nível {reward.level}
                     </span>
-                    {isClaimed ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    ) : isUnlocked ? (
-                      <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                    {isUnlocked ? (
+                      <Sparkles className="w-4 h-4 text-amber-400" />
                     ) : (
                       <Lock className="w-4 h-4 text-slate-600" />
                     )}
@@ -129,7 +102,7 @@ export const Seasons: React.FC = () => {
 
                   <div className="p-3 rounded-xl bg-slate-950/70 border border-white/5 mb-3 text-center">
                     <span className="text-[10px] font-mono text-slate-400 block uppercase">
-                      {reward.isPremium ? 'Passe Elite' : 'Gratuito'}
+                      {reward.isPremium ? 'Elite' : 'Gratuito'}
                     </span>
                     <span className="font-heading font-bold text-xs text-white block mt-1">
                       {reward.name}
@@ -137,19 +110,15 @@ export const Seasons: React.FC = () => {
                   </div>
                 </div>
 
-                <button
-                  disabled={!isUnlocked || isClaimed}
-                  onClick={() => handleClaimTier(reward.level, reward.name)}
-                  className={`w-full py-2 rounded-xl text-xs font-mono font-bold transition-all ${
-                    isClaimed
-                      ? 'bg-white/5 text-slate-500 cursor-default'
-                      : isUnlocked
-                      ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
-                      : 'bg-white/5 text-slate-600 cursor-not-allowed'
+                <div
+                  className={`w-full py-2 rounded-xl text-xs font-mono font-bold text-center ${
+                    isUnlocked
+                      ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                      : 'bg-white/5 text-slate-600'
                   }`}
                 >
-                  {isClaimed ? 'Resgatado' : isUnlocked ? 'Resgatar' : 'Bloqueado'}
-                </button>
+                  {isUnlocked ? 'Recompensa em breve' : 'Bloqueado'}
+                </div>
               </div>
             );
           })}
@@ -157,14 +126,14 @@ export const Seasons: React.FC = () => {
       </div>
 
       {/* Season Challenges */}
-      <div className="rounded-2xl bg-[#0b0b12] border border-white/10 p-6">
+      <div className="rounded-[24px] bg-[#0a0d14] border border-white/10 p-5 sm:p-6 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-heading text-xl font-bold text-white flex items-center gap-2">
             <Trophy className="w-5 h-5 text-amber-400" />
-            <span>Missões e Desafios de Temporada</span>
+            <span>Missões do Ciclo</span>
           </h3>
           <span className="text-xs font-mono text-slate-400">
-            Conclua missões para acelerar seu progresso
+            Missões em teste — recompensas serão ativadas depois
           </span>
         </div>
 
@@ -175,13 +144,13 @@ export const Seasons: React.FC = () => {
             return (
               <div
                 key={c.id}
-                className="p-4 rounded-xl bg-white/5 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="p-4 rounded-2xl bg-white/[0.035] border border-white/[0.07] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-heading font-bold text-sm text-white">{c.title}</span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">
-                      +{c.xpReward} XP
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/40 border border-amber-500/20 text-amber-300">
+                      Recompensa em breve
                     </span>
                     <span className="text-[10px] font-mono text-slate-500 uppercase">
                       Categoria: {c.category}
@@ -205,17 +174,10 @@ export const Seasons: React.FC = () => {
                 </div>
 
                 <div className="shrink-0">
-                  {c.isCompleted ? (
+                  {isDone ? (
                     <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 font-bold px-3 py-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30">
-                      <CheckCircle2 className="w-4 h-4" /> Concluído
+                      <CheckCircle2 className="w-4 h-4" /> Missão concluída
                     </div>
-                  ) : isDone ? (
-                    <button
-                      onClick={() => handleClaimChallenge(c.id, c.xpReward)}
-                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-mono font-bold transition-all shadow-[0_0_12px_rgba(245,158,11,0.3)]"
-                    >
-                      Reivindicar
-                    </button>
                   ) : (
                     <span className="text-xs font-mono text-slate-500 px-3 py-2 rounded-xl bg-white/5">
                       Em Andamento
