@@ -72,6 +72,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     null;
 
   const userItems = assets.filter((a) => a.ownerId === user.id);
+  const userCards = userItems.filter((a) => a.type === 'Card');
+  const hasBattleCard = userCards.length > 0;
   const myBoxes = boxes.filter((b) => b.ownerId === user.id);
   const hasUnopenedRecruitBox = myBoxes.some((b) => b.boxType === 'RECRUIT');
   const distinctGuardiansCards = new Set(
@@ -126,11 +128,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1">
               <button
-                onClick={() => onNavigate('play')}
+                onClick={() => onNavigate(hasBattleCard ? 'play' : 'boxes')}
                 className="px-6 py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all shadow-[0_0_28px_rgba(34,211,238,0.22)] flex items-center gap-2.5 hover:-translate-y-0.5"
               >
-                <Swords className="w-5 h-5" />
-                <span>Entrar na Arena</span>
+                {hasBattleCard ? (
+                  <Swords className="w-5 h-5" />
+                ) : (
+                  <PackageOpen className="w-5 h-5" />
+                )}
+                <span>{hasBattleCard ? 'Entrar na Arena' : 'Adquirir primeira carta'}</span>
               </button>
 
               <button
