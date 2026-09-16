@@ -15,13 +15,8 @@ import { SellModal } from '../components/modals/SellModal';
 import {
   ShoppingBag,
   Search,
-  Filter,
   ArrowUpDown,
   Tag,
-  Zap,
-  TrendingUp,
-  Coins,
-  Check,
   AlertCircle,
 } from 'lucide-react';
 
@@ -97,18 +92,20 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Top Header & Market Metrics */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Market Command Header */}
+      <section className="relative overflow-hidden rounded-2xl border border-amber-500/15 bg-gradient-to-br from-[#100d08] via-[#090a0f] to-[#07080c] p-5 sm:p-6">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-amber-500/[0.07] blur-3xl" />
+        <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-wider">
-            <ShoppingBag className="w-4 h-4" /> Mercado P2P Descentralizado
+          <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-amber-400 uppercase tracking-[0.2em]">
+            <ShoppingBag className="w-4 h-4" /> Mercado // Exchange
           </div>
-          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-1">
+          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-2 tracking-tight">
             Marketplace NEXA
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">
-            Compre e venda Cards diretamente entre jogadores. Taxa de corretagem de 2% para manutenção do ecossistema.
+          <p className="text-xs sm:text-sm text-slate-400 font-mono mt-1.5 max-w-2xl leading-relaxed">
+            Negocie Cards diretamente entre jogadores e acompanhe os principais indicadores do mercado.
           </p>
         </div>
 
@@ -116,35 +113,36 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSellPickerOpen(true)}
-            className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-heading font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(245,158,11,0.35)] flex items-center gap-2 hover:scale-105"
+            className="px-5 py-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-200 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all flex items-center gap-2 hover:-translate-y-0.5"
           >
             <Tag className="w-4 h-4" />
             <span>Anunciar Item Meu</span>
           </button>
         </div>
-      </div>
+        </div>
+      </section>
 
       {/* Market Statistics Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-[#090910] border border-white/10 font-mono text-xs">
-        <div className="p-2 border-r border-white/5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl bg-[#090a0f] border border-white/[0.08] font-mono text-xs overflow-hidden">
+        <div className="p-4 border-r border-white/[0.06]">
           <span className="text-slate-500 uppercase text-[10px] block">Piso do Mercado</span>
           <span className="font-bold text-base text-amber-400">
             {formatEconomicValue(marketStats.currentFloorPrice)} NXA
           </span>
         </div>
-        <div className="p-2 sm:border-r border-white/5">
+        <div className="p-4 border-b sm:border-b-0 sm:border-r border-white/[0.06]">
           <span className="text-slate-500 uppercase text-[10px] block">Última Venda</span>
           <span className="font-bold text-base text-cyan-400">
             {formatEconomicValue(marketStats.lastSalePrice)} NXA
           </span>
         </div>
-        <div className="p-2 border-r border-white/5">
+        <div className="p-4 border-r border-white/[0.06]">
           <span className="text-slate-500 uppercase text-[10px] block">Volume Global</span>
           <span className="font-bold text-base text-purple-400">
             {formatEconomicValue(marketStats.totalVolumeNXA)} NXA
           </span>
         </div>
-        <div className="p-2">
+        <div className="p-4">
           <span className="text-slate-500 uppercase text-[10px] block">Anúncios Ativos</span>
           <span className="font-bold text-base text-slate-200">
             {filteredListings.length} disponíveis
@@ -153,7 +151,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
       </div>
 
       {/* Search & Filters Controls */}
-      <div className="space-y-4">
+      <div className="space-y-3 rounded-2xl border border-white/[0.07] bg-[#090a0f] p-3">
         <div className="flex flex-col md:flex-row gap-3">
           {/* Search bar */}
           <div className="relative flex-1">
@@ -163,7 +161,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome do item, descrição ou vendedor..."
-              className="w-full bg-[#0d0d15] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-cyan-400"
+              className="w-full bg-black/25 border border-white/[0.07] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 font-mono focus:outline-none focus:border-amber-400/40"
             />
           </div>
 
@@ -173,7 +171,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-[#0d0d15] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-cyan-400"
+              className="bg-black/25 border border-white/[0.07] rounded-xl px-3 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-amber-400/40"
             >
               <option value="recent">Mais Recentes</option>
               <option value="price_asc">Menor Preço</option>
@@ -223,7 +221,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
 
       {/* Listings Grid */}
       {filteredListings.length === 0 ? (
-        <div className="py-20 text-center rounded-3xl bg-[#0a0a10] border border-dashed border-white/10 p-8">
+        <div className="py-20 text-center rounded-2xl bg-[#090a0f] border border-dashed border-white/[0.09] p-8">
           <ShoppingBag className="w-12 h-12 text-slate-600 mx-auto mb-3" />
           <h4 className="font-heading text-lg font-bold text-white">Nenhum item encontrado</h4>
           <p className="text-xs text-slate-400 font-mono mt-1 max-w-sm mx-auto">
@@ -250,9 +248,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
             return (
               <div
                 key={listing.id}
-                className={`flex flex-col rounded-2xl overflow-hidden border transition-all duration-300 backdrop-blur-md bg-[#0c0c14] ${
+                className={`flex flex-col rounded-2xl overflow-hidden border transition-all duration-300 bg-[#090a0f] ${
                   rarity.border
-                } ${rarity.borderHover} hover:scale-[1.015] shadow-lg`}
+                } ${rarity.borderHover} hover:-translate-y-0.5`}
               >
                 {/* Visual Image */}
                 <div
@@ -264,7 +262,11 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
                     alt={asset.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c14] via-transparent to-black/30" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090a0f] via-transparent to-black/25" />
+                  <div
+                    className="absolute inset-x-0 bottom-0 h-16 opacity-30 pointer-events-none"
+                    style={{ background: `linear-gradient(to top, ${rarity.color}45, transparent)` }}
+                  />
 
                   <div className="absolute top-2.5 left-2.5">
                     <RarityBadge rarity={asset.rarity} size="sm" />
@@ -305,10 +307,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Price & Action Button */}
-                  <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+                  <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
                     <div>
                       <span className="text-[10px] font-mono text-slate-500 uppercase block">Preço</span>
-                      <span className="font-heading text-lg font-black text-cyan-300">
+                      <span className="font-heading text-lg font-black text-amber-300">
                         {formatEconomicValue(listing.price)} <span className="text-xs font-mono">NXA</span>
                       </span>
                     </div>
@@ -324,7 +326,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
                     ) : (
                       <button
                         onClick={() => setBuyingListing(listing)}
-                        className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading font-black text-xs uppercase tracking-wider transition-colors shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                        className="px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/35 text-amber-200 font-heading font-black text-xs uppercase tracking-wider transition-colors"
                       >
                         Comprar
                       </button>
@@ -340,12 +342,12 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
       {/* Buy Confirmation Modal */}
       {buyingListing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md rounded-2xl bg-[#0d0d16] border border-cyan-500/40 p-6 shadow-2xl">
+          <div className="relative w-full max-w-md rounded-2xl bg-[#0a0b10] border border-amber-500/30 p-6 shadow-2xl">
             <h3 className="font-heading text-xl font-bold text-white mb-1">
-              Confirmar Aquisição P2P
+              Confirmar Aquisição
             </h3>
             <p className="text-xs text-slate-400 font-mono mb-4">
-              A transação é validada e executada de forma atômica no livro-razão.
+              Revise os dados da negociação antes de confirmar a compra.
             </p>
 
             <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 mb-4">
@@ -404,7 +406,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
               <button
                 onClick={() => handleConfirmBuy(buyingListing)}
                 disabled={marketplaceBusy}
-                className="flex-1 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-mono text-xs font-bold transition-colors shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                className="flex-1 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/35 disabled:bg-slate-800 disabled:text-slate-500 disabled:border-white/5 text-amber-200 font-mono text-xs font-bold transition-colors"
               >
                 {marketplaceBusy ? 'Confirmando…' : 'Confirmar Compra'}
               </button>
@@ -416,12 +418,12 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
       {/* Select Item To Sell Modal */}
       {sellPickerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl bg-[#0c0c16] border border-amber-500/40 p-6 shadow-2xl">
+          <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl bg-[#0a0b10] border border-amber-500/30 p-6 shadow-2xl">
             <h3 className="font-heading text-xl font-bold text-white mb-1">
-              Escolha um Ativo para Anunciar
+              Selecionar Card para Anúncio
             </h3>
             <p className="text-xs text-slate-400 font-mono mb-4">
-              Apenas ativos livres (IDLE) que você possui podem ser listados no mercado.
+              Selecione um Card elegível e disponível no seu inventário para criar um anúncio.
             </p>
 
             <div className="flex-1 overflow-y-auto space-y-2 pr-1 mb-4">
@@ -437,7 +439,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
                       setSellingAsset(item);
                       setSellPickerOpen(false);
                     }}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-amber-950/30 border border-white/5 hover:border-amber-500/40 transition-all cursor-pointer flex items-center justify-between"
+                    className="p-3 rounded-xl bg-white/[0.025] hover:bg-amber-500/[0.05] border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
                       <CardImage asset={item} src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />

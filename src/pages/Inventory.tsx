@@ -17,12 +17,6 @@ import {
   Package,
   PackageOpen,
   Search,
-  Filter,
-  ArrowUpDown,
-  Sparkles,
-  Zap,
-  Shield,
-  Layers,
   Repeat,
   CheckCircle2,
   Lock,
@@ -117,47 +111,51 @@ craftCardWithFragments,
   const totalPower = cardPowers.some(power => power === null) ? null : cardPowers.reduce<number>((sum, power) => sum + power!, 0);
 
   return (
-    <div className="space-y-8">
-      {/* Top Header & Summary */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Arsenal Command Header */}
+      <section className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#0b1018] via-[#090b11] to-[#07080c] p-5 sm:p-6">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-cyan-500/[0.07] blur-3xl" />
+        <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-wider">
-            <Package className="w-4 h-4" /> Gestão de Ativos Digitais
+          <div className="flex items-center gap-2 text-[10px] font-mono text-cyan-400 uppercase tracking-[0.2em]">
+            <Package className="w-4 h-4" /> Arsenal // Inventário
           </div>
-          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-1">
-            Meu Inventário & Arsenal
+          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-2 tracking-tight">
+            Cofre de Ativos
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">
-            Gerencie suas cartas, caixas, fragmentos e equipamentos colecionáveis.
+          <p className="text-xs text-slate-400 font-mono mt-1.5 max-w-2xl">
+            Consulte, organize e gerencie os ativos vinculados ao seu piloto.
           </p>
         </div>
 
-        {/* Quick Power summary */}
-        <div className="flex items-center gap-3">
-          <div className="px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 font-mono text-xs flex items-center gap-3">
-            <div>
-              <span className="text-slate-500 uppercase text-[10px] block">Poder das Cartas</span>
-              <span className="font-bold text-base text-cyan-300">{totalPower === null ? 'Indisponível' : `${totalPower.toLocaleString('pt-BR')} PWR`}</span>
-            </div>
-            <div className="w-px h-8 bg-white/10" />
-            <div>
-              <span className="text-slate-500 uppercase text-[10px] block">Coleção</span>
-              <span className="font-bold text-base text-white">{myAssets.length} Ativos</span>
-            </div>
+        {/* Quick arsenal telemetry */}
+        <div className="grid grid-cols-2 gap-2 sm:min-w-[330px]">
+          <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] px-4 py-3">
+            <span className="block text-[9px] font-mono uppercase tracking-[0.16em] text-slate-500">Potência registrada</span>
+            <span className="mt-1 block font-mono text-lg font-black text-cyan-300">
+              {totalPower === null ? '—' : totalPower.toLocaleString('pt-BR')}
+            </span>
+            <span className="text-[9px] font-mono uppercase tracking-wider text-cyan-700">PWR em cartas</span>
+          </div>
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3">
+            <span className="block text-[9px] font-mono uppercase tracking-[0.16em] text-slate-500">Ativos registrados</span>
+            <span className="mt-1 block font-mono text-lg font-black text-white">{myAssets.length}</span>
+            <span className="text-[9px] font-mono uppercase tracking-wider text-slate-600">no cofre</span>
           </div>
         </div>
-      </div>
+        </div>
+      </section>
 
-      {/* Tabs */}
-      <div className="border-b border-white/10 flex items-center gap-2 overflow-x-auto pb-px">
+      {/* Asset navigation */}
+      <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl border border-white/[0.07] bg-[#090b10] p-1.5">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`pb-3 px-3.5 font-heading font-bold text-sm tracking-wide transition-all border-b-2 whitespace-nowrap flex items-center gap-2 ${
+            className={`rounded-lg px-3.5 py-2 font-heading font-bold text-xs tracking-wide transition-all whitespace-nowrap flex items-center gap-2 border ${
               activeTab === tab.id
-                ? 'border-cyan-400 text-cyan-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300 shadow-[inset_0_0_18px_rgba(6,182,212,0.04)]'
+                : 'border-transparent text-slate-500 hover:bg-white/[0.035] hover:text-slate-200'
             }`}
           >
             <span>{tab.label}</span>
@@ -174,16 +172,16 @@ craftCardWithFragments,
         ))}
       </div>
 
-      {/* Filter and Search bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Arsenal controls */}
+      <div className="flex flex-col sm:flex-row gap-2 rounded-xl border border-white/[0.07] bg-[#090b10]/80 p-2">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filtrar seu arsenal por nome ou atributo..."
-            className="w-full bg-[#0d0d15] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-cyan-400"
+            placeholder="Buscar por nome ou descrição..."
+            className="w-full bg-[#07090d] border border-white/[0.08] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 font-mono focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/10"
           />
         </div>
 
@@ -192,7 +190,7 @@ craftCardWithFragments,
           <select
             value={selectedRarity}
             onChange={(e) => setSelectedRarity(e.target.value)}
-            className="bg-[#0d0d15] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-cyan-400"
+            className="bg-[#07090d] border border-white/[0.08] rounded-lg px-3 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-cyan-500/60"
           >
             <option value="ALL">Todas Raridades</option>
             <option value="Comum">Comum</option>
@@ -207,7 +205,7 @@ craftCardWithFragments,
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="bg-[#0d0d15] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-cyan-400"
+            className="bg-[#07090d] border border-white/[0.08] rounded-lg px-3 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-cyan-500/60"
           >
             <option value="power_desc">Maior Poder</option>
             <option value="power_asc">Menor Poder</option>
@@ -228,7 +226,7 @@ craftCardWithFragments,
                 <span>Minhas Caixas de Suprimento</span>
               </h3>
               <p className="text-xs font-mono text-slate-400">
-                Abra suas caixas conquistadas em combate ou adquiridas com NEX.
+                Consulte e abra as caixas atualmente registradas no seu inventário.
               </p>
             </div>
             <button
@@ -244,7 +242,7 @@ craftCardWithFragments,
               <PackageOpen className="w-12 h-12 text-slate-600 mx-auto mb-3" />
               <h4 className="font-heading text-lg font-bold text-white">Nenhuma caixa no inventário</h4>
               <p className="text-xs text-slate-400 font-mono mt-1 max-w-sm mx-auto">
-                Vença batalhas na Arena para receber drops de Caixas Básicas ou visite a central de caixas.
+                Seu inventário não possui caixas disponíveis no momento. Consulte a Central de Caixas para ver as opções atuais.
               </p>
               <div className="flex items-center justify-center gap-3 mt-4">
                 <button
@@ -343,7 +341,7 @@ craftCardWithFragments,
                 <span>Fragmentos de Carta</span>
               </h3>
               <p className="text-xs font-mono text-slate-400">
-                Cartas repetidas em caixas são convertidas em fragmentos. Reúna 100 para sintetizar uma nova carta.
+                Acompanhe os fragmentos registrados e o progresso necessário para cada síntese disponível.
               </p>
             </div>
           </div>
@@ -353,7 +351,7 @@ craftCardWithFragments,
               <Repeat className="w-12 h-12 text-slate-600 mx-auto mb-3" />
               <h4 className="font-heading text-lg font-bold text-white">Nenhum fragmento acumulado</h4>
               <p className="text-xs text-slate-400 font-mono mt-1 max-w-sm mx-auto">
-                Quando você obtém um personagem que já possui ao abrir caixas de suprimento, ele é automaticamente convertido em fragmentos!
+                Nenhum fragmento está registrado para este piloto no momento.
               </p>
             </div>
           ) : (
@@ -446,7 +444,7 @@ craftCardWithFragments,
               <Package className="w-12 h-12 text-slate-600 mx-auto mb-3" />
               <h4 className="font-heading text-lg font-bold text-white">Nenhum ativo nesta categoria</h4>
               <p className="text-xs text-slate-400 font-mono mt-1 max-w-sm mx-auto">
-                Vença batalhas na Arena para conquistar novas relíquias ou adquira itens no Marketplace.
+                Nenhum ativo corresponde à categoria ou aos filtros selecionados.
               </p>
               <button
                 onClick={() => onNavigate('play')}
@@ -456,7 +454,7 @@ craftCardWithFragments,
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-4">
               {filteredAssets.map((asset) => (
                 <AssetCard
                   key={asset.id}

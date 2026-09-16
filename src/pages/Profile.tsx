@@ -78,31 +78,35 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Profile Card Header */}
-      <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-[#0c0c16] shadow-2xl">
+      <div className="relative rounded-2xl overflow-hidden border border-cyan-500/15 bg-[#090a0f]">
         {/* Cover Banner */}
-        <div className="h-44 bg-gradient-to-r from-cyan-900/60 via-purple-900/40 to-slate-900 relative">
-          <div className="absolute inset-0 bg-grid-white/[0.05]" />
+        <div className="h-32 sm:h-36 bg-gradient-to-r from-cyan-950/70 via-[#111327] to-purple-950/45 relative">
+          <div className="absolute inset-0 bg-grid-white/[0.035]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#090a0f] via-transparent to-transparent" />
+          <div className="absolute left-6 top-5 flex items-center gap-2 text-[9px] font-mono font-bold uppercase tracking-[0.2em] text-cyan-400/80">
+            <Shield className="w-3.5 h-3.5" /> Comunidade // Identidade do Piloto
+          </div>
         </div>
 
         {/* User Identity Row */}
-        <div className="px-6 sm:px-8 pb-8 pt-0 relative">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-16 mb-6">
+        <div className="px-5 sm:px-7 pb-6 pt-0 relative">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-12 mb-5">
             <div className="flex items-end gap-4">
               <div className="relative">
                 <img
                   src={user.avatar}
                   alt={user.username}
-                  className="w-28 h-28 rounded-2xl object-cover border-4 border-[#0c0c16] shadow-2xl bg-slate-950"
+                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-4 border-[#090a0f] bg-slate-950 shadow-[0_0_24px_rgba(6,182,212,0.10)]"
                 />
-                <span className="absolute bottom-1 right-1 px-2 py-0.5 rounded-md bg-cyan-500 text-slate-950 font-mono font-bold text-[10px]">
+                <span className="absolute bottom-1 right-1 px-2 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-400/35 text-cyan-200 font-mono font-bold text-[9px]">
                   Nv. {user.level}
                 </span>
               </div>
 
               <div>
-                <h1 className="font-heading text-2xl sm:text-3xl font-black text-white">
+                <h1 className="font-heading text-2xl sm:text-3xl font-black text-white tracking-tight">
                   {user.username}
                 </h1>
                 <span className="text-xs font-mono text-cyan-400 font-semibold block mt-0.5">
@@ -121,7 +125,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
                 }
                 setIsEditing(!isEditing);
               }}
-              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-300 transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-white/[0.025] hover:bg-cyan-500/[0.06] border border-white/[0.07] hover:border-cyan-500/20 text-xs font-mono text-slate-300 transition-colors flex items-center gap-1.5"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>{isEditing ? 'Cancelar Edição' : 'Editar Perfil'}</span>
@@ -130,43 +134,43 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
 
           {/* Edit Form */}
           {isEditing ? (
-            <form onSubmit={handleSaveProfile} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4 mb-6">
+            <form onSubmit={handleSaveProfile} className="p-4 rounded-xl bg-black/25 border border-cyan-500/10 space-y-4 mb-5">
               <fieldset disabled={isSaving} className="space-y-4">
               <div>
                 <label htmlFor="profile-avatar" className="block text-xs font-mono text-slate-400 uppercase mb-1">URL do avatar</label>
                 <input id="profile-avatar" type="url" value={avatar}
                   onChange={(e) => setAvatar(e.target.value)} placeholder="https://..."
-                  className="w-full bg-[#161624] border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
+                  className="w-full bg-black/30 border border-white/[0.07] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500/35" />
                 <p className="text-xs text-slate-400">Deixe vazio para manter o avatar atual.</p>
               </div>
               <div>
                 <label className="block text-xs font-mono text-slate-400 uppercase mb-1">
-                  Título de Honra do Piloto:
+                  Título do Piloto:
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-[#161624] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-black/30 border border-white/[0.07] rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500/35"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-mono text-slate-400 uppercase mb-1">
-                  Biografia / Manifesto de Combate:
+                  Biografia:
                 </label>
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={2}
-                  className="w-full bg-[#161624] border border-white/10 rounded-xl px-3 py-2 text-xs font-sans text-white focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-black/30 border border-white/[0.07] rounded-xl px-3 py-2 text-xs font-sans text-white focus:outline-none focus:border-cyan-500/35"
                 />
               </div>
 
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-mono text-xs font-bold flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/35 text-cyan-200 font-mono text-xs font-bold flex items-center gap-1.5"
                 >
                   <Check className="w-4 h-4" /> {isSaving ? 'Salvando...' : 'Salvar Alterações'}
                 </button>
@@ -180,7 +184,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
           )}
 
           {/* XP Progression Bar & Next Rewards */}
-          <div className="p-5 rounded-2xl bg-slate-950/80 border border-cyan-500/30 space-y-4">
+          <div className="p-4 rounded-xl bg-black/30 border border-cyan-500/15 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
               <span className="text-slate-300 font-bold flex items-center gap-1.5">
                 <Award className="w-4 h-4 text-cyan-400" />
@@ -191,9 +195,9 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
               </span>
             </div>
 
-            <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden border border-white/10 p-0.5">
+            <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/[0.07] p-0.5">
               <div
-                className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+                className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full transition-all duration-500"
                 style={{ width: `${xpPercentage}%` }}
               />
             </div>
@@ -234,8 +238,8 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
       </div>
 
       {/* Combat & Arsenal Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-[#0b0b12] border border-white/10">
+      <div className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl bg-[#090a0f] border border-white/[0.08] overflow-hidden">
+        <div className="p-4 border-r border-b sm:border-b-0 border-white/[0.06]">
           <div className="flex items-center justify-between text-slate-400 text-xs font-mono">
             <span>Poder Total</span>
             <Zap className="w-4 h-4 text-cyan-400" />
@@ -245,7 +249,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
           </span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#0b0b12] border border-white/10">
+        <div className="p-4 border-b sm:border-b-0 sm:border-r border-white/[0.06]">
           <div className="flex items-center justify-between text-slate-400 text-xs font-mono">
             <span>Vitórias Arena</span>
             <Swords className="w-4 h-4 text-emerald-400" />
@@ -255,7 +259,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
           </span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#0b0b12] border border-white/10">
+        <div className="p-4 border-r border-white/[0.06]">
           <div className="flex items-center justify-between text-slate-400 text-xs font-mono">
             <span>Taxa de Vitória</span>
             <Trophy className="w-4 h-4 text-amber-400" />
@@ -265,7 +269,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
           </span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#0b0b12] border border-white/10">
+        <div className="p-4">
           <div className="flex items-center justify-between text-slate-400 text-xs font-mono">
             <span>Total de Ativos</span>
             <Package className="w-4 h-4 text-purple-400" />
@@ -277,17 +281,17 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
       </div>
 
       {/* My Showcase Top Items */}
-      <div className="rounded-2xl bg-[#0b0b12] border border-white/10 p-6">
-        <h3 className="font-heading text-xl font-bold text-white mb-4 flex items-center gap-2">
+      <div className="rounded-2xl bg-[#090a0f] border border-white/[0.08] p-5">
+        <h3 className="font-heading text-lg font-bold text-white mb-4 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-cyan-400" />
-          <span>Vitrine de Ativos do Piloto</span>
+          <span>Destaques do Arsenal</span>
         </h3>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl bg-[#090a0f] border border-white/[0.08] overflow-hidden">
           {userItems.slice(0, 4).map((item) => (
             <div
               key={item.id}
-              className="p-3 rounded-xl bg-white/5 border border-white/5 flex flex-col justify-between gap-2"
+              className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.06] flex flex-col justify-between gap-2 hover:border-cyan-500/15 transition-colors"
             >
               <div className="aspect-square rounded-lg overflow-hidden bg-slate-950">
                 <CardImage asset={item} src={item.image} alt={item.name} className="w-full h-full object-cover" />
@@ -307,10 +311,10 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
       </div>
 
       {/* User's Personal Transactions History */}
-      <div className="rounded-2xl bg-[#0b0b12] border border-white/10 p-6">
-        <h3 className="font-heading text-xl font-bold text-white mb-4 flex items-center gap-2">
+      <div className="rounded-2xl bg-[#090a0f] border border-white/[0.08] p-5">
+        <h3 className="font-heading text-lg font-bold text-white mb-4 flex items-center gap-2">
           <History className="w-5 h-5 text-purple-400" />
-          <span>Extrato Financeiro Pessoal</span>
+          <span>Movimentações Recentes</span>
         </h3>
 
         {myTransactions.length === 0 ? (
@@ -323,7 +327,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
               return (
                 <div
                   key={tx.id}
-                  className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between text-xs font-mono"
+                  className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.06] flex items-center justify-between text-xs font-mono"
                 >
                   <div className="flex items-center gap-3">
                     <CardImage asset={tx.itemSnapshot}

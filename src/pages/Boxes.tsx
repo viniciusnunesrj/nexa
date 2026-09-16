@@ -124,35 +124,35 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
   });
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Header Banner */}
-      <div className="relative rounded-3xl overflow-hidden border border-cyan-500/30 bg-gradient-to-r from-[#0b0c16] via-[#101024] to-[#0a0a14] p-6 sm:p-8 shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Supply Command Header */}
+      <section className="relative rounded-2xl overflow-hidden border border-cyan-500/15 bg-gradient-to-br from-[#0b1018] via-[#090b11] to-[#07080c] p-5 sm:p-6">
+        <div className="absolute -top-24 right-0 w-80 h-80 bg-cyan-500/[0.07] rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-28 left-1/3 w-72 h-72 bg-purple-500/[0.06] rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-cyan-400">
               <PackageOpen className="w-3.5 h-3.5" />
-              <span>SISTEMA DE CAIXAS & RECOMPENSAS NEXA</span>
+              <span>Central de Suprimentos // Nexus</span>
             </div>
-            <h1 className="font-heading text-3xl sm:text-5xl font-black text-white tracking-tight">
+            <h1 className="font-heading text-3xl sm:text-4xl font-black text-white tracking-tight mt-2">
               Caixas de Suprimento
             </h1>
-            <p className="text-slate-300 text-sm max-w-2xl leading-relaxed">
-              Adquira pacotes táticos e caixas temáticas de coleções. Economia interna atômica 
-              alimentada puramente por NEX obtido em batalhas, síntese e missões.
+            <p className="text-slate-400 text-xs sm:text-sm max-w-2xl leading-relaxed mt-1.5">
+              Adquira e abra suprimentos disponíveis, consulte garantias e acompanhe o histórico de operações.
             </p>
           </div>
 
           {/* Quick Counter Badges & Test Suite Button */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="px-4 py-3 rounded-2xl bg-black/60 border border-white/10 font-mono text-center">
+            <div className="px-4 py-3 rounded-xl bg-black/35 border border-white/[0.07] font-mono text-center">
               <span className="text-[10px] text-slate-400 block uppercase">Caixas Disponíveis</span>
               <span className="font-heading text-2xl font-black text-cyan-400">
                 {totalBoxes}
               </span>
             </div>
 
-            <div className="px-4 py-3 rounded-2xl bg-black/60 border border-amber-500/30 font-mono text-center shadow-lg shadow-amber-500/10">
+            <div className="px-4 py-3 rounded-xl bg-amber-500/[0.04] border border-amber-500/20 font-mono text-center">
               <span className="text-[10px] text-slate-400 block uppercase">Seu Saldo NEX</span>
               <span className="font-heading text-2xl font-black text-amber-400 flex items-center justify-center gap-1">
                 <Coins className="w-5 h-5 text-amber-400" />
@@ -165,7 +165,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                 setTestModalOpen(true);
                 if (!testReport) handleRunTests();
               }}
-              className="px-4 py-3 rounded-2xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/40 font-mono text-center transition-all flex flex-col items-center justify-center gap-1 group"
+              className="px-3 py-2.5 rounded-xl bg-white/[0.025] hover:bg-purple-500/[0.07] border border-white/[0.07] hover:border-purple-500/25 font-mono text-center transition-all flex flex-col items-center justify-center gap-0.5 group opacity-70 hover:opacity-100"
               title="Executar bateria automatizada de testes do sistema"
             >
               <span className="text-[10px] text-purple-300 uppercase font-bold flex items-center gap-1">
@@ -180,15 +180,15 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
         </div>
 
         {/* Pity Tracker Bar */}
-        <div className="mt-6 pt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="mt-5 pt-4 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-purple-950/60 border border-purple-500/30 text-purple-300">
+            <div className="p-2 rounded-lg bg-purple-500/[0.06] border border-purple-500/20 text-purple-300">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-heading text-sm font-bold text-white">
-                  Sistema de Pity (Caixas de Alta Raridade)
+                  Proteção de Raridade
                 </span>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-950 border border-purple-500/40 text-purple-300">
                   {pityCount} / {pityMax}
@@ -197,7 +197,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
               <p className="text-xs font-mono text-slate-400 mt-0.5">
                 {isPityReady ? (
                   <strong className="text-purple-300">
-                    Próxima abertura de caixa alta: Épico ou superior 100% GARANTIDO!
+                    Próxima abertura elegível com Épico ou superior garantido.
                   </strong>
                 ) : (
                   `Épico+ garantido em ${pityMax - pityCount} caixa${pityMax - pityCount === 1 ? '' : 's'}.`
@@ -220,14 +220,14 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Tabs and Filters */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-[#090b10] p-2">
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setSelectedTab('BOXES')}
-            className={`px-4 py-2 rounded-xl font-heading text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg border font-heading text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
               selectedTab === 'BOXES'
                 ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
                 : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'
@@ -239,7 +239,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
 
           <button
             onClick={() => setSelectedTab('HISTORY')}
-            className={`px-4 py-2 rounded-xl font-heading text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg border font-heading text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
               selectedTab === 'HISTORY'
                 ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
                 : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'
@@ -251,7 +251,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
         </div>
 
         {selectedTab === 'BOXES' && (
-          <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/10 text-xs font-mono">
+          <div className="flex items-center gap-1 bg-black/25 p-1 rounded-lg border border-white/[0.06] text-xs font-mono">
             <button
               onClick={() => setCategoryFilter('ALL')}
               className={`px-3 py-1.5 rounded-lg transition-colors ${
@@ -288,7 +288,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
 
       {/* TAB CONTENT 1: AVAILABLE BOXES */}
       {selectedTab === 'BOXES' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredBoxTypes.map((type) => {
             const def = BOX_DEFINITIONS[type];
             if (!def) return null;
@@ -300,7 +300,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
             return (
               <div
                 key={type}
-                className="rounded-3xl bg-[#0e0e1a] border border-white/10 hover:border-cyan-500/40 transition-all flex flex-col justify-between overflow-hidden shadow-xl group"
+                className="rounded-2xl bg-[#090a0f] border border-white/[0.08] hover:border-cyan-500/30 transition-all flex flex-col justify-between overflow-hidden group"
               >
                 {/* Visual Header */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-slate-950">
@@ -309,12 +309,16 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                     alt={def.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e1a] via-[#0e0e1a]/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090a0f] via-[#090a0f]/35 to-black/10" />
+                  <div
+                    className="absolute inset-x-0 bottom-0 h-20 opacity-35 pointer-events-none"
+                    style={{ background: `linear-gradient(to top, ${def.accentColor}35, transparent)` }}
+                  />
 
                   {/* Badge */}
                   <div className="absolute top-3 left-3">
                     <span
-                      className="px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase border shadow-md"
+                      className="px-2.5 py-1 rounded-md text-[9px] font-mono font-bold tracking-wider uppercase border backdrop-blur-md"
                       style={{
                         backgroundColor: `${def.accentColor}25`,
                         borderColor: `${def.accentColor}60`,
@@ -328,7 +332,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                   {/* Count Pill */}
                   <div className="absolute top-3 right-3">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-mono font-bold border shadow-md ${
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border backdrop-blur-md ${
                         hasBox
                           ? 'bg-cyan-500/30 border-cyan-400 text-cyan-200'
                           : 'bg-black/70 border-white/10 text-slate-400'
@@ -340,9 +344,10 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* Body Content */}
-                <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
+                <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <h3 className="font-heading text-xl font-black text-white">
+                    <div className="mb-3 h-px w-full opacity-60" style={{ background: `linear-gradient(90deg, ${def.accentColor}, transparent)` }} />
+                    <h3 className="font-heading text-lg font-black text-white">
                       {def.name}
                     </h3>
                     <p className="text-[11px] font-mono text-cyan-400 mt-0.5">
@@ -354,7 +359,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Guarantees Box */}
-                  <div className="p-3 rounded-xl bg-slate-950/80 border border-white/10 space-y-1">
+                  <div className="p-3 rounded-xl bg-black/30 border border-white/[0.06] space-y-1">
                     <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 uppercase font-bold">
                       <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
                       <span>Garantias da Caixa</span>
@@ -365,7 +370,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Price & Currency Tag */}
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-black/40 border border-white/5 font-mono text-xs">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-black/30 border border-white/[0.06] font-mono text-xs">
                     <span className="text-slate-400">Preço:</span>
                     {def.purchasableWithNEX ? (
                       <span className="inline-flex items-center gap-1.5 font-bold text-amber-400 text-sm">
@@ -392,7 +397,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Actions Area */}
-                  <div className="pt-2 border-t border-white/10 space-y-2">
+                  <div className="pt-2 border-t border-white/[0.06] space-y-2">
                     {hasBox && (
                       <button
                         onClick={() => handleOpenBox(type)}
@@ -443,7 +448,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
 
       {/* TAB CONTENT 2: HISTORY */}
       {selectedTab === 'HISTORY' && (
-        <div className="rounded-3xl bg-[#0e0e1a] border border-white/10 p-6 space-y-4 shadow-xl">
+        <div className="rounded-2xl bg-[#090a0f] border border-white/[0.08] p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-heading text-lg font-bold text-white flex items-center gap-2">
               <History className="w-5 h-5 text-cyan-400" />
@@ -472,7 +477,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
               {boxHistory.map((rec) => (
                 <div
                   key={rec.id}
-                  className="p-4 rounded-2xl bg-black/40 border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-white/15 transition-all font-mono"
+                  className="p-4 rounded-xl bg-black/25 border border-white/[0.06] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-white/15 transition-all font-mono"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-xl bg-white/5 border border-white/10">

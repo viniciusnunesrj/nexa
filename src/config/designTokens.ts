@@ -70,14 +70,14 @@ export const RARITY_CONFIG: Record<Rarity, RarityTheme> = {
   },
   Mítico: {
     label: 'Mítico',
-    color: '#f43f5e',
-    gradient: 'from-rose-600/35 to-rose-950/15',
-    border: 'border-rose-500/80',
-    borderHover: 'hover:border-rose-400',
-    bgGlow: 'rgba(244, 63, 94, 0.55)',
+    color: '#fb3f6c',
+    gradient: 'from-rose-600/40 to-red-950/15',
+    border: 'border-rose-500/90',
+    borderHover: 'hover:border-rose-300',
+    bgGlow: 'rgba(251, 63, 108, 0.52)',
     text: 'text-rose-400',
-    badge: 'bg-rose-950/90 text-rose-200 border-rose-500/70',
-    shadow: 'shadow-[0_0_32px_rgba(244,63,94,0.48)]',
+    badge: 'bg-rose-950/95 text-rose-200 border-rose-400/80',
+    shadow: 'shadow-[0_0_34px_rgba(251,63,108,0.44)]',
   },
 };
 

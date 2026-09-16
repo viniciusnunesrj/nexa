@@ -7,12 +7,7 @@ import {
   Medal,
   Award,
   Sparkles,
-  Swords,
-  Zap,
-  User,
   Search,
-  RefreshCw,
-  TrendingUp,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -64,27 +59,29 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
   const isUserInFilteredList = Boolean(myPosition && filteredList.some((e) => e.userId === myPosition.userId));
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-12">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {!userId && <p role="alert">Entre na sua conta para acessar o ranking.</p>}
       {loading && userId && <p role="status" className="text-slate-400">Carregando ranking...</p>}
       {error && <div role="alert" className="text-rose-300">{error} <button type="button" className="underline" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Ranking Command Header */}
+      <section className="relative overflow-hidden rounded-2xl border border-amber-500/15 bg-gradient-to-br from-[#100d08] via-[#090a0f] to-[#07080c] p-5 sm:p-6">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-amber-500/[0.07] blur-3xl" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-amber-400 uppercase tracking-wider">
-            <Trophy className="w-4 h-4 text-amber-400" /> Classificação Geral da Cidadela
+          <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-amber-400 uppercase tracking-[0.2em]">
+            <Trophy className="w-4 h-4" /> Comunidade // Classificação Global
           </div>
-          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-1 flex items-center gap-3">
-            🏆 RANKING GLOBAL
+          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-2 tracking-tight">
+            Ranking Global
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-1 max-w-xl">
-            Classificação calculada no servidor. Pontuação: <span className="text-amber-300 font-bold">(Level × 100) + (Vitórias × 50) + ⌊XP ÷ 10⌋</span>.
+          <p className="text-xs sm:text-sm text-slate-400 font-mono mt-1.5 max-w-2xl leading-relaxed">
+            Classificação oficial calculada no servidor. Score: <span className="text-amber-300 font-bold">(Nível × 100) + (Vitórias × 50) + ⌊XP ÷ 10⌋</span>.
           </p>
         </div>
 
         {/* Global Stats Pill */}
         <div className="flex items-center gap-2">
-          <div className="px-4 py-2 rounded-xl bg-[#0d0d15] border border-white/10 flex items-center gap-3">
+          <div className="px-4 py-3 rounded-xl bg-black/25 border border-white/[0.07] flex items-center gap-3">
             <div className="text-right font-mono">
               <span className="text-[10px] text-slate-500 uppercase block">Pilotos Registrados</span>
               <span className="text-sm font-bold text-cyan-400">{totalUsers} pilotos</span>
@@ -94,11 +91,12 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      </section>
 
       {/* "MINHA POSIÇÃO" Highlight Card */}
       {myPosition && (
-        <div className="relative rounded-2xl bg-gradient-to-r from-cyan-950/60 via-[#0e0e1a] to-amber-950/40 border-2 border-cyan-500/40 p-5 shadow-[0_0_30px_rgba(6,182,212,0.15)] overflow-hidden">
+        <div className="relative rounded-2xl bg-gradient-to-r from-cyan-500/[0.06] via-[#090a0f] to-amber-500/[0.04] border border-cyan-500/25 p-5 overflow-hidden">
           <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -136,20 +134,20 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
             </div>
 
             {/* Quick Metrics of Current User */}
-            <div className="grid grid-cols-4 gap-2 text-center font-mono">
-              <div className="bg-black/50 border border-white/5 p-2.5 rounded-xl">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-center font-mono">
+              <div className="bg-black/30 border border-white/[0.06] p-2.5 rounded-xl">
                 <span className="text-[10px] text-slate-500 block uppercase">Nível</span>
                 <span className="text-sm font-bold text-cyan-400">Nv. {myPosition.level}</span>
               </div>
-              <div className="bg-black/50 border border-white/5 p-2.5 rounded-xl">
+              <div className="bg-black/30 border border-white/[0.06] p-2.5 rounded-xl">
                 <span className="text-[10px] text-slate-500 block uppercase">Derrotas</span>
                 <span className="text-sm font-bold text-slate-200">{myPosition.losses.toLocaleString()}</span>
               </div>
-              <div className="bg-black/50 border border-white/5 p-2.5 rounded-xl">
+              <div className="bg-black/30 border border-white/[0.06] p-2.5 rounded-xl">
                 <span className="text-[10px] text-slate-500 block uppercase">Vitórias</span>
                 <span className="text-sm font-bold text-emerald-400">{myPosition.wins}V</span>
               </div>
-              <div className="bg-gradient-to-b from-amber-500/20 to-black/60 border border-amber-500/40 p-2.5 rounded-xl">
+              <div className="bg-amber-500/[0.07] border border-amber-500/25 p-2.5 rounded-xl">
                 <span className="text-[10px] text-amber-400 block uppercase font-bold">Score</span>
                 <span className="text-sm font-black text-amber-300">
                   {myPosition.rankingScore.toLocaleString()} pts
@@ -162,17 +160,17 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
 
       {/* Podium for Top 3 (When at least 2 players exist) */}
       {top1 && top2 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end pt-6 pb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end pt-3 pb-1">
           {/* Rank 2 (Silver) */}
-          <div className="order-2 sm:order-1 p-6 rounded-2xl bg-[#0a0a14] border border-slate-400/30 text-center flex flex-col items-center relative overflow-hidden shadow-xl">
+          <div className="order-2 sm:order-1 p-5 rounded-2xl bg-[#090a0f] border border-slate-400/20 text-center flex flex-col items-center relative overflow-hidden">
             <div className="absolute top-2 right-2 text-slate-400 font-brand font-black text-2xl">
               #2
             </div>
             <div className="relative mb-3">
               <img
                 src={top2.avatar}
-                alt=<button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(top2.userId)} aria-label={`Ver perfil de ${top2.username}`}>{top2.username}</button>
-                className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-300 shadow-[0_0_20px_rgba(203,213,225,0.3)] bg-slate-900"
+                alt={top2.username}
+                className="w-16 h-16 rounded-xl object-cover border border-slate-300/60 bg-slate-900"
               />
               <Medal className="w-6 h-6 text-slate-300 absolute -bottom-2 -right-2 drop-shadow" />
             </div>
@@ -193,16 +191,16 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
           </div>
 
           {/* Rank 1 (Gold - Center & Elevated) */}
-          <div className="order-1 sm:order-2 p-8 rounded-3xl bg-gradient-to-b from-[#1f1a09] to-[#0d0d18] border-2 border-amber-400 text-center flex flex-col items-center relative overflow-hidden shadow-[0_0_40px_rgba(245,158,11,0.25)] sm:-translate-y-4">
+          <div className="order-1 sm:order-2 p-6 rounded-2xl bg-gradient-to-b from-amber-500/[0.10] to-[#090a0f] border border-amber-400/55 text-center flex flex-col items-center relative overflow-hidden shadow-[0_0_28px_rgba(245,158,11,0.10)] sm:-translate-y-3">
             <div className="absolute top-2 right-3 text-amber-400 font-brand font-black text-3xl">
               #1
             </div>
-            <Crown className="w-8 h-8 text-amber-400 mb-1 animate-bounce" />
+            <Crown className="w-8 h-8 text-amber-400 mb-1" />
             <div className="relative mb-3">
               <img
                 src={top1.avatar}
-                alt=<button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(top1.userId)} aria-label={`Ver perfil de ${top1.username}`}>{top1.username}</button>
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.5)] bg-slate-900"
+                alt={top1.username}
+                className="w-20 h-20 rounded-xl object-cover border border-amber-400/80 shadow-[0_0_18px_rgba(245,158,11,0.16)] bg-slate-900"
               />
             </div>
             <h3 className="font-heading font-black text-white text-lg truncate w-full flex items-center justify-center gap-1.5">
@@ -223,15 +221,15 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
 
           {/* Rank 3 (Bronze) */}
           {top3 && (
-            <div className="order-3 p-6 rounded-2xl bg-[#0a0a14] border border-amber-800/40 text-center flex flex-col items-center relative overflow-hidden shadow-xl">
+            <div className="order-3 p-5 rounded-2xl bg-[#090a0f] border border-amber-700/25 text-center flex flex-col items-center relative overflow-hidden">
               <div className="absolute top-2 right-2 text-amber-600 font-brand font-black text-2xl">
                 #3
               </div>
               <div className="relative mb-3">
                 <img
                   src={top3.avatar}
-                  alt=<button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(top3.userId)} aria-label={`Ver perfil de ${top3.username}`}>{top3.username}</button>
-                  className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-600 shadow-[0_0_20px_rgba(217,119,6,0.3)] bg-slate-900"
+                  alt={top3.username}
+                  className="w-16 h-16 rounded-xl object-cover border border-amber-600/60 bg-slate-900"
                 />
                 <Award className="w-6 h-6 text-amber-600 absolute -bottom-2 -right-2 drop-shadow" />
               </div>
@@ -255,9 +253,9 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
       )}
 
       {/* Main Ranking Table Card */}
-      <div className="rounded-2xl bg-[#0b0b12] border border-white/10 overflow-hidden shadow-xl">
+      <div className="rounded-2xl bg-[#090a0f] border border-white/[0.08] overflow-hidden">
         {/* Table Filter / Search Header */}
-        <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02]">
+        <div className="p-4 border-b border-white/[0.07] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.015]">
           <div className="flex items-center gap-2">
             <span className="font-heading font-bold text-white text-sm">
               Ranking de Pilotos
@@ -274,8 +272,8 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
               maxLength={100}
               value={search}
               onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-              placeholder="Buscar jogador ou posição..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              placeholder="Buscar piloto..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/30 border border-white/[0.07] text-xs font-mono text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/35"
             />
           </div>
         </div>
@@ -283,7 +281,7 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
         {/* Global Ranking Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-white/5 text-slate-400 uppercase text-[10px] border-b border-white/10 tracking-wider">
+            <thead className="bg-white/[0.025] text-slate-500 uppercase text-[9px] border-b border-white/[0.07] tracking-[0.12em]">
               <tr>
                 <th className="py-3.5 px-4">POSIÇÃO</th>
                 <th className="py-3.5 px-4">JOGADOR</th>
@@ -341,7 +339,7 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
                       <div className="flex items-center gap-2.5">
                         <img
                           src={rankedUser.avatar}
-                          alt=<button type="button" className="hover:underline focus-visible:outline focus-visible:outline-cyan-400" onClick={() => openProfile(rankedUser.userId)} aria-label={`Ver perfil de ${rankedUser.username}`}>{rankedUser.username}</button>
+                          alt={rankedUser.username}
                           className={`w-8 h-8 rounded-lg object-cover bg-slate-900 shrink-0 ${
                             isCurrent ? 'border-2 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.4)]' : ''
                           }`}
@@ -411,7 +409,7 @@ export const Leaderboard: React.FC<{ onOpenProfile: (userId: string) => void }> 
           </table>
         </div>
 
-        <div className="flex justify-between items-center p-4 text-sm text-slate-300">
+        <div className="flex justify-between items-center p-4 border-t border-white/[0.06] text-xs font-mono text-slate-400">
         <button type="button" disabled={!userId || loading || offset === 0} className="disabled:opacity-40" onClick={() => setOffset(value => Math.max(0, value - 100))}>Anterior</button>
         <span>Página {Math.floor(offset / 100) + 1}</span>
         <button type="button" disabled={!userId || loading || !!error || filteredList.length < 100 || offset >= 1000000 || (!search && offset + 100 >= totalUsers)} className="disabled:opacity-40" onClick={() => setOffset(value => value + 100)}>Próxima</button>

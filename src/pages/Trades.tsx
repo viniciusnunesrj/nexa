@@ -52,10 +52,10 @@ export const Trades: React.FC = () => {
     return (
       <div
         key={trade.id}
-        className="p-6 rounded-2xl bg-[#0c0c16] border border-white/10 hover:border-purple-500/40 transition-all space-y-4"
+        className="p-5 rounded-2xl bg-[#090a0f] border border-white/[0.08] hover:border-amber-500/20 transition-all space-y-4"
       >
         {/* Header with players and timestamp */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-white/5">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <img
@@ -68,7 +68,9 @@ export const Trades: React.FC = () => {
               </span>
             </div>
 
-            <ArrowRight className="w-4 h-4 text-purple-400" />
+            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/[0.07] border border-amber-500/15">
+              <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
+            </div>
 
             <div className="flex items-center gap-2">
               <img
@@ -109,7 +111,7 @@ export const Trades: React.FC = () => {
         {/* Trade exchange comparison */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Sender Offer */}
-          <div className="p-3 rounded-xl bg-slate-950/70 border border-white/5 space-y-2">
+          <div className="p-3 rounded-xl bg-black/25 border border-purple-500/10 space-y-2">
             <span className="text-[10px] font-mono uppercase text-cyan-400 font-bold block">
               Oferta ({trade.senderName}):
             </span>
@@ -117,7 +119,7 @@ export const Trades: React.FC = () => {
               {trade.offeredItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/5 text-xs font-mono"
+                  className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white/[0.025] border border-white/[0.04] text-xs font-mono"
                 >
                   <div className="flex items-center gap-2 truncate">
                     <CardImage asset={item} src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" />
@@ -136,7 +138,7 @@ export const Trades: React.FC = () => {
           </div>
 
           {/* Receiver Expected */}
-          <div className="p-3 rounded-xl bg-slate-950/70 border border-white/5 space-y-2">
+          <div className="p-3 rounded-xl bg-black/25 border border-purple-500/10 space-y-2">
             <span className="text-[10px] font-mono uppercase text-purple-400 font-bold block">
               Contrapartida ({trade.receiverName}):
             </span>
@@ -144,7 +146,7 @@ export const Trades: React.FC = () => {
               {trade.requestedItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/5 text-xs font-mono"
+                  className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white/[0.025] border border-white/[0.04] text-xs font-mono"
                 >
                   <div className="flex items-center gap-2 truncate">
                     <CardImage asset={item} src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" />
@@ -165,7 +167,7 @@ export const Trades: React.FC = () => {
 
         {/* Note if any */}
         {trade.note && (
-          <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/5 text-xs font-mono text-slate-300">
+          <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/[0.025] border border-white/[0.04] text-xs font-mono text-slate-300">
             <MessageSquare className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
             <p className="italic">"{trade.note}"</p>
           </div>
@@ -186,7 +188,7 @@ export const Trades: React.FC = () => {
                 <button
                   disabled={tradeBusy}
                   onClick={() => void acceptTrade(trade.id)}
-                  className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold transition-colors shadow-[0_0_15px_rgba(16,185,129,0.3)] flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/35 text-emerald-300 text-xs font-mono font-bold transition-colors flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4" /> Aceitar Permuta
                 </button>
@@ -209,40 +211,44 @@ export const Trades: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* Trade Command Header */}
+      <section className="relative overflow-hidden rounded-2xl border border-amber-500/15 bg-gradient-to-br from-[#100d08] via-[#090a0f] to-[#07080c] p-5 sm:p-6">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-amber-500/[0.07] blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-purple-500/[0.05] blur-3xl" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-purple-400 uppercase tracking-wider">
-            <ArrowLeftRight className="w-4 h-4" /> Trocas Diretas P2P
+          <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-amber-400 uppercase tracking-[0.2em]">
+            <ArrowLeftRight className="w-4 h-4" /> Mercado // Trades P2P
           </div>
-          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-1">
-            Central de Negociações (Trades)
+          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-2 tracking-tight">
+            Central de Negociações
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">
-            {isSupabaseConfigured() ? 'Troque Cards e NXA com confirmação do servidor. Propostas pendentes não reservam cartas ou saldo.' : 'Permute itens, personagens e NXA com outros jogadores.'}
+          <p className="text-xs sm:text-sm text-slate-400 font-mono mt-1.5 max-w-2xl leading-relaxed">
+            {isSupabaseConfigured() ? 'Negocie Cards e NXA diretamente com outros pilotos. A conclusão da troca é validada pelo servidor.' : 'Permute itens, personagens e NXA com outros jogadores.'}
           </p>
         </div>
 
         <button
           onClick={() => setNewTradeModalOpen(true)}
-          className="px-5 py-3 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-heading font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center gap-2 hover:scale-105"
+          className="px-5 py-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-200 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all flex items-center gap-2 hover:-translate-y-0.5"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Proposta de Troca</span>
         </button>
-      </div>
+        </div>
+      </section>
 
       {/* Tabs */}
-      {isSupabaseConfigured() && <div className="flex flex-wrap items-center gap-3 text-xs">
-        <button disabled={tradeBusy} onClick={() => void refreshTrades()} className="text-cyan-300 disabled:opacity-60">{tradeBusy ? 'Atualizando...' : 'Atualizar trocas e inventário'}</button>
-        {tradesHasMore && <button disabled={tradeBusy} onClick={() => void refreshTrades(true)} className="text-purple-300">Mais propostas</button>}
+      {isSupabaseConfigured() && <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono">
+        <button disabled={tradeBusy} onClick={() => void refreshTrades()} className="px-3 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.025] text-cyan-300 hover:bg-cyan-500/[0.05] disabled:opacity-60">{tradeBusy ? 'Sincronizando...' : 'Sincronizar negociações'}</button>
+        {tradesHasMore && <button disabled={tradeBusy} onClick={() => void refreshTrades(true)} className="px-3 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.025] text-purple-300">Carregar mais</button>}
         {tradeError && <p role="alert" className="text-rose-300">{tradeError}</p>}
       </div>}
-      <div className="border-b border-white/10 flex items-center gap-2 overflow-x-auto pb-px">
+      <div className="flex items-center gap-1 overflow-x-auto rounded-xl border border-white/[0.07] bg-[#090a0f] p-1">
         <button
           onClick={() => setActiveTab('received')}
-          className={`pb-3 px-4 font-heading font-bold text-sm tracking-wide transition-all border-b-2 flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-lg font-heading font-bold text-xs tracking-wide transition-all border flex items-center gap-2 ${
             activeTab === 'received'
               ? 'border-purple-400 text-purple-300'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -258,7 +264,7 @@ export const Trades: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('sent')}
-          className={`pb-3 px-4 font-heading font-bold text-sm tracking-wide transition-all border-b-2 flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-lg font-heading font-bold text-xs tracking-wide transition-all border flex items-center gap-2 ${
             activeTab === 'sent'
               ? 'border-purple-400 text-purple-300'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -272,7 +278,7 @@ export const Trades: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('history')}
-          className={`pb-3 px-4 font-heading font-bold text-sm tracking-wide transition-all border-b-2 flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-lg font-heading font-bold text-xs tracking-wide transition-all border flex items-center gap-2 ${
             activeTab === 'history'
               ? 'border-purple-400 text-purple-300'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -290,7 +296,7 @@ export const Trades: React.FC = () => {
         {activeTab === 'received' && (
           <>
             {receivedTrades.length === 0 ? (
-              <div className="py-20 text-center rounded-3xl bg-[#0a0a10] border border-dashed border-white/10 p-8">
+              <div className="py-20 text-center rounded-2xl bg-[#090a0f] border border-dashed border-white/[0.09] p-8">
                 <ArrowLeftRight className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                 <h4 className="font-heading text-lg font-bold text-white">Nenhuma proposta pendente</h4>
                 <p className="text-xs text-slate-400 font-mono mt-1">
@@ -306,7 +312,7 @@ export const Trades: React.FC = () => {
         {activeTab === 'sent' && (
           <>
             {sentTrades.length === 0 ? (
-              <div className="py-20 text-center rounded-3xl bg-[#0a0a10] border border-dashed border-white/10 p-8">
+              <div className="py-20 text-center rounded-2xl bg-[#090a0f] border border-dashed border-white/[0.09] p-8">
                 <Clock className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                 <h4 className="font-heading text-lg font-bold text-white">Você não tem propostas ativas enviadas</h4>
                 <p className="text-xs text-slate-400 font-mono mt-1">
@@ -314,7 +320,7 @@ export const Trades: React.FC = () => {
                 </p>
                 <button
                   onClick={() => setNewTradeModalOpen(true)}
-                  className="mt-4 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs font-bold"
+                  className="mt-4 px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/35 text-amber-200 font-mono text-xs font-bold"
                 >
                   Propor Nova Troca
                 </button>
@@ -328,7 +334,7 @@ export const Trades: React.FC = () => {
         {activeTab === 'history' && (
           <>
             {historyTrades.length === 0 ? (
-              <div className="py-20 text-center rounded-3xl bg-[#0a0a10] border border-dashed border-white/10 p-8">
+              <div className="py-20 text-center rounded-2xl bg-[#090a0f] border border-dashed border-white/[0.09] p-8">
                 <ShieldCheck className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                 <h4 className="font-heading text-lg font-bold text-white">Nenhum registro histórico de trocas</h4>
                 <p className="text-xs text-slate-400 font-mono mt-1">

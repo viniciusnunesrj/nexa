@@ -44,18 +44,18 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
   const milestoneReward = nextMilestone ? LEVEL_REWARDS[nextMilestone] : null;
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-7 max-w-7xl mx-auto pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-wider">
-            <TrendingUp className="w-4 h-4" /> Progressão Central do Piloto
+            <TrendingUp className="w-4 h-4" /> NEXA // PROGRESSÃO DO PILOTO
           </div>
           <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-1">
-            Trilha de Níveis & Recompensas
+            Progressão do Piloto
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-1">
-            Evolua seu piloto ganhando XP na Arena, desbloqueie slots de sintetização e resgate caixas e relíquias raras.
+            Avance na Arena, desbloqueie capacidades e acompanhe os marcos permanentes da sua conta.
           </p>
         </div>
 
@@ -69,9 +69,9 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
       </div>
 
       {/* Hero Overview Card */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#121024] via-[#0c0a18] to-[#080812] border border-cyan-500/30 shadow-[0_0_40px_rgba(34,211,238,0.1)] relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-5 sm:p-7 lg:p-8 rounded-[28px] bg-gradient-to-br from-[#0d1624] via-[#090d17] to-[#070910] border border-cyan-400/20 shadow-[0_18px_60px_rgba(0,0,0,0.32)] relative overflow-hidden">
+        <div className="absolute -top-32 -right-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 right-1/3 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
           {/* Col 1: Current Level & XP */}
@@ -86,7 +86,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
             </div>
 
             <div className="flex items-baseline gap-4">
-              <span className="font-heading text-4xl sm:text-6xl font-black text-white tracking-tight">
+              <span className="font-heading text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-[-0.04em]">
                 NÍVEL {user.level}
               </span>
               <span className="text-xs sm:text-sm font-mono text-cyan-400 font-semibold">
@@ -100,12 +100,12 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
                 <span>Progresso para o Nível {user.level + 1}</span>
                 <span className="text-cyan-300 font-bold">{progressPercent}%</span>
               </div>
-              <div className="h-3 w-full bg-black/60 rounded-full overflow-hidden border border-white/10 p-0.5">
+              <div className="h-2.5 w-full bg-black/60 rounded-full overflow-hidden border border-white/10 p-px">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPercent}%` }}
                   transition={{ duration: 1, ease: 'easeOut' }}
-                  className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.5)]"
+                  className="h-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-500 rounded-full shadow-[0_0_14px_rgba(34,211,238,0.35)]"
                 />
               </div>
               <span className="text-[11px] font-mono text-slate-500 block">
@@ -115,7 +115,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
           </div>
 
           {/* Col 2: Next Rewards Card */}
-          <div className="p-5 rounded-2xl bg-[#090812] border border-white/10 space-y-3">
+          <div className="p-5 rounded-2xl bg-black/25 border border-white/10 backdrop-blur-sm space-y-3">
             <span className="text-[10px] font-mono uppercase text-slate-400 font-bold block">
               PRÓXIMO DESBLOQUEIO
             </span>
@@ -199,7 +199,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-4">
+      <div className="flex items-center gap-2 overflow-x-auto border-b border-white/10 pb-3 scrollbar-none">
         <button
           onClick={() => setActiveTab('timeline')}
           className={`px-4 py-2 rounded-xl font-heading text-xs uppercase tracking-wider font-bold transition-all flex items-center gap-2 ${
@@ -250,7 +250,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
             </span>
           </div>
 
-          <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-cyan-500 before:via-purple-500 before:to-slate-800">
+          <div className="relative pl-6 sm:pl-8 space-y-4 before:absolute before:left-3 sm:before:left-4 before:top-4 before:bottom-4 before:w-px before:bg-gradient-to-b before:from-cyan-400/70 before:via-blue-500/30 before:to-slate-800/40">
             {timeline.map((item) => {
               const isReached = item.isReached;
               const isCurrent = item.level === user.level;

@@ -11,14 +11,10 @@ import { soundService } from '../services/soundService';
 import confetti from 'canvas-confetti';
 import {
   Flame,
-  Zap,
   Plus,
   X,
   Sparkles,
   AlertTriangle,
-  CheckCircle2,
-  HelpCircle,
-  RotateCcw,
 } from 'lucide-react';
 
 export const Fusion: React.FC = () => {
@@ -100,38 +96,42 @@ export const Fusion: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 text-xs font-mono text-purple-400 uppercase tracking-wider">
-          <Flame className="w-4 h-4" /> Evolução & Alquimia Quântica
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* Reactor Header */}
+      <section className="relative overflow-hidden rounded-2xl border border-purple-500/20 bg-gradient-to-br from-[#0d0b15] via-[#090a10] to-[#07080c] p-5 sm:p-6">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-purple-500/[0.08] blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/4 h-52 w-52 rounded-full bg-cyan-500/[0.04] blur-3xl" />
+        <div className="relative">
+          <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-purple-400 uppercase tracking-[0.2em]">
+            <Flame className="w-4 h-4" /> Reator // Síntese
+          </div>
+          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-2 tracking-tight">
+            Câmara de Fusão
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 font-mono mt-1.5 max-w-2xl leading-relaxed">
+            Combine 3 ativos compatíveis da mesma raridade para tentar sintetizar um ativo do escalão seguinte.
+          </p>
         </div>
-        <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-1">
-          Reator de Fusão de Ativos
-        </h1>
-        <p className="text-xs text-slate-400 font-mono mt-1">
-          Combine 3 itens da mesma raridade e gaste moedas NEX para forjar um novo ativo do escalão superior.
-        </p>
-      </div>
+      </section>
 
       {/* Fusion Chamber Reactor Stage */}
-      <div className="relative rounded-3xl bg-gradient-to-b from-[#110d1c] via-[#090810] to-[#06050b] border border-purple-500/40 p-6 sm:p-10 shadow-2xl overflow-hidden text-center">
+      <div className="relative rounded-2xl bg-gradient-to-b from-[#0d0b14] via-[#090a0f] to-[#07080b] border border-purple-500/20 p-5 sm:p-7 overflow-hidden text-center">
         {/* Glowing background reactor aura */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-purple-600/[0.08] rounded-full blur-3xl pointer-events-none" />
 
         {/* 3 Input Slots */}
         <div className="relative z-10 max-w-2xl mx-auto">
           <span className="text-[11px] font-mono text-purple-300 uppercase tracking-wider block mb-4 font-bold">
-            Câmaras de Ressonância (3 Matérias Exigidas)
+            Matriz de Entrada // 3 Ativos Compatíveis
           </span>
 
-          <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-8">
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-4 mb-6">
             {[0, 1, 2].map((slotIndex) => {
               const item = selectedItems[slotIndex];
               return (
                 <div
                   key={slotIndex}
-                  className={`aspect-[3/4] rounded-2xl border-2 flex flex-col items-center justify-center p-3 relative transition-all duration-300 ${
+                  className={`aspect-[4/3] sm:aspect-[5/4] rounded-xl border flex flex-col items-center justify-center p-3 relative transition-all duration-300 ${
                     item
                       ? 'bg-purple-950/40 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
                       : 'bg-white/5 border-dashed border-white/20 hover:border-purple-400/50'
@@ -148,7 +148,7 @@ export const Fusion: React.FC = () => {
                       <CardImage asset={item}
                         src={item.image}
                         alt={item.name}
-                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover mb-2"
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover mb-2 border border-white/10"
                       />
                       <h5 className="font-heading font-bold text-xs text-white truncate w-full">
                         {item.name}
@@ -169,9 +169,9 @@ export const Fusion: React.FC = () => {
           </div>
 
           {/* Central Reactor Core Status */}
-          <div className="p-5 rounded-2xl bg-black/60 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono mb-8">
-            <div className="text-left">
-              <span className="text-slate-400 block text-[10px] uppercase">Raridade Alvo Prevista:</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 rounded-xl bg-black/30 border border-white/[0.07] text-xs font-mono mb-6 overflow-hidden">
+            <div className="text-left p-3.5 sm:border-r sm:border-white/[0.06]">
+              <span className="text-slate-500 block text-[9px] uppercase tracking-[0.14em]">Raridade Alvo</span>
               <div className="flex items-center gap-2 mt-1">
                 {targetRarity ? (
                   <RarityBadge rarity={targetRarity} size="md" />
@@ -181,15 +181,15 @@ export const Fusion: React.FC = () => {
               </div>
             </div>
 
-            <div className="text-left sm:text-right">
-              <span className="text-slate-400 block text-[10px] uppercase">Custo da Síntese:</span>
+            <div className="text-left sm:text-center p-3.5 border-t sm:border-t-0 sm:border-r border-white/[0.06]">
+              <span className="text-slate-500 block text-[9px] uppercase tracking-[0.14em]">Custo da Síntese</span>
               <span className="font-bold text-amber-400 text-sm">
                 {rule ? `${formatEconomicValue(rule.costNEX)} NEX` : '—'}
               </span>
             </div>
 
-            <div className="text-left sm:text-right">
-              <span className="text-slate-400 block text-[10px] uppercase">Taxa de Estabilidade:</span>
+            <div className="text-left sm:text-right p-3.5 border-t sm:border-t-0 border-white/[0.06]">
+              <span className="text-slate-500 block text-[9px] uppercase tracking-[0.14em]">Taxa de Estabilidade</span>
               <span className="font-bold text-emerald-400 text-sm">
                 {rule ? `${Math.round(rule.successRate * 100)}%` : '—'}
               </span>
@@ -200,7 +200,7 @@ export const Fusion: React.FC = () => {
           <button
             onClick={handleStartFusion}
             disabled={selectedIds.length !== 3 || isSynthesizing || (rule && user.balanceNEX < rule.costNEX)}
-            className={`px-10 py-4 rounded-2xl font-heading font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-3 w-full sm:w-auto mx-auto ${
+            className={`px-10 py-3.5 rounded-xl border font-heading font-black text-xs uppercase tracking-[0.14em] transition-all flex items-center justify-center gap-3 w-full sm:w-auto mx-auto ${
               selectedIds.length === 3 && rule && user.balanceNEX >= rule.costNEX && !isSynthesizing
                 ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-[0_0_30px_rgba(168,85,247,0.5)] hover:scale-105'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5'
@@ -221,7 +221,7 @@ export const Fusion: React.FC = () => {
       </div>
 
       {/* Inventory Selector Drawer */}
-      <div className="rounded-2xl bg-[#0b0b12] border border-white/10 p-6">
+      <div className="rounded-2xl bg-[#090a0f] border border-white/[0.08] p-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <h3 className="font-heading text-xl font-bold text-white">
             Seus Itens Disponíveis para Fusão
@@ -288,7 +288,7 @@ export const Fusion: React.FC = () => {
       {/* Fusion Result Modal */}
       {fusionResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md rounded-3xl bg-[#0e0c1a] border border-purple-500/50 p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(168,85,247,0.3)]">
+          <div className="relative w-full max-w-md rounded-2xl bg-[#0b0a10] border border-purple-500/35 p-6 sm:p-8 text-center shadow-[0_0_40px_rgba(168,85,247,0.18)]">
             <div
               className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl border mb-4 ${
                 fusionResult.success
@@ -334,7 +334,7 @@ export const Fusion: React.FC = () => {
 
             <button
               onClick={() => setFusionResult(null)}
-              className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+              className="w-full py-3 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/35 text-purple-100 font-mono text-xs font-bold uppercase tracking-wider transition-colors"
             >
               Fechar e Continuar
             </button>

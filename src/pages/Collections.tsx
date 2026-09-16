@@ -22,17 +22,11 @@ import {
   Coins,
   PackageOpen,
   Award,
-  ArrowRight,
   Hammer,
-  Play,
-  Pause,
-  Clock,
   Tag,
   CheckCircle2,
-  TrendingUp,
   X,
   AlertCircle,
-  ShieldCheck,
   ChevronRight,
 } from 'lucide-react';
 
@@ -118,45 +112,45 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* ========================================================================= */}
       {/* 1. BANNER / HEADER DA COLEÇÃO ATIVA                                      */}
       {/* ========================================================================= */}
-      <div className="relative rounded-3xl overflow-hidden border border-purple-500/30 bg-gradient-to-r from-[#0d091a] via-[#140f28] to-[#0a0714] p-6 sm:p-8 shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
+      <section className="relative rounded-2xl overflow-hidden border border-purple-500/20 bg-gradient-to-br from-[#0c0b14] via-[#0a0b12] to-[#07080c] p-5 sm:p-6">
+        <div className="absolute -top-24 right-0 w-80 h-80 bg-purple-600/[0.10] rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 left-1/3 w-64 h-64 bg-cyan-600/[0.06] rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/60 border border-purple-500/40 text-purple-300 text-xs font-mono font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-purple-300">
               <Layers className="w-3.5 h-3.5" />
-              <span>SISTEMA DE ÁLBUNS & COLEÇÕES NEXA</span>
+              <span>Arquivo Nexus // Coleções</span>
             </div>
 
-            <h1 className="font-heading text-3xl sm:text-5xl font-black text-white tracking-tight flex items-center gap-3">
+            <h1 className="font-heading text-3xl sm:text-4xl font-black text-white tracking-tight flex items-center gap-3">
               <span>{activeProgress.collection.name}</span>
             </h1>
 
-            <p className="text-slate-300 text-sm leading-relaxed">
+            <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-xl">
               {activeProgress.collection.description}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-2 font-mono text-xs">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-slate-300">
+            <div className="flex flex-wrap items-center gap-2 pt-2 font-mono text-xs">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/30 border border-white/[0.07] text-slate-300">
                 <span className="text-slate-500">Progresso da Coleção:</span>
                 <span className="font-bold text-cyan-400">
                   {activeProgress.ownedCount} / {activeProgress.totalCards} ({activeProgress.percentage}%)
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-slate-300">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/30 border border-white/[0.07] text-slate-300">
                 <span className="text-slate-500">Álbum Geral:</span>
                 <span className="font-bold text-purple-300">
                   {totalUniqueCardsOwned} / {totalCardsInGame} Cartas Desbloqueadas
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/40 border border-cyan-500/30 text-slate-300">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500/[0.04] border border-cyan-500/15 text-slate-300">
                 <Zap className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="text-slate-500">Slots de Síntese:</span>
                 <span className="font-bold text-cyan-300">
@@ -167,9 +161,9 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
           </div>
 
           {/* REWARD CARD FOR 100% COMPLETION */}
-          <div className="w-full lg:w-80 rounded-2xl bg-black/60 border border-purple-500/40 p-5 space-y-4 shadow-xl shrink-0">
+          <div className="w-full lg:w-80 rounded-xl bg-black/35 border border-purple-500/20 p-4 space-y-3 shrink-0">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase font-bold text-purple-300 flex items-center gap-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-[0.16em] font-bold text-purple-300 flex items-center gap-1.5">
                 <Award className="w-4 h-4 text-amber-400" />
                 Recompensa 100%
               </span>
@@ -230,23 +224,26 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* ========================================================================= */}
       {/* 2. SELETOR DE TODAS AS 8 COLEÇÕES                                        */}
       {/* ========================================================================= */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-heading text-xl font-bold text-white flex items-center gap-2">
-            <Layers className="w-5 h-5 text-cyan-400" />
-            <span>Coleções da Temporada (8 Álbuns)</span>
-          </h2>
+      <section className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <div className="text-[9px] font-mono uppercase tracking-[0.18em] text-cyan-500 mb-1">Índice de arquivos</div>
+            <h2 className="font-heading text-xl font-bold text-white flex items-center gap-2">
+              <Layers className="w-5 h-5 text-cyan-400" />
+              <span>Coleções da Temporada</span>
+            </h2>
+          </div>
           <span className="text-xs font-mono text-slate-400">
             {COLLECTIONS_DATA.length} Coleções • 60 Cartas
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
           {COLLECTIONS_DATA.map((col) => {
             const p = CollectionService.getCollectionProgress(user.id, col.id, cards);
             const isSelected = col.id === selectedCollectionId;
@@ -255,14 +252,14 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
               <button
                 key={col.id}
                 onClick={() => setSelectedCollectionId(col.id)}
-                className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between group ${
+                className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between group ${
                   isSelected
-                    ? 'bg-purple-950/40 border-purple-400/80 shadow-lg shadow-purple-500/20 scale-[1.02]'
-                    : 'bg-[#0e0e1a] border-white/10 hover:border-white/20 hover:bg-[#141424]'
+                    ? 'bg-purple-500/[0.09] border-purple-400/50 shadow-[inset_0_0_20px_rgba(168,85,247,0.04)]'
+                    : 'bg-[#090b10] border-white/[0.07] hover:border-white/15 hover:bg-white/[0.025]'
                 }`}
               >
                 <div>
-                  <span className="text-xl block mb-1">{col.themeIcon}</span>
+                  <span className="text-lg block mb-1 opacity-90">{col.themeIcon}</span>
                   <h4 className="font-heading text-xs font-bold text-white truncate">
                     {col.name}
                   </h4>
@@ -285,25 +282,29 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
             );
           })}
         </div>
-      </div>
+      </section>
 
       {/* ========================================================================= */}
       {/* 3. GRID DO ÁLBUM DE CARTAS DA COLEÇÃO ATIVA                               */}
       {/* ========================================================================= */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-t border-white/[0.06] pt-5">
           <div>
+            <div className="text-[9px] font-mono uppercase tracking-[0.18em] text-purple-400 mb-1">Registro ativo</div>
             <h3 className="font-heading text-xl font-bold text-white">
-              Álbum: {activeProgress.collection.name} ({activeProgress.ownedCount}/{activeProgress.totalCards})
+              {activeProgress.collection.name}
+              <span className="ml-2 font-mono text-xs font-normal text-slate-500">
+                {activeProgress.ownedCount}/{activeProgress.totalCards}
+              </span>
             </h3>
-            <p className="text-xs text-slate-400 font-mono">
-              Todas as cartas geram NEX ativamente quando em estado sintetizado.
+            <p className="text-xs text-slate-500 font-mono mt-1">
+              Consulte suas cartas, estados de síntese e fragmentos desta coleção.
             </p>
           </div>
 
           <button
             onClick={() => onNavigate('boxes')}
-            className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 bg-cyan-950/40 border border-cyan-500/30 px-3.5 py-2 rounded-xl transition-all"
+            className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 bg-cyan-500/[0.06] border border-cyan-500/20 px-3.5 py-2 rounded-lg transition-all"
           >
             <PackageOpen className="w-4 h-4" />
             <span>Adquirir Caixas de Coleção</span>
@@ -311,7 +312,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {activeProgress.templatesStatus.map(({ template, isOwned, ownedCard }) => {
             const rarityStyle = RARITY_CONFIG[template.rarity];
             const fragCount = CardFragmentService.getFragmentCount(user.id, template.templateId);
@@ -335,14 +336,14 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
             return (
               <div
                 key={template.templateId}
-                className={`rounded-3xl border overflow-hidden transition-all flex flex-col justify-between ${
+                className={`rounded-2xl border overflow-hidden transition-all flex flex-col justify-between ${
                   isOwned
-                    ? 'bg-[#0f1022] border-white/15 hover:border-cyan-500/50 shadow-xl'
-                    : 'bg-[#0a0a14] border-white/5 opacity-80'
+                    ? `${rarityStyle.border} ${rarityStyle.borderHover} bg-[#090a0f] ${rarityStyle.shadow}`
+                    : 'bg-[#08090d] border-white/[0.05] opacity-75'
                 }`}
               >
                 {/* Visual Card Image */}
-                <div className="relative aspect-[3/4] overflow-hidden bg-slate-950 group">
+                <div className="relative aspect-[4/3] overflow-hidden bg-slate-950 group">
                   <CardImage asset={template}
                     src={template.image}
                     alt={template.name}
@@ -350,7 +351,13 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                       isOwned ? 'group-hover:scale-105' : 'grayscale contrast-125 brightness-50'
                     }`}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0f1022] via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090a0f] via-transparent to-black/20" />
+                  {isOwned && (
+                    <div
+                      className="absolute inset-x-0 bottom-0 h-20 opacity-40 pointer-events-none"
+                      style={{ background: `linear-gradient(to top, ${rarityStyle.bgGlow}, transparent)` }}
+                    />
+                  )}
 
                   {/* Element & Rarity Header */}
                   <div className="absolute top-3 inset-x-3 flex items-center justify-between">
@@ -358,7 +365,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                       <span>{template.elementIcon}</span>
                       <span className="text-[10px] uppercase text-slate-300">{template.element}</span>
                     </span>
-                    <RarityBadge rarity={template.rarity} size="xs" />
+                    <RarityBadge rarity={template.rarity} size="sm" />
                   </div>
 
                   {/* Lock Overlay if unowned */}
@@ -413,9 +420,15 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* Card Information & Controls */}
-                <div className="p-5 space-y-4 flex-1 flex flex-col justify-between">
+                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                   <div>
-                    <h4 className="font-heading text-lg font-black text-white truncate">
+                    <div className="mb-2 flex items-center gap-2">
+                      <div className="h-px flex-1 opacity-60" style={{ background: `linear-gradient(90deg, ${rarityStyle.color}, transparent)` }} />
+                      <span className="text-[8px] font-mono font-bold uppercase tracking-[0.16em]" style={{ color: rarityStyle.color }}>
+                        {rarityStyle.label}
+                      </span>
+                    </div>
+                    <h4 className="font-heading text-base font-black text-white truncate">
                       {template.name}
                     </h4>
                     <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
@@ -424,7 +437,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Production Stats */}
-                  <div className="p-3 rounded-2xl bg-black/40 border border-white/5 space-y-2 font-mono text-xs">
+                  <div className="p-3 rounded-xl bg-black/30 border border-white/[0.06] space-y-2 font-mono text-[11px]">
                     <div className="flex items-center justify-between text-slate-400">
                       <span>Taxa de Geração:</span>
                       <span className="font-bold text-cyan-400">+{formatEconomicValue(rate)} NEX/h</span>
@@ -473,7 +486,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Interactive Action Area */}
-                  <div className="pt-2 border-t border-white/10 space-y-2">
+                  <div className="pt-2 border-t border-white/[0.06] space-y-2">
                     {isOwned && card ? (
                       <>
                         {effectiveExhausted || isSynthesizing ? (
@@ -572,7 +585,7 @@ export const Collections: React.FC<CollectionsPageProps> = ({ onNavigate }) => {
             );
           })}
         </div>
-      </div>
+      </section>
 
       {/* ========================================================================= */}
       {/* 4. MODAL DE VENDA NO MARKETPLACE                                          */}

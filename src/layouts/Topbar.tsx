@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Menu, Volume2, VolumeX, ChevronDown, UserCheck, LogOut } from 'lucide-react';
+import {
+  Menu,
+  Volume2,
+  VolumeX,
+  ChevronDown,
+  User,
+  TrendingUp,
+  LogOut,
+  Radio,
+  Zap,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { soundService } from '../services/soundService';
 import { CurrencyBadge } from '../components/common/CurrencyBadge';
@@ -9,172 +19,446 @@ interface TopbarProps {
   onNavigate: (page: string) => void;
 }
 
-export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileMenu, onNavigate }) => {
-  const { user, publicUsers, publicUsersLoading, publicUsersError, publicUsersHasMore, loadMorePublicUsers, logout } = useAuth();
-  const [soundEnabled, setSoundEnabled] = useState(true);
+export const Topbar: React.FC<TopbarProps> = ({
+  onOpenMobileMenu,
+  onNavigate,
+}) => {
+  const { user, logout } = useAuth();
+
+  const [soundEnabled, setSoundEnabled] = useState(
+    soundService.enabled !== false
+  );
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const maxExp = user.maxExperience || 500;
+  const currentExp = user.experience || 0;
+
+  const xpPercentage = Math.min(
+    100,
+    Math.round((currentExp / maxExp) * 100)
+  );
 
   const toggleSound = () => {
     const next = !soundEnabled;
+
     setSoundEnabled(next);
     soundService.enabled = next;
-    if (next) soundService.playClick();
+
+    if (next) {
+      soundService.playClick();
+    }
   };
 
-  const maxExp = user.maxExperience || 500;
-  const xpPercentage = Math.min(100, Math.round(((user.experience || 0) / maxExp) * 100));
+  const navigateFromMenu = (page: string) => {
+    soundService.playClick();
+    setUserMenuOpen(false);
+    onNavigate(page);
+  };
+
+  const handleLogout = () => {
+    soundService.playClick();
+    setUserMenuOpen(false);
+    logout();
+    onNavigate('login');
+  };
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-[#070709]/80 backdrop-blur-xl border-b border-white/10 px-4 lg:px-8 flex items-center justify-between gap-4">
-      {/* Left: Mobile trigger & Page breadcrumb */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onOpenMobileMenu}
-          className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:text-white lg:hidden"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+    <header
+      className="
+        sticky top-0 z-30
+        h-16
+        border-b border-white/[0.08]
+        bg-[#07080b]/90
+        backdrop-blur-xl
+      "
+    >
+      {/* subtle HUD line */}
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent pointer-events-none" />
 
-        <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span className="text-emerald-400 font-bold uppercase">Rede Nexus Ativa</span>
-          <span className="text-slate-600">|</span>
-          <span>Temporada 1: Ascensão</span>
-        </div>
-      </div>
-
-      {/* Right: Balances, Sound, Profile Menu */}
-      <div className="flex items-center gap-3 sm:gap-4">
-        {/* Currencies */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <CurrencyBadge type="NEX" amount={user.balanceNEX} size="sm" />
-          <CurrencyBadge type="NXA" amount={user.balanceNXA} size="sm" />
-        </div>
-
-        {/* Audio Toggle */}
-        <button
-          onClick={toggleSound}
-          title={soundEnabled ? 'Silenciar Áudio' : 'Ativar Efeitos Sonoros'}
-          className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/30 transition-colors"
-        >
-          {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4 text-slate-500" />}
-        </button>
-
-        {/* Account Switcher Dropdown */}
-        <div className="relative">
+      <div className="h-full px-3 sm:px-4 lg:px-7 flex items-center justify-between gap-3">
+        {/* LEFT */}
+        <div className="flex items-center min-w-0 gap-3">
+          {/* Mobile navigation */}
           <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition-all text-left"
+            type="button"
+            onClick={onOpenMobileMenu}
+            aria-label="Abrir navegação"
+            title="Abrir navegação"
+            className="
+              lg:hidden
+              w-9 h-9 shrink-0
+              rounded-xl
+              border border-white/10
+              bg-white/[0.035]
+              text-slate-400
+              flex items-center justify-center
+              hover:text-cyan-300
+              hover:border-cyan-500/30
+              transition-colors
+            "
           >
-            <img
-              src={user.avatar}
-              alt={user.username}
-              className="w-7 h-7 rounded-lg object-cover border border-cyan-400/50 shrink-0"
-            />
-            <div className="hidden md:flex flex-col">
-              <span className="font-heading font-bold text-xs text-white leading-tight">
-                {user.username}
-              </span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[10px] font-mono text-cyan-400 font-bold">Nv. {user.level}</span>
-                <div className="w-12 h-1 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-cyan-400 rounded-full" style={{ width: `${xpPercentage}%` }} />
-                </div>
-              </div>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            <Menu className="w-4.5 h-4.5" />
           </button>
 
-          {userMenuOpen && (
-            <>
-              <div
-                onClick={() => setUserMenuOpen(false)}
-                className="fixed inset-0 z-40"
-              />
-              <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0e0e17] border border-white/15 p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="px-3 py-2 border-b border-white/10">
-                  <span className="text-[10px] font-mono uppercase text-slate-400 font-semibold block">
-                    Jogadores
+          {/* Nexus status */}
+          <div className="hidden sm:flex items-center min-w-0">
+            <div
+              className="
+                h-9
+                px-3
+                rounded-xl
+                border border-emerald-500/10
+                bg-emerald-500/[0.025]
+                flex items-center gap-2.5
+              "
+            >
+              <div className="relative flex items-center justify-center">
+                <span className="absolute w-2 h-2 rounded-full bg-emerald-400/40 animate-ping" />
+                <span className="relative w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]" />
+              </div>
+
+              <div className="flex items-center gap-2 whitespace-nowrap">
+                <Radio className="w-3 h-3 text-emerald-500/70" />
+
+                <span className="text-[9px] font-mono font-bold tracking-[0.12em] text-emerald-400 uppercase">
+                  Rede Nexus
+                </span>
+
+                <span className="text-[8px] font-mono text-emerald-500/50">
+                  //
+                </span>
+
+                <span className="text-[8px] font-mono font-bold tracking-wider text-emerald-500/70 uppercase">
+                  Online
+                </span>
+              </div>
+            </div>
+
+            <div className="hidden xl:block w-px h-5 bg-white/10 mx-3" />
+
+            {/* Season */}
+            <button
+              type="button"
+              onClick={() => {
+                soundService.playClick();
+                onNavigate('season');
+              }}
+              className="
+                hidden xl:flex
+                h-9 px-3
+                items-center gap-2
+                rounded-xl
+                border border-transparent
+                text-slate-500
+                hover:text-slate-300
+                hover:bg-white/[0.025]
+                hover:border-white/[0.06]
+                transition-all
+              "
+            >
+              <Zap className="w-3.5 h-3.5 text-purple-400/70" />
+
+              <span className="text-[9px] font-mono uppercase tracking-[0.12em]">
+                Temporada
+              </span>
+
+              <span className="text-[9px] font-mono font-bold text-purple-300">
+                S1 · ASCENSÃO
+              </span>
+            </button>
+          </div>
+
+          {/* Small mobile identity */}
+          <div className="sm:hidden min-w-0">
+            <span className="block text-[8px] font-mono font-bold uppercase tracking-[0.12em] text-emerald-400">
+              Nexus Online
+            </span>
+
+            <span className="block text-[10px] font-heading font-bold text-slate-300 truncate">
+              S1 · Ascensão
+            </span>
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex items-center justify-end gap-1.5 sm:gap-2 min-w-0">
+          {/* Economy */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <CurrencyBadge
+              type="NEX"
+              amount={user.balanceNEX}
+              size="sm"
+            />
+
+            <CurrencyBadge
+              type="NXA"
+              amount={user.balanceNXA}
+              size="sm"
+            />
+          </div>
+
+          <div className="hidden sm:block w-px h-6 bg-white/[0.08] mx-0.5" />
+
+          {/* Audio */}
+          <button
+            type="button"
+            onClick={toggleSound}
+            title={
+              soundEnabled
+                ? 'Desativar efeitos sonoros'
+                : 'Ativar efeitos sonoros'
+            }
+            aria-label={
+              soundEnabled
+                ? 'Desativar efeitos sonoros'
+                : 'Ativar efeitos sonoros'
+            }
+            className="
+              hidden sm:flex
+              w-9 h-9 shrink-0
+              rounded-xl
+              border border-white/[0.08]
+              bg-white/[0.025]
+              items-center justify-center
+              text-slate-500
+              hover:text-cyan-300
+              hover:border-cyan-500/25
+              hover:bg-cyan-500/[0.04]
+              transition-all
+            "
+          >
+            {soundEnabled ? (
+              <Volume2 className="w-4 h-4 text-cyan-400/80" />
+            ) : (
+              <VolumeX className="w-4 h-4" />
+            )}
+          </button>
+
+          {/* Pilot */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setUserMenuOpen((value) => !value)}
+              aria-expanded={userMenuOpen}
+              title="Menu do piloto"
+              className={`
+                h-10
+                flex items-center
+                gap-2
+                rounded-xl
+                border
+                transition-all
+                ${
+                  userMenuOpen
+                    ? 'bg-cyan-500/[0.07] border-cyan-500/30'
+                    : 'bg-white/[0.025] border-white/[0.08] hover:border-cyan-500/25 hover:bg-white/[0.04]'
+                }
+                p-1
+                sm:pl-1 sm:pr-2
+              `}
+            >
+              <div className="relative shrink-0">
+                <img
+                  src={user.avatar}
+                  alt={user.username}
+                  className="w-8 h-8 rounded-lg object-cover border border-cyan-400/30 bg-slate-900"
+                />
+
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border-2 border-[#090a0e]" />
+              </div>
+
+              <div className="hidden md:flex flex-col min-w-[86px] max-w-[120px] text-left">
+                <span className="font-heading font-bold text-[11px] leading-tight text-white truncate">
+                  {user.username}
+                </span>
+
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="shrink-0 text-[8px] font-mono font-bold text-cyan-400 uppercase">
+                    NV. {user.level}
                   </span>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Diretório público da comunidade:
-                  </p>
-                </div>
 
-                <div className="py-1 space-y-1 max-h-56 overflow-y-auto">
-                  {publicUsers.map((u) => {
-                    const isCurrent = u.id === user.id;
-                    return (
-                      <div
-                        key={u.id}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-colors ${
-                          isCurrent
-                            ? 'bg-cyan-950/60 border border-cyan-500/40 text-cyan-200'
-                            : 'hover:bg-white/5 text-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <img
-                            src={u.avatar || undefined}
-                            alt={u.username}
-                            className="w-7 h-7 rounded-lg object-cover"
-                          />
-                          <div className="min-w-0">
-                            <span className="text-xs font-bold font-heading block truncate">
-                              {u.username}
-                            </span>
-                            <span className="text-[10px] font-mono text-slate-400">
-                              Nv. {u.level}
-                            </span>
-                          </div>
-                        </div>
-                        {isCurrent && <UserCheck className="w-4 h-4 text-cyan-400 shrink-0" />}
-                      </div>
-                    );
-                  })}
-                  {publicUsersError && <p role="alert" className="px-2 text-xs text-rose-300">{publicUsersError}</p>}
-                  {publicUsersHasMore && <button disabled={publicUsersLoading} onClick={() => void loadMorePublicUsers()} className="w-full p-2 text-xs text-cyan-300 disabled:opacity-60">{publicUsersLoading ? 'Carregando...' : publicUsersError ? 'Tentar novamente' : 'Mais jogadores'}</button>}
-                </div>
-
-                <div className="pt-2 border-t border-white/10 space-y-1">
-                  <button
-                    onClick={() => {
-                      onNavigate('progression');
-                      setUserMenuOpen(false);
-                      soundService.playClick();
-                    }}
-                    className="w-full text-center py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/25 text-xs font-mono font-bold text-cyan-300 transition-colors"
-                  >
-                    ⭐ Trilha de Níveis
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      onNavigate('profile');
-                      setUserMenuOpen(false);
-                      soundService.playClick();
-                    }}
-                    className="w-full text-center py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-300 transition-colors"
-                  >
-                    Ver Perfil Completo
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      soundService.playClick();
-                      setUserMenuOpen(false);
-                      logout();
-                      onNavigate('login');
-                    }}
-                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 text-xs font-mono font-bold transition-colors"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Sair da Conta</span>
-                  </button>
+                  <div className="flex-1 h-[3px] min-w-[36px] rounded-full bg-white/[0.08] overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-purple-500"
+                      style={{ width: `${xpPercentage}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-            </>
-          )}
+
+              <ChevronDown
+                className={`hidden sm:block w-3.5 h-3.5 text-slate-600 transition-transform ${
+                  userMenuOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {userMenuOpen && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Fechar menu do piloto"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="fixed inset-0 z-40 cursor-default"
+                />
+
+                <div
+                  className="
+                    absolute right-0 top-full mt-2 z-50
+                    w-[280px]
+                    overflow-hidden
+                    rounded-2xl
+                    border border-white/10
+                    bg-[#0a0b11]/98
+                    shadow-[0_24px_80px_rgba(0,0,0,0.65)]
+                    backdrop-blur-xl
+                  "
+                >
+                  {/* Pilot card */}
+                  <div className="relative p-4 overflow-hidden border-b border-white/[0.07]">
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.07] via-transparent to-purple-500/[0.06] pointer-events-none" />
+
+                    <div className="relative flex items-center gap-3">
+                      <img
+                        src={user.avatar}
+                        alt={user.username}
+                        className="w-11 h-11 rounded-xl object-cover border border-cyan-400/30 bg-slate-900"
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-[8px] font-mono font-bold tracking-[0.15em] text-cyan-500 uppercase">
+                          Piloto conectado
+                        </span>
+
+                        <span className="mt-0.5 block font-heading font-black text-sm text-white truncate">
+                          {user.username}
+                        </span>
+
+                        <span className="block text-[9px] font-mono text-slate-500">
+                          Nível {user.level} · Rede Nexus
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* XP */}
+                    <div className="relative mt-4">
+                      <div className="mb-1.5 flex items-center justify-between gap-3">
+                        <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-slate-500">
+                          Progressão
+                        </span>
+
+                        <span className="text-[8px] font-mono text-cyan-400">
+                          {currentExp} / {maxExp} XP
+                        </span>
+                      </div>
+
+                      <div className="h-1.5 rounded-full bg-black/50 border border-white/[0.05] overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 transition-[width] duration-500"
+                          style={{ width: `${xpPercentage}%` }}
+                        />
+                      </div>
+
+                      <div className="mt-1.5 flex justify-between">
+                        <span className="text-[8px] font-mono text-slate-600">
+                          NV. {user.level}
+                        </span>
+
+                        <span className="text-[8px] font-mono text-slate-600">
+                          {xpPercentage}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="p-2">
+                    <button
+                      type="button"
+                      onClick={() => navigateFromMenu('progression')}
+                      className="
+                        w-full h-10 px-3
+                        rounded-xl
+                        flex items-center gap-3
+                        text-left
+                        text-slate-300
+                        hover:text-cyan-200
+                        hover:bg-cyan-500/[0.06]
+                        transition-colors
+                      "
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-cyan-500/[0.07] flex items-center justify-center">
+                        <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
+                      </div>
+
+                      <div>
+                        <span className="block text-[10px] font-heading font-bold">
+                          Progressão do Piloto
+                        </span>
+
+                        <span className="block text-[8px] font-mono text-slate-600">
+                          Níveis, XP e recompensas
+                        </span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => navigateFromMenu('profile')}
+                      className="
+                        w-full h-10 px-3
+                        rounded-xl
+                        flex items-center gap-3
+                        text-left
+                        text-slate-300
+                        hover:text-purple-200
+                        hover:bg-purple-500/[0.06]
+                        transition-colors
+                      "
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-purple-500/[0.07] flex items-center justify-center">
+                        <User className="w-3.5 h-3.5 text-purple-400" />
+                      </div>
+
+                      <div>
+                        <span className="block text-[10px] font-heading font-bold">
+                          Meu Perfil
+                        </span>
+
+                        <span className="block text-[8px] font-mono text-slate-600">
+                          Identidade pública do piloto
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Logout */}
+                  <div className="p-2 border-t border-white/[0.07]">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="
+                        w-full h-9 px-3
+                        rounded-xl
+                        flex items-center gap-3
+                        text-left
+                        text-slate-500
+                        hover:text-rose-300
+                        hover:bg-rose-500/[0.07]
+                        transition-colors
+                      "
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+
+                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider">
+                        Encerrar sessão
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GameStateProvider, useGameState } from './contexts/GameStateContext';
 import { AppLayout } from './layouts/AppLayout';
+import { Chat } from './pages/Chat';
 
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -94,6 +95,8 @@ const AppContent: React.FC = () => {
         return <Fusion />;
       case 'trades':
         return <Trades />;
+	case 'chat':
+	  return <Chat />;
       case 'ranking':
       case 'leaderboard':
         return <Leaderboard onOpenProfile={openPublicProfile} />;
@@ -119,9 +122,13 @@ const AppContent: React.FC = () => {
 
   return (
     <ProtectedRoute onRedirectToLogin={() => handleNavigate('login')}>
-      <AppLayout currentPage={currentPage} onNavigate={handleNavigate}>
-        {renderCurrentPage()}
-      </AppLayout>
+      <AppLayout
+  currentPage={currentPage}
+  onNavigate={handleNavigate}
+  onOpenProfile={openPublicProfile}
+>
+  {renderCurrentPage()}
+</AppLayout>
 
       {/* Global Level Up Celebration Modal */}
       <LevelUpModal

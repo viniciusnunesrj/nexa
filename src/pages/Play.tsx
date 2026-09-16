@@ -1,9 +1,7 @@
-import { formatEconomicValue } from '../utils/formatEconomicValue';
-import { CardImage } from '../components/common/CardImage';
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
-import { GameItem, PlayerBox, BoxRewardSummary, Card } from '../types';
+import { GameItem, PlayerBox, BoxRewardSummary, Card, BattleRunResult } from '../types';
 import { RARITY_CONFIG } from '../config/designTokens';
 import { getTemplateById } from '../config/collectionsData';
 import { BOX_DEFINITIONS } from '../config/boxRates';
@@ -12,7 +10,6 @@ import { BoxOpeningModal } from '../components/boxes/BoxOpeningModal';
 import { soundService } from '../services/soundService';
 import { EconomyService } from '../services/economyService';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { BattleCombatantSnapshot } from '../types/battle';
 import confetti from 'canvas-confetti';
 import {
   Swords,
@@ -20,17 +17,12 @@ import {
   Zap,
   Sparkles,
   Trophy,
-  ArrowRight,
-  Flame,
   CheckCircle2,
-  RotateCcw,
   Package,
-  PackageOpen,
   Layers,
   X,
   Plus,
   AlertCircle,
-  Filter,
 } from 'lucide-react';
 
 interface PlayProps {
@@ -165,7 +157,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
   const getCardPower = (c: Card): number => {
     const template = getTemplateById(c.templateId);
     return template
-      ? (RARITY_POWER_BASE[c.rarity] || 100) + template.marketValue + template.synthesisRate * 10
+      ? RARITY_POWER_BASE[c.rarity] + template.marketValue + template.synthesisRate * 10
       : RARITY_POWER_BASE[c.rarity] || 100;
   };
 
@@ -217,6 +209,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
 
   // Battle state
   const [inBattle, setInBattle] = useState(false);
+  const [battleTurn, setBattleTurn] = useState<number>(0);
   const [playerHp, setPlayerHp] = useState<number>(100);
   const [enemyHp, setEnemyHp] = useState<number>(100);
   const [combatLogs, setCombatLogs] = useState<string[]>([]);
@@ -227,15 +220,23 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
     nxaGained: number;
     droppedItem: GameItem | null;
     droppedBox?: PlayerBox | null;
-    outcome: 'VICTORY' | 'DEFEAT' | 'DRAW';
+    battleRun?: BattleRunResult;
   } | null>(null);
   const [activeOpeningSummary, setActiveOpeningSummary] = useState<BoxRewardSummary | null>(null);
-  const [battleTeam, setBattleTeam] = useState<BattleCombatantSnapshot[]>([]);
-  const [enemyTeam, setEnemyTeam] = useState<BattleCombatantSnapshot[]>([]);
-  const [activePlayerIndex, setActivePlayerIndex] = useState(0);
-  const [activeEnemyIndex, setActiveEnemyIndex] = useState(0);
+  const [battleRun, setBattleRun] = useState<BattleRunResult | null>(null);
+  const [battleEventIndex, setBattleEventIndex] = useState(-1);
+  const [battleHp, setBattleHp] = useState<Record<string, number>>({});
+  const [battleDefeated, setBattleDefeated] = useState<Record<string, boolean>>({});
   const [battleFlash, setBattleFlash] = useState<string | null>(null);
   const [battleNotice, setBattleNotice] = useState<'DEFEATED' | 'NEXT' | null>(null);
+
+  // Bot opponent
+  const [enemyData, setEnemyData] = useState({
+    name: 'Androide Sentinela X-9',
+    power: 1400,
+    class: 'Guardião',
+    avatar: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&auto=format&fit=crop&q=80',
+  });
 
   const arenas = [
     { id: 'arena-1', name: 'Distrito Neon 07', difficulty: 'Normal', mult: '1.0x' },
@@ -244,209 +245,199 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
   ];
   const [selectedArena, setSelectedArena] = useState(arenas[0].id);
 
-  const createBattleRequestId = (): string => {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-    return `battle-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  };
-
   const startCombat = async () => {
-    if (teamCards.length === 0 || inBattle) return;
+    if (teamCards.length === 0) return;
 
-    // A future retry must reuse this same requestId instead of generating a new run.
-    const requestId = createBattleRequestId();
     setInBattle(true);
     setBattleResult(null);
+    setBattleRun(null);
+    setBattleEventIndex(-1);
+    setBattleHp({});
+    setBattleDefeated({});
     setBattleFlash(null);
     setBattleNotice(null);
-    setBattleTeam([]);
-    setEnemyTeam([]);
-    setActivePlayerIndex(0);
-    setActiveEnemyIndex(0);
+    setCombatLogs([
+      `Iniciando combate na arena com formação de ${teamCards.length} carta(s).`,
+    ]);
     setPlayerHp(100);
     setEnemyHp(100);
-    setCombatLogs(['Solicitação de combate enviada ao servidor.']);
-    soundService.playLaser();
+    setBattleTurn(1);
 
+    soundService.playLaser();
     try {
-      const result = await executeBattle(requestId);
-      const serverBattle = result.serverBattle;
-      if (serverBattle) {
-        let animatedPlayers = serverBattle.playerTeam;
-        let animatedEnemies = serverBattle.enemyTeam;
-        setBattleTeam(animatedPlayers);
-        setEnemyTeam(animatedEnemies);
-        const count = serverBattle.events.length;
-        const delay = count <= 20 ? 300 : count <= 40 ? 240 : count <= 60 ? 175 : 125;
-        for (const event of serverBattle.events) {
-          await new Promise<void>((resolve) => setTimeout(resolve, delay));
-          const attacker = [...animatedPlayers, ...animatedEnemies].find(
-            (combatant) => combatant.id === event.attackerId
-          );
-          const defender = [...animatedPlayers, ...animatedEnemies].find(
-            (combatant) => combatant.id === event.defenderId
-          );
-          if (event.attackerSide === 'PLAYER') {
-            animatedEnemies = animatedEnemies.map((combatant) =>
-              combatant.id === event.defenderId ? { ...combatant, hp: event.defenderHpAfter } : combatant
-            );
-          } else {
-            // The server calls the enemy side NPC; this is the ENEMY animation path.
-            animatedPlayers = animatedPlayers.map((combatant) =>
-              combatant.id === event.defenderId ? { ...combatant, hp: event.defenderHpAfter } : combatant
-            );
-          }
-          setBattleTeam(animatedPlayers);
-          setEnemyTeam(animatedEnemies);
-          if (event.attackerSide === 'PLAYER') {
-            setActivePlayerIndex(animatedPlayers.findIndex((combatant) => combatant.id === event.attackerId));
-          } else {
-            setActiveEnemyIndex(animatedEnemies.findIndex((combatant) => combatant.id === event.attackerId));
-          }
-          setBattleFlash(event.defenderId);
-          if (event.defeated) {
+      const requestId =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      const rewards = await executeBattle(requestId);
+      const run = rewards.serverBattle ?? rewards.battleRun;
+      if (!run) {
+        setInBattle(false);
+        setBattleResult(rewards);
+        return;
+      }
+
+      setBattleRun(run);
+      const playerRunSnapshots = (run.playerTeam || []) as Array<Record<string, unknown>>;
+      const npcRunSnapshots = (run.enemyTeam || []) as Array<Record<string, unknown>>;
+      const snapshots = [...playerRunSnapshots, ...npcRunSnapshots];
+      const initialHp = Object.fromEntries(
+        snapshots.map((snapshot) => [String(snapshot.id), Number(snapshot.maxHp ?? snapshot.max_hp) || 0])
+      );
+      setBattleHp(initialHp);
+      const npcSnapshot = npcRunSnapshots[0] as Record<string, unknown> | undefined;
+      setEnemyData((previous) => ({
+        ...previous,
+        name: String(npcSnapshot?.name || previous.name),
+        power: Number(npcSnapshot?.power || previous.power),
+      }));
+      setEnemyHp(100);
+      setPlayerHp(100);
+      const events = run.events || [];
+      const eventDelay = events.length <= 20 ? 300 : events.length <= 40 ? 240 : events.length <= 60 ? 175 : 125;
+      let elapsed = 0;
+      events.forEach((event, index) => {
+        const scheduledAt = elapsed;
+        const defeated = Boolean(event.defeated);
+        const defenderId = event.defenderId || '';
+        const attackerId = event.attackerId || '';
+        elapsed += eventDelay + (defeated ? 500 : 0);
+        window.setTimeout(() => {
+          setBattleEventIndex(index);
+          setBattleFlash(defenderId);
+          setBattleHp((previous) => ({
+            ...previous,
+            [defenderId]: event.defenderHpAfter ?? previous[defenderId] ?? 0,
+          }));
+          const defenderSnapshot = snapshots.find((snapshot) => String(snapshot.id) === defenderId);
+          const defenderMaxHp = Number(defenderSnapshot?.maxHp ?? defenderSnapshot?.max_hp) || 1;
+          const defenderPercent = Math.max(0, Math.round(((event.defenderHpAfter ?? 0) / defenderMaxHp) * 100));
+          if (event.attackerSide === 'PLAYER') setEnemyHp(defenderPercent);
+          else setPlayerHp(defenderPercent);
+          setBattleDefeated((previous) => ({ ...previous, [defenderId]: defeated }));
+          if (defeated) {
             setBattleNotice('DEFEATED');
-            await new Promise<void>((resolve) => setTimeout(resolve, 300));
-            const nextIndex = event.attackerSide === 'PLAYER'
-              ? animatedEnemies.findIndex((combatant) => combatant.hp > 0)
-              : animatedPlayers.findIndex((combatant) => combatant.hp > 0);
-            if (nextIndex >= 0) {
-              setBattleNotice('NEXT');
-              await new Promise<void>((resolve) => setTimeout(resolve, 200));
-            }
-            if (event.attackerSide === 'PLAYER' && nextIndex >= 0) setActiveEnemyIndex(nextIndex);
-            if (event.attackerSide === 'NPC' && nextIndex >= 0) setActivePlayerIndex(nextIndex);
-          }
-          const defenderHpPercent = defender ? Math.round((event.defenderHpAfter / defender.maxHp) * 100) : 0;
-          if (event.attackerSide === 'PLAYER') {
-            setEnemyHp(defenderHpPercent);
-          } else {
-            setPlayerHp(defenderHpPercent);
+            window.setTimeout(() => setBattleNotice('NEXT'), 350);
+            window.setTimeout(() => setBattleNotice(null), 850);
           }
           setCombatLogs((previous) => [
             ...previous,
-            `${attacker?.name || event.attackerId} causou ${event.damage} de dano em ${defender?.name || event.defenderId}${
-              event.defeated ? ' e derrotou o combatente.' : ` (${event.defenderHpBefore} → ${event.defenderHpAfter} HP).`
-            }`,
+            `${attackerId} atacou por ${event.damage} de dano.${defeated ? ' COMBATENTE DERROTADO. PRÓXIMO COMBATENTE.' : ''}`,
           ]);
-          soundService.playLaser();
-          setBattleNotice(null);
-        }
-      }
-
-      setBattleResult({
-        victory: result.outcome === 'VICTORY',
-        outcome: result.outcome,
-        xpGained: result.xpGained,
-        nexGained: result.nexGained,
-        nxaGained: result.nxaGained,
-        droppedItem: result.droppedItem,
-        droppedBox: result.droppedBox,
+          window.setTimeout(() => setBattleFlash(null), 220);
+        }, scheduledAt);
       });
-      setCombatLogs((previous) => [...previous, `Combate encerrado: ${result.outcome}.`]);
-      if (result.outcome === 'VICTORY') {
-        soundService.playVictory();
-        try {
+      const totalDelay = elapsed;
+      window.setTimeout(() => {
+        setBattleTurn(run.rounds);
+        setInBattle(false);
+        setBattleResult({ ...rewards, battleRun: run });
+        if (run.outcome === 'VICTORY') {
+          soundService.playVictory();
           confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 }, colors: ['#22d3ee', '#a855f7', '#f59e0b', '#10b981'] });
-        } catch {
-          // Visual effect is best effort.
         }
-      }
+      }, totalDelay + 700);
     } catch (error) {
-      setCombatLogs((previous) => [
-        ...previous,
-        error instanceof Error ? error.message : 'Não foi possível confirmar a batalha.',
-      ]);
-    } finally {
-      setBattleFlash(null);
-      setBattleNotice(null);
       setInBattle(false);
+      setCombatLogs((previous) => [...previous, error instanceof Error ? error.message : 'Não foi possível confirmar a batalha.']);
     }
   };
 
   // Cards to display in the arsenal picker
   const displayedCards = cardFilterMode === 'free' ? freeCards : userCards;
-  const activePlayer = battleTeam[activePlayerIndex];
-  const activeEnemy = enemyTeam[activeEnemyIndex];
-  const snapshotPower = (combatant: BattleCombatantSnapshot): number | null => {
-    // 5B2 does not require power: use confirmed power or known template data only.
-    if ('power' in combatant && typeof combatant.power === 'number' && Number.isFinite(combatant.power)) return combatant.power;
-    const template = combatant.templateId ? getTemplateById(combatant.templateId) : undefined;
-    return template ? (RARITY_POWER_BASE[combatant.rarity] || 100) + template.marketValue + template.synthesisRate * 10 : null;
-  };
-  const activePlayerImage = activePlayer ? userCards.find(card => card.id === activePlayer.id)?.image : mainCard?.image;
-  const renderBattleSlot = (snapshot: BattleCombatantSnapshot, side: 'PLAYER' | 'NPC') => {
-    const team = side === 'PLAYER' ? battleTeam : enemyTeam;
-    const active = snapshot === team[side === 'PLAYER' ? activePlayerIndex : activeEnemyIndex];
-    const defeated = snapshot.hp <= 0;
-    const percent = snapshot.maxHp > 0 ? Math.max(0, Math.min(100, snapshot.hp / snapshot.maxHp * 100)) : 0;
+  const playerSnapshots = (battleRun?.playerTeam || []) as Array<Record<string, unknown>>;
+  const npcSnapshots = (battleRun?.enemyTeam || []) as Array<Record<string, unknown>>;
+  const activeEvent = battleRun?.events[battleEventIndex];
+  const activePlayerId = activeEvent
+    ? (activeEvent.attackerSide === 'PLAYER' ? activeEvent.attackerId : activeEvent.defenderId)
+    : undefined;
+  const activeNpcId = activeEvent
+    ? (activeEvent.attackerSide === 'NPC' ? activeEvent.attackerId : activeEvent.defenderId)
+    : undefined;
+  const activePlayerSnapshot = playerSnapshots.find((snapshot) => String(snapshot.id) === activePlayerId);
+  const activeNpcSnapshot = npcSnapshots.find((snapshot) => String(snapshot.id) === activeNpcId);
+  const activePlayerHp = activePlayerSnapshot ? battleHp[String(activePlayerSnapshot.id)] ?? Number(activePlayerSnapshot.maxHp ?? activePlayerSnapshot.max_hp) : 0;
+  const activeNpcHp = activeNpcSnapshot ? battleHp[String(activeNpcSnapshot.id)] ?? Number(activeNpcSnapshot.maxHp ?? activeNpcSnapshot.max_hp) : 0;
+  const renderBattleSlot = (snapshot: Record<string, unknown>, side: 'PLAYER' | 'NPC') => {
+    const id = String(snapshot.id);
+    const defeated = Boolean(battleDefeated[id]);
+    const active = id === (side === 'PLAYER' ? activePlayerId : activeNpcId);
+    const hp = battleHp[id] ?? Number(snapshot.maxHp ?? snapshot.max_hp) ?? 0;
+    const maxHp = Number(snapshot.maxHp ?? snapshot.max_hp) || 1;
     return (
-      <div key={snapshot.id} className={`rounded-lg border px-2.5 py-2 text-left transition-all ${defeated ? 'grayscale opacity-50 border-white/10' : active ? 'border-cyan-300 bg-cyan-950/50' : 'border-white/20'} ${battleFlash === snapshot.id ? 'ring-2 ring-rose-300' : ''}`}>
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="font-semibold text-white text-xs truncate" title={snapshot.name}>{snapshot.name}</span>
-          {(side === 'NPC' || side === 'PLAYER') && (
-            <span className={`shrink-0 rounded-md border px-1 py-0.5 text-[8px] font-mono font-bold uppercase ${(RARITY_CONFIG[snapshot.rarity as keyof typeof RARITY_CONFIG] || RARITY_CONFIG.Comum).badge}`}>
-              {snapshot.rarity}
-            </span>
-          )}
-          {side === 'PLAYER' && (snapshot.leader || snapshot.id === mainCardId) && <span className="shrink-0 rounded bg-amber-400/10 px-1 py-0.5 text-[8px] font-bold text-amber-300">PRINCIPAL</span>}
+      <div
+        key={id}
+        className={`rounded-xl border p-2 text-left transition-all duration-300 ${
+          defeated ? 'opacity-40 border-white/10 grayscale' : active ? 'border-cyan-300 bg-cyan-400/15 shadow-[0_0_15px_rgba(34,211,238,.25)]' : 'border-white/10 bg-black/30'
+        } ${battleFlash === id ? 'animate-pulse ring-2 ring-rose-400' : ''}`}
+      >
+        <div className="flex items-center gap-2">
+          <img src={String(snapshot.image || (side === 'PLAYER' ? mainCard?.image : enemyData.avatar))} alt="" className="h-8 w-8 rounded-lg object-cover" />
+          <div className="min-w-0 flex-1">
+            <span className="block truncate text-[10px] font-bold text-white">{String(snapshot.name || 'Combatente')}</span>
+            <span className="text-[9px] font-mono text-slate-400">{String(snapshot.rarity || '')} • {Number(snapshot.power || 0)} PWR</span>
+          </div>
+          <span className={`text-[9px] font-mono font-bold ${defeated ? 'text-rose-300' : active ? 'text-cyan-300' : 'text-slate-400'}`}>
+            {defeated ? 'DERROTADO' : active ? 'ATIVO' : 'PRÓXIMO'}
+          </span>
         </div>
-        <div className="mt-0.5 text-[9px] font-bold tracking-wide text-cyan-200">{defeated ? 'DERROTADO' : active ? 'ATIVO' : 'PRÓXIMO'}</div>
-        <div className="mt-1 h-1 rounded bg-black/60 overflow-hidden"><div className="h-full bg-cyan-400 transition-all duration-300" style={{ width: `${percent}%` }} /></div>
+        <div className="mt-1 flex items-center justify-between text-[9px] font-mono text-slate-400">
+          <span>POSIÇÃO {String(snapshot.position)}/{side === 'PLAYER' ? playerSnapshots.length : npcSnapshots.length}</span>
+          <span className={defeated ? 'text-rose-300' : 'text-cyan-300'}>{Math.max(0, Math.round(hp))}/{Math.round(maxHp)} HP</span>
+        </div>
+        <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/60">
+          <div className={`h-full transition-all duration-300 ${side === 'PLAYER' ? 'bg-cyan-400' : 'bg-rose-500'}`} style={{ width: `${Math.max(0, Math.min(100, (hp / maxHp) * 100))}%` }} />
+        </div>
       </div>
     );
   };
 
-  const activePlayerHp = activePlayer
-    ? (activePlayer.maxHp > 0 ? Math.max(0, Math.min(100, activePlayer.hp / activePlayer.maxHp * 100)) : 0)
-    : playerHp;
-  const activeEnemyHp = activeEnemy
-    ? (activeEnemy.maxHp > 0 ? Math.max(0, Math.min(100, activeEnemy.hp / activeEnemy.maxHp * 100)) : 0)
-    : enemyHp;
-
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      {/* Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* Arena Command Header */}
+      <section className="relative overflow-hidden rounded-2xl border border-blue-500/15 bg-gradient-to-br from-[#07101a] via-[#090a0f] to-[#07080c] p-5 sm:p-6">
+        <div className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-blue-500/[0.08] blur-3xl" />
+        <div className="relative flex flex-col xl:flex-row xl:items-end justify-between gap-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-wider">
-            <Swords className="w-4 h-4" /> Módulo de Batalha & Looting
+          <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-[0.2em]">
+            <Swords className="w-4 h-4" /> Arena // Comando de Combate
           </div>
-          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-1">
+          <h1 className="font-heading text-3xl sm:text-4xl font-black text-white mt-2 tracking-tight">
             Arena de Batalha
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">
-            Monte uma formação de até quatro cartas <strong className="text-emerald-400">FREE</strong> do inventário e defina uma delas como principal para desafiar a arena.
+          <p className="text-xs sm:text-sm text-slate-400 font-mono mt-1.5 max-w-2xl leading-relaxed">
+            Configure até quatro cartas <strong className="text-emerald-400">FREE</strong>, escolha o combatente principal e envie sua formação para a Arena.
           </p>
         </div>
 
         {/* Selected Arena Picker */}
-        <div className="flex items-center gap-2 bg-[#0d0d15] border border-white/10 p-1.5 rounded-xl">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 bg-black/25 border border-white/[0.07] p-1.5 rounded-xl xl:min-w-[420px]">
           {arenas.map((a) => (
             <button
               key={a.id}
               onClick={() => setSelectedArena(a.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
                 selectedArena === a.id
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-blue-500/15 text-cyan-200 border border-cyan-500/30 font-bold'
+                  : 'text-slate-500 border border-transparent hover:text-slate-200 hover:bg-white/[0.025]'
               }`}
             >
               {a.name}
             </button>
           ))}
         </div>
-      </div>
+        </div>
+      </section>
 
-      <style>{`@keyframes battle-notice-compact { 0%, 65% { opacity: 1; } 100% { opacity: 0; } }`}</style>
       {/* Main Battle Stage */}
-      <div className="relative rounded-3xl bg-[#0a0a12] border border-white/10 overflow-hidden shadow-2xl p-4 sm:p-6">
+      <section className="relative rounded-2xl bg-[#07090e] border border-blue-500/15 overflow-hidden p-4 sm:p-6">
         {/* Background Atmosphere */}
-        <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 via-transparent to-black pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-950/[0.16] via-transparent to-black/30 pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent pointer-events-none" />
         {battleNotice && (
-          <div className="absolute top-2 inset-x-3 z-30 flex justify-center pointer-events-none">
-            <div key={battleNotice} style={{ animation: 'battle-notice-compact 180ms ease-out forwards' }} className={`rounded-lg border px-3 py-1.5 text-center text-[10px] font-heading font-bold uppercase tracking-wide shadow-md ${
+          <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+            <div className={`rounded-2xl border px-6 py-4 text-center font-heading font-black uppercase tracking-widest shadow-2xl ${
               battleNotice === 'DEFEATED'
                 ? 'border-rose-400/70 bg-rose-950/85 text-rose-200'
                 : 'border-cyan-400/70 bg-cyan-950/85 text-cyan-200'
@@ -456,43 +447,43 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
           </div>
         )}
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
           {/* Fighter 1: Player's Character + Battle Team Cards */}
-          <div className="flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 relative overflow-hidden">
+          <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-rose-500/[0.02] border border-rose-500/15 relative overflow-hidden">
             <div className="w-full flex items-center justify-between mb-4">
               <span className="text-xs font-mono text-cyan-400 font-bold uppercase">
                 Sua Formação
               </span>
               {mainCard && <RarityBadge rarity={mainCard.rarity} size="sm" />}
             </div>
-            {battleTeam.length > 0 && (
-              <div className="mb-5 grid w-full grid-cols-2 gap-1.5">
-                <span className="col-span-2 text-left text-[10px] font-mono font-bold uppercase text-cyan-300">MINHA FORMAÇÃO</span>
-                {battleTeam.map((snapshot) => renderBattleSlot(snapshot, 'PLAYER'))}
+            {playerSnapshots.length > 0 && (
+              <div className="mb-4 grid w-full grid-cols-1 gap-2">
+                <span className="text-left text-[10px] font-mono font-bold uppercase text-cyan-300">MINHA FORMAÇÃO</span>
+                {playerSnapshots.map((snapshot) => renderBattleSlot(snapshot, 'PLAYER'))}
               </div>
             )}
 
-            {(activePlayer || mainCard) ? (
+            {mainCard ? (
               <>
-                <div className="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.3)] mb-4 bg-slate-950">
-                  {activePlayerImage ? <CardImage asset={activePlayer || mainCard}
-                    src={activePlayerImage}
-                    alt={activePlayer?.name || mainCard?.name}
+                <div className="relative w-36 h-36 sm:w-40 sm:h-40 rounded-2xl overflow-hidden border border-cyan-400/60 shadow-[0_0_22px_rgba(34,211,238,0.12)] mb-4 bg-slate-950">
+                  <img
+                    src={String(activePlayerSnapshot?.image || mainCard.image)}
+                    alt={String(activePlayerSnapshot?.name || mainCard.name)}
                     className={`w-full h-full object-cover transition-transform duration-300 ${
-                      activePlayer && activePlayer.hp <= 0 ? 'grayscale opacity-50' : inBattle ? 'scale-110 animate-pulse' : ''
+                      inBattle ? 'scale-110 animate-pulse' : ''
                     }`}
-                  /> : <Shield className="w-20 h-20 text-cyan-300 mx-auto mt-10" />}
-                  {inBattle && activePlayer && activePlayer.hp > 0 && (
+                  />
+                  {inBattle && (
                     <div className="absolute inset-0 bg-cyan-500/20 mix-blend-overlay animate-ping" />
                   )}
                 </div>
 
                 <h3 className="font-heading text-xl font-bold text-white">
-                  {activePlayer?.name || mainCard?.name}
+                  {String(activePlayerSnapshot?.name || mainCard.name)}
                 </h3>
                 <span className="text-xs font-mono text-slate-400 mt-0.5">
-                  {activePlayer
-                    ? `Posição ${activePlayer.position}/${battleTeam.length} • ${activePlayer.rarity} • ${snapshotPower(activePlayer) ?? 'Indisponível'} PWR`
+                  {activePlayerSnapshot
+                    ? `Posição ${String(activePlayerSnapshot.position)}/${playerSnapshots.length} • ${String(activePlayerSnapshot.rarity)} • ${Number(activePlayerSnapshot.power)} PWR`
                     : 'Aguardando combatente ativo'}
                 </span>
 
@@ -500,19 +491,21 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                 <div className="w-full mt-4">
                   <div className="flex justify-between text-[11px] font-mono mb-1">
                     <span className="text-slate-400">Integridade dos Escudos</span>
-                    <span className="text-cyan-400 font-bold">{activePlayer ? `${activePlayer.hp}/${activePlayer.maxHp} HP` : 'HP confirmado na batalha'}</span>
+                    <span className="text-cyan-400 font-bold">
+                      {activePlayerSnapshot ? `${Math.round(activePlayerHp)}/${Math.round(Number(activePlayerSnapshot.maxHp ?? activePlayerSnapshot.max_hp) || 0)} HP` : '0/0 HP'}
+                    </span>
                   </div>
                   <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
                     <div
                       className="h-full bg-cyan-400 rounded-full transition-all duration-500"
-                      style={{ width: `${activePlayerHp}%` }}
+                      style={{ width: `${activePlayerSnapshot ? Math.max(0, Math.min(100, (activePlayerHp / (Number(activePlayerSnapshot.maxHp ?? activePlayerSnapshot.max_hp) || 1)) * 100)) : 0}%` }}
                     />
                   </div>
                 </div>
 
                 {/* Total Power Badge with Card Contribution */}
                 <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs font-mono text-slate-300">
-                  <span className="flex items-center gap-1 text-cyan-400 font-bold bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-500/30">
+                  <span className="flex items-center gap-1 text-cyan-300 font-bold bg-cyan-500/[0.07] px-2.5 py-1 rounded-lg border border-cyan-500/20">
                     <Zap className="w-3.5 h-3.5 text-cyan-300" /> {totalFighterPower} PWR Total
                   </span>
                   {totalFighterPower > 0 && (
@@ -538,10 +531,10 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                       {teamCards.map((card) => (
                         <div
                           key={card.id}
-                          className="flex items-center justify-between p-2 rounded-xl bg-cyan-950/40 border border-cyan-500/40 text-xs font-mono"
+                          className="flex items-center justify-between p-2 rounded-xl bg-black/25 border border-cyan-500/15 text-xs font-mono"
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <CardImage asset={card}
+                            <img
                               src={card.image}
                               alt={card.name}
                               className="w-7 h-7 rounded-lg object-cover bg-slate-900 shrink-0"
@@ -602,13 +595,13 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
 
           {/* VS Badge in Center on Mobile / Indicator */}
           <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex-col items-center pointer-events-none">
-            <div className="w-14 h-14 rounded-full bg-slate-950 border-2 border-cyan-400/80 shadow-[0_0_20px_rgba(34,211,238,0.5)] flex items-center justify-center font-brand font-black text-xl text-cyan-300">
+            <div className="w-12 h-12 rounded-full bg-[#07090e] border border-blue-400/60 shadow-[0_0_18px_rgba(59,130,246,0.18)] flex items-center justify-center font-brand font-black text-lg text-cyan-200">
               VS
             </div>
           </div>
 
-          {/* Fighter 2: Opponent returned by the server */}
-          <div className="flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 relative overflow-hidden">
+          {/* Fighter 2: Opponent Bot */}
+          <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-rose-500/[0.02] border border-rose-500/15 relative overflow-hidden">
             <div className="w-full flex items-center justify-between mb-4">
               <span className="text-xs font-mono text-rose-400 font-bold uppercase">
                 Adversário da Arena
@@ -617,53 +610,63 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                 IA DE COMBATE
               </span>
             </div>
-            {enemyTeam.length > 0 && (
-              <div className="mb-5 grid w-full grid-cols-2 gap-1.5">
-                <span className="col-span-2 text-left text-[10px] font-mono font-bold uppercase text-rose-300">INIMIGOS</span>
-                {enemyTeam.map((snapshot) => renderBattleSlot(snapshot, 'NPC'))}
+            {npcSnapshots.length > 0 && (
+              <div className="mb-4 grid w-full grid-cols-1 gap-2">
+                <span className="text-left text-[10px] font-mono font-bold uppercase text-rose-300">INIMIGOS</span>
+                {npcSnapshots.map((snapshot) => renderBattleSlot(snapshot, 'NPC'))}
               </div>
             )}
 
-            <div className="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.3)] mb-4 bg-gradient-to-br from-rose-950 to-slate-950 flex items-center justify-center">
-              <Shield className={`w-20 h-20 text-rose-400/70 ${activeEnemy && activeEnemy.hp <= 0 ? 'grayscale opacity-50' : inBattle ? 'animate-pulse' : ''}`} />
+            <div className="relative w-36 h-36 sm:w-40 sm:h-40 rounded-2xl overflow-hidden border border-rose-500/60 shadow-[0_0_22px_rgba(244,63,94,0.10)] mb-4 bg-slate-950">
+              <img
+                src={String(activeNpcSnapshot?.image || enemyData.avatar)}
+                alt={String(activeNpcSnapshot?.name || enemyData.name)}
+                className={`w-full h-full object-cover transition-transform duration-300 ${
+                  inBattle ? 'scale-110 animate-pulse' : ''
+                }`}
+              />
             </div>
 
             <h3 className="font-heading text-xl font-bold text-white">
-              {activeEnemy?.name || 'Aguardando adversário confirmado'}
+              {String(activeNpcSnapshot?.name || enemyData.name)}
             </h3>
             <span className="text-xs font-mono text-slate-400 mt-0.5">
-              {activeEnemy ? `Posição ${activeEnemy.position}/${enemyTeam.length} • ${activeEnemy.rarity}${snapshotPower(activeEnemy) !== null ? ` • ${snapshotPower(activeEnemy)} PWR` : ''}` : 'O servidor definirá a formação'}
+              {activeNpcSnapshot
+                ? `Posição ${String(activeNpcSnapshot.position)}/${npcSnapshots.length} • ${String(activeNpcSnapshot.rarity)} • ${Number(activeNpcSnapshot.power)} PWR`
+                : 'Aguardando combatente ativo'}
             </span>
 
             {/* Enemy HP Bar */}
             <div className="w-full mt-4">
               <div className="flex justify-between text-[11px] font-mono mb-1">
                 <span className="text-slate-400">Escudos Adversários</span>
-                <span className="text-rose-400 font-bold">{activeEnemy ? `${activeEnemy.hp}/${activeEnemy.maxHp} HP` : 'HP confirmado na batalha'}</span>
+                <span className="text-rose-400 font-bold">
+                  {activeNpcSnapshot ? `${Math.round(activeNpcHp)}/${Math.round(Number(activeNpcSnapshot.maxHp ?? activeNpcSnapshot.max_hp) || 0)} HP` : '0/0 HP'}
+                </span>
               </div>
               <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
                 <div
                   className="h-full bg-rose-500 rounded-full transition-all duration-500"
-                  style={{ width: `${activeEnemyHp}%` }}
+                  style={{ width: `${activeNpcSnapshot ? Math.max(0, Math.min(100, (activeNpcHp / (Number(activeNpcSnapshot.maxHp ?? activeNpcSnapshot.max_hp) || 1)) * 100)) : 0}%` }}
                 />
               </div>
             </div>
 
             <div className="mt-4 flex items-center gap-4 text-xs font-mono text-slate-300">
-              <span className="text-rose-300 font-bold">
-                {activeEnemy ? `${activeEnemy.hp}/${activeEnemy.maxHp} HP` : 'HP confirmado na batalha'}
+              <span className="flex items-center gap-1 text-rose-400 font-bold">
+                <Zap className="w-3.5 h-3.5" /> {Number(activeNpcSnapshot?.power || 0)} PWR
               </span>
-              <span>{activeEnemy ? `Defesa ${activeEnemy.defense}` : 'Sem dados locais'}</span>
+              <span>Dificuldade: Média</span>
             </div>
           </div>
         </div>
 
         {/* Action Controls & Battle Log */}
-        <div className="relative z-10 mt-5 pt-5 border-t border-white/10 flex flex-col items-center">
+        <div className="relative z-10 mt-5 pt-5 border-t border-white/[0.07] flex flex-col items-center">
           {/* Logs */}
-          <div className="w-full max-w-xl bg-slate-950/80 border border-white/10 rounded-2xl p-4 min-h-[90px] flex flex-col justify-center text-center mb-6">
+          <div className="w-full max-w-2xl bg-black/30 border border-blue-500/15 rounded-xl px-4 py-3 min-h-[72px] flex flex-col justify-center text-center mb-4">
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
-              Registro Tático do Combate:
+              Registro Tático // Arena
             </span>
             <p className="font-mono text-xs text-cyan-300 font-medium animate-in fade-in">
               {combatLogs[combatLogs.length - 1] || 'Aguardando início do duelo...'}
@@ -674,43 +677,43 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
           <button
             onClick={startCombat}
             disabled={inBattle || teamCards.length === 0}
-            className={`px-10 py-4 rounded-2xl font-heading font-black text-lg uppercase tracking-wider transition-all flex items-center gap-3 ${
+            className={`w-full sm:w-auto min-w-0 sm:min-w-[340px] px-6 sm:px-10 py-4 rounded-xl font-heading font-black text-base sm:text-lg uppercase tracking-[0.08em] transition-all flex items-center justify-center gap-3 border ${
               inBattle
-                ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 shadow-[0_0_30px_rgba(6,182,212,0.45)] hover:scale-105 [@media(hover:none)]:from-cyan-300 [@media(hover:none)]:to-cyan-500 [@media(hover:none)]:shadow-[0_0_30px_rgba(6,182,212,0.6)]'
+                ? 'bg-slate-900 border-white/[0.06] text-slate-600 cursor-not-allowed'
+                : 'bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 border-cyan-300/30 text-[#031018] shadow-[0_0_28px_rgba(14,165,233,0.28)] hover:brightness-110 active:scale-[0.99] [@media(hover:none)]:from-cyan-400 [@media(hover:none)]:via-blue-500 [@media(hover:none)]:to-indigo-500 [@media(hover:none)]:text-[#031018]'
             }`}
           >
             <Swords className="w-6 h-6" />
             <span>{inBattle ? 'Engajando em Batalha...' : 'Iniciar Batalha na Arena'}</span>
           </button>
         </div>
-      </div>
+      </section>
 
       {/* ======================================================= */}
       {/* SELEÇÃO DE CARTAS PARA A BATALHA (DO INVENTÁRIO REAL)   */}
       {/* ======================================================= */}
-      <div className="rounded-2xl bg-[#0b0b12] border border-white/10 p-6 space-y-4 shadow-xl">
+      <section className="rounded-2xl bg-[#090a0f] border border-white/[0.08] p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
           <div>
             <div className="flex items-center gap-2">
               <Layers className="w-5 h-5 text-cyan-400" />
               <h3 className="font-heading text-xl font-bold text-white">
-                Cartas para a Batalha (Inventário)
+                Arsenal de Combate
               </h3>
             </div>
             <p className="text-xs font-mono text-slate-400 mt-1">
-              Cartas <strong className="text-emerald-400">FREE</strong> do seu inventário estão prontas para jogar. Cartas em síntese (<strong className="text-amber-400">ACTIVE</strong>) ou exauridas não podem ser selecionadas.
+              Selecione cartas <strong className="text-emerald-400">FREE</strong> para compor a formação. Ativos ocupados ou exauridos permanecem indisponíveis.
             </p>
           </div>
 
           {/* Toggle Filter: Apenas FREE vs Todas as Cartas */}
-          <div className="flex items-center gap-1 bg-black/60 border border-white/10 p-1 rounded-xl shrink-0 self-start sm:self-auto font-mono text-xs">
+          <div className="flex items-center gap-1 bg-black/30 border border-white/[0.07] p-1 rounded-xl shrink-0 self-start sm:self-auto font-mono text-xs">
             <button
               onClick={() => setCardFilterMode('free')}
               className={`px-3 py-1.5 rounded-lg transition-all ${
                 cardFilterMode === 'free'
                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-500 border border-transparent hover:text-slate-200 hover:bg-white/[0.025]'
               }`}
             >
               Disponíveis FREE ({freeCards.length})
@@ -719,8 +722,8 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
               onClick={() => setCardFilterMode('all')}
               className={`px-3 py-1.5 rounded-lg transition-all ${
                 cardFilterMode === 'all'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-blue-500/15 text-cyan-200 border border-cyan-500/30 font-bold'
+                  : 'text-slate-500 border border-transparent hover:text-slate-200 hover:bg-white/[0.025]'
               }`}
             >
               Todas as Cartas ({userCards.length})
@@ -742,10 +745,10 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                   key={card.id}
                   className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
                     isSelected
-                      ? 'bg-cyan-950/60 border-cyan-400 ring-1 ring-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)]'
+                      ? 'bg-cyan-500/[0.055] border-cyan-400/70 ring-1 ring-cyan-400/25 shadow-[0_0_18px_rgba(34,211,238,0.08)]'
                       : isFree
-                      ? 'bg-white/5 border-white/10 hover:border-white/20'
-                      : 'bg-black/40 border-white/5 opacity-70'
+                      ? 'bg-white/[0.025] border-white/[0.07] hover:border-cyan-500/20'
+                      : 'bg-black/30 border-white/[0.04] opacity-65'
                   }`}
                 >
                   <div>
@@ -776,7 +779,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
 
                     {/* Card Artwork */}
                     <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-slate-950 border border-white/10">
-                      <CardImage asset={card}
+                      <img
                         src={card.image}
                         alt={card.name}
                         className="w-full h-full object-cover"
@@ -808,7 +811,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                       isSelected ? (
                         <button
                           onClick={() => handleToggleCardSelection(card)}
-                          className="w-full py-2 px-3 rounded-xl bg-cyan-950/80 border border-cyan-400 text-cyan-300 font-mono text-xs font-bold hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-400 transition-colors flex items-center justify-center gap-1.5"
+                          className="w-full py-2 px-3 rounded-xl bg-cyan-500/[0.07] border border-cyan-400/40 text-cyan-200 font-mono text-xs font-bold hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-400 transition-colors flex items-center justify-center gap-1.5"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
                           <span>NO TIME • REMOVER</span>
@@ -816,7 +819,7 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                       ) : (
                         <button
                           onClick={() => handleToggleCardSelection(card)}
-                          className="w-full py-2 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-cyan-500/20 hover:scale-[1.02] flex items-center justify-center gap-1.5"
+                          className="w-full py-2 px-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/35 text-cyan-100 font-heading text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-cyan-500/20 hover:scale-[1.02] flex items-center justify-center gap-1.5"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>SELECIONAR</span>
@@ -869,15 +872,15 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Battle Rewards & Loot Reveal Modal */}
       {battleResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-lg animate-in fade-in zoom-in-95 duration-200">
-          <div className="relative w-full max-w-md rounded-3xl bg-[#0e0e1a] border border-cyan-500/50 p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(6,182,212,0.3)]">
+          <div className="relative w-full max-w-md rounded-2xl bg-[#090b11] border border-blue-500/25 p-6 sm:p-7 text-center shadow-[0_0_40px_rgba(14,165,233,0.12)]">
             {/* Header Icon */}
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 mb-4 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-              {battleResult.outcome === 'VICTORY' ? (
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-cyan-500/[0.08] border border-cyan-400/25 text-cyan-300 mb-4">
+              {battleResult.victory ? (
                 <Trophy className="w-8 h-8 text-cyan-400 animate-bounce" />
               ) : (
                 <Shield className="w-8 h-8 text-slate-400" />
@@ -885,18 +888,18 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             </div>
 
             <h2 className="font-heading text-3xl font-black text-white">
-              {battleResult.outcome === 'VICTORY'
-                ? 'Vitória Esmagadora!'
-                : battleResult.outcome === 'DRAW'
-                ? 'Empate na Arena'
+              {battleResult.battleRun?.outcome === 'DRAW'
+                ? 'Empate Tático'
+                : battleResult.victory
+                ? 'Vitória na Arena'
                 : 'Batalha Encerrada'}
             </h2>
             <p className="text-xs font-mono text-slate-300 mt-1">
-              {battleResult.outcome === 'VICTORY'
-                ? 'Você dominou a arena e coletou espólios cibernéticos!'
-                : battleResult.outcome === 'DRAW'
-                ? 'O combate terminou sem vencedor. Recompensas confirmadas pelo servidor.'
-                : 'A formação adversária prevaleceu. Recompensas confirmadas pelo servidor.'}
+              {battleResult.battleRun?.outcome === 'DRAW'
+                ? 'O limite seguro de rounds foi atingido sem vencedor.'
+                : battleResult.victory
+                ? 'Combate confirmado. Recompensas registradas.'
+                : 'Combate encerrado. Resultado e recompensas confirmados.'}
             </p>
 
             {/* Currency Gains */}
@@ -907,11 +910,11 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
               </div>
               <div className="text-center">
                 <span className="text-[10px] text-slate-500 block">MOEDAS NEX</span>
-                <span className="font-bold text-sm text-amber-400">+{formatEconomicValue(battleResult.nexGained)}</span>
+                <span className="font-bold text-sm text-amber-400">+{battleResult.nexGained}</span>
               </div>
               <div className="text-center">
                 <span className="text-[10px] text-slate-500 block">TOKENS NXA</span>
-                <span className="font-bold text-sm text-cyan-400">+{formatEconomicValue(battleResult.nxaGained)}</span>
+                <span className="font-bold text-sm text-cyan-400">+{battleResult.nxaGained}</span>
               </div>
             </div>
 
@@ -963,13 +966,11 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                     </div>
                   </div>
                   <button
-                    onClick={async () => {
+                    onClick={() => {
                       if (!battleResult.droppedBox) return;
-                      try {
-                        const summary = await openBox(battleResult.droppedBox.id);
+                      const summary = openBox(battleResult.droppedBox.id);
+                      if (summary) {
                         setActiveOpeningSummary(summary);
-                      } catch {
-                        // Error notification is handled by the context.
                       }
                     }}
                     className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-heading text-xs font-black uppercase tracking-wider transition-all shrink-0"
