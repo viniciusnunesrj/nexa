@@ -1,6 +1,7 @@
 import { TradeOffer, NexaAsset, NexaUser } from '../types';
 import type { PublicProfile } from '../types/publicProfile';
 import { SecurityService } from './securityService';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 export class TradeService {
   /**
@@ -15,6 +16,7 @@ export class TradeService {
     requestedNXA: number,
     note?: string
   ): TradeOffer {
+    if (isSupabaseConfigured()) throw new Error('Trocas online exigem confirmação do servidor.');
     if (sender.id === receiver.id) {
       throw new Error('Não é possível criar uma proposta de troca com você mesmo.');
     }
@@ -56,12 +58,13 @@ export class TradeService {
   }
 
   /**
-   * Execute atomic acceptance of trade offer
+   * Offline simulation only; online settlement belongs to TradeOnlineService.
    */
   public static executeAccept(
     trade: TradeOffer,
     currentUser: NexaUser
   ) {
+    if (isSupabaseConfigured()) throw new Error('Trocas online exigem confirmação do servidor.');
     if (trade.status !== 'PENDING') {
       throw new Error('Esta proposta de troca não está mais ativa.');
     }

@@ -32,6 +32,8 @@ import { INITIAL_TRADES } from '../data/mockTrades';
 import { MarketplaceOnlineService, MarketplaceOperation, canSellOnlineCard } from '../services/marketplaceOnlineService';
 import { MarketplaceService } from '../services/marketplaceService';
 import { TradeService } from '../services/tradeService';
+import { TradeOnlineService } from '../services/tradeOnlineService';
+import type { OnlineTradeInput, TradeOperation } from '../types/trades';
 import { FusionService, FusionExecutionResult } from '../services/fusionService';
 import { RewardService } from '../services/rewardService';
 import { LedgerService } from '../services/ledgerService';
@@ -58,6 +60,10 @@ interface GameStateContextType {
   listings: Listing[];
   transactions: NexaTransaction[];
   trades: TradeOffer[];
+  tradeBusy: boolean;
+  tradeError: string;
+  tradesHasMore: boolean;
+  refreshTrades: (loadMore?: boolean) => Promise<void>;
   ledger: LedgerEntry[];
   marketStats: MarketStats;
   notifications: ToastNotification[];
@@ -113,10 +119,10 @@ interface GameStateContextType {
     requestedItemIds: string[],
     requestedNXA: number,
     note?: string
-  ) => void;
-  acceptTrade: (tradeId: string) => void;
-  rejectTrade: (tradeId: string) => void;
-  cancelTrade: (tradeId: string) => void;
+  ) => Promise<boolean>;
+  acceptTrade: (tradeId: string) => Promise<boolean>;
+  rejectTrade: (tradeId: string) => Promise<boolean>;
+  cancelTrade: (tradeId: string) => Promise<boolean>;
   claimSeasonLevelReward: (level: number, rewardType: string, rewardValue: number | string) => void;
   resetAllDemoData: () => void;
   // Level & Progression State
@@ -249,6 +255,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
 
   const [trades, setTrades] = useState<TradeOffer[]>(() => {
+    if (isSupabaseConfigured()) return [];
     try {
       const stored = localStorage.getItem(TRADES_KEY);
       return stored ? JSON.parse(stored) : INITIAL_TRADES;
@@ -256,6 +263,109 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return INITIAL_TRADES;
     }
   });
+
+  const [tradeBusy, setTradeBusy] = useState(false);
+  const [tradeError, setTradeError] = useState('');
+  const [tradesHasMore, setTradesHasMore] = useState(false);
+  const [tradeOwnerId, setTradeOwnerId] = useState<string | null>(null);
+  const tradePending = useRef(false);
+  const tradeReading = useRef(false);
+  const tradeRevision = useRef(0);
+  const tradeSession = useRef(marketUser.current);
+  if (tradeSession.current !== marketUser.current) {
+    tradeSession.current = marketUser.current;
+    ++tradeRevision.current;
+  }
+
+  const applyTradeState = (state: Awaited<ReturnType<typeof TradeOnlineService.refresh>>, userId: string) => {
+    setAssets(prev => [...prev.filter(a => a.type !== 'Card' && (a as any).type !== 'card'), ...state.cards]);
+    setTrades(state.trades);
+    setTradeOwnerId(userId);
+    setTradesHasMore(state.trades.length === 100);
+    setLedger(state.ledger);
+    SupabaseService.acceptConfirmedProfile(state.profile);
+    EconomyService.hydrateProfileFromSupabase(state.profile);
+    syncUser(state.profile);
+  };
+
+  const refreshTrades = async (loadMore = false): Promise<void> => {
+    if (!isSupabaseConfigured() || !isAuthenticated || !currentUser || tradePending.current
+      || tradeReading.current || marketPending.current || synthesisPending.current) return;
+    const userId = currentUser.id;
+    const revision = ++tradeRevision.current;
+    const marketVersion = marketRevision.current;
+    tradeReading.current = true;
+    setTradeBusy(true);
+    try {
+      if (loadMore && tradeOwnerId === userId) {
+        const page = await TradeOnlineService.fetchOffers(userId, trades.length);
+        if (marketUser.current !== userId || revision !== tradeRevision.current) return;
+        setTrades(prev => [...new Map([...prev, ...page].map(t => [t.id, t])).values()]);
+        setTradesHasMore(page.length === 100);
+      } else {
+        const state = await TradeOnlineService.refresh(userId);
+        if (marketUser.current !== userId || revision !== tradeRevision.current || marketVersion !== marketRevision.current) return;
+        applyTradeState(state, userId);
+      }
+      setTradeError('');
+    } catch (error) {
+      if (marketUser.current === userId && revision === tradeRevision.current) {
+        setTradeError(error instanceof Error ? error.message : 'Falha ao carregar trocas.');
+      }
+    } finally {
+      tradeReading.current = false;
+      if (!tradePending.current) setTradeBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    setTrades([]);
+    setTradeOwnerId(null);
+    setTradeError('');
+    setTradesHasMore(false);
+    // Reading is initiated on the Trades page; never query using fallback user.
+  }, [currentUser?.id, isAuthenticated]);
+
+  const executeOnlineTrade = async (operation: TradeOperation, input: OnlineTradeInput | string): Promise<boolean> => {
+    if (!isAuthenticated || !currentUser) {
+      notify('error', 'Troca indisponível', 'Entre na sua conta para negociar.');
+      return false;
+    }
+    if (tradePending.current || marketPending.current || synthesisPending.current) {
+      notify('info', 'Aguarde', 'Outra operação está em andamento.');
+      return false;
+    }
+    const userId = currentUser.id;
+    tradePending.current = true;
+    // Reuse the existing inventory-operation barriers without changing those flows.
+    marketPending.current = true;
+    synthesisPending.current = true;
+    ++marketRevision.current;
+    ++tradeRevision.current;
+    setTradeBusy(true);
+    setTradeError('');
+    try {
+      const state = await TradeOnlineService.execute(userId, operation, input);
+      if (marketUser.current !== userId) return false;
+      applyTradeState(state, userId);
+      notify('success', 'Troca', 'Operação confirmada pelo servidor.');
+      return true;
+    } catch (error) {
+      if (marketUser.current === userId) {
+        const message = error instanceof Error ? error.message : 'Falha na troca. Tente novamente com o mesmo pedido.';
+        setTradeError(message);
+        notify('error', 'Falha na troca', message);
+      }
+      return false;
+    } finally {
+      tradePending.current = false;
+      marketPending.current = false;
+      synthesisPending.current = false;
+      ++marketRevision.current;
+      setTradeBusy(false);
+    }
+  };
 
   const [marketStats, setMarketStats] = useState<MarketStats>(() => {
     try {
@@ -392,7 +502,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
       localStorage.setItem(LISTINGS_KEY, JSON.stringify(listings));
       localStorage.setItem(TXS_KEY, JSON.stringify(transactions));
-      localStorage.setItem(TRADES_KEY, JSON.stringify(trades));
+      if (!isSupabaseConfigured()) localStorage.setItem(TRADES_KEY, JSON.stringify(trades));
       localStorage.setItem(STATS_KEY, JSON.stringify(marketStats));
       localStorage.setItem('nexa_ledger_entries_v1', JSON.stringify(ledger));
     } catch {
@@ -851,7 +961,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // PROPOSE TRADE
-  const proposeTrade = (
+  const proposeTrade = async (
     receiverId: string,
     offeredItemIds: string[],
     offeredNXA: number,
@@ -859,6 +969,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     requestedNXA: number,
     note?: string
   ) => {
+    if (isSupabaseConfigured()) return executeOnlineTrade('CREATE', {
+      receiverId, offeredItemIds, offeredNXA, requestedItemIds, requestedNXA, note,
+    });
     try {
       if (isSupabaseConfigured() && (!isAuthenticated || !currentUser)) throw new Error('Entre na sua conta para propor uma troca.');
       const receiver = publicUsers.find((u) => u.id === receiverId);
@@ -885,13 +998,16 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setTrades((prev) => [newTrade, ...prev]);
       soundService.playClick();
       notify('success', 'Proposta Enviada', `Proposta de troca enviada para ${receiver.username}.`);
+      return true;
     } catch (err: any) {
       notify('error', 'Falha na Proposta', err.message || 'Erro desconhecido.');
+      return false;
     }
   };
 
   // ACCEPT TRADE
-  const acceptTrade = (tradeId: string) => {
+  const acceptTrade = async (tradeId: string) => {
+    if (isSupabaseConfigured()) return executeOnlineTrade('ACCEPT', tradeId);
     try {
       const trade = trades.find((t) => t.id === tradeId);
       if (!trade) throw new Error('Troca não encontrada.');
@@ -920,13 +1036,16 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       soundService.playVictory();
       notify('success', 'Troca Concluída!', `Você e ${trade.senderName} finalizaram o intercâmbio com sucesso.`);
+      return true;
     } catch (err: any) {
       notify('error', 'Erro ao Aceitar', err.message || 'Erro desconhecido.');
+      return false;
     }
   };
 
   // REJECT TRADE
-  const rejectTrade = (tradeId: string) => {
+  const rejectTrade = async (tradeId: string) => {
+    if (isSupabaseConfigured()) return executeOnlineTrade('REJECT', tradeId);
     try {
       const trade = trades.find((t) => t.id === tradeId);
       if (!trade) throw new Error('Troca não encontrada.');
@@ -943,13 +1062,16 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       soundService.playClick();
       notify('info', 'Troca Recusada', `A proposta de ${trade.senderName} foi recusada.`);
+      return true;
     } catch (err: any) {
       notify('error', 'Erro ao Recusar', err.message || 'Erro desconhecido.');
+      return false;
     }
   };
 
   // CANCEL TRADE
-  const cancelTrade = (tradeId: string) => {
+  const cancelTrade = async (tradeId: string) => {
+    if (isSupabaseConfigured()) return executeOnlineTrade('CANCEL', tradeId);
     try {
       const trade = trades.find((t) => t.id === tradeId);
       if (!trade) throw new Error('Troca não encontrada.');
@@ -966,8 +1088,10 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       soundService.playClick();
       notify('info', 'Proposta Cancelada', 'Os itens ofertados foram desbloqueados.');
+      return true;
     } catch (err: any) {
       notify('error', 'Erro ao Cancelar', err.message || 'Erro desconhecido.');
+      return false;
     }
   };
 
@@ -1302,7 +1426,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         refreshCardFragments,
         listings,
         transactions,
-        trades,
+        trades: isSupabaseConfigured() && tradeOwnerId !== currentUser?.id ? [] : trades,
+        tradeBusy,
+        tradeError,
+        tradesHasMore,
+        refreshTrades,
         ledger,
         marketStats,
         notifications,

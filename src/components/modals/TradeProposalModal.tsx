@@ -1,6 +1,8 @@
 import { formatEconomicValue } from '../../utils/formatEconomicValue';
 import { CardImage } from '../common/CardImage';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { isSupabaseConfigured } from '../../lib/supabase';
+import { TradeOnlineService } from '../../services/tradeOnlineService';
 import { NexaAsset } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGameState } from '../../contexts/GameStateContext';
@@ -16,8 +18,9 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
   initialItem,
   onClose,
 }) => {
-  const { user, publicUsers, publicUsersLoading, publicUsersError, publicUsersHasMore, loadMorePublicUsers } = useAuth();
+  const { user, currentUser, isAuthenticated, publicUsers, publicUsersLoading, publicUsersError, publicUsersHasMore, loadMorePublicUsers } = useAuth();
   const { assets, proposeTrade } = useGameState();
+  const online = isSupabaseConfigured();
 
   const otherUsers = publicUsers.filter((u) => u.id !== user.id);
   const [selectedUserId, setSelectedUserId] = useState<string>(
@@ -25,7 +28,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
   );
 
   const [offeredItemIds, setOfferedItemIds] = useState<string[]>(
-    initialItem ? [initialItem.id] : []
+    initialItem && (!online || initialItem.type === 'Card') ? [initialItem.id] : []
   );
   const [offeredNXA, setOfferedNXA] = useState<number>(0);
 
@@ -33,6 +36,56 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
   const [requestedNXA, setRequestedNXA] = useState<number>(0);
   const [note, setNote] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [remoteMine, setRemoteMine] = useState<NexaAsset[]>([]);
+  const [remoteTarget, setRemoteTarget] = useState<NexaAsset[]>([]);
+  const [cardsLoading, setCardsLoading] = useState(false);
+  const [mineHasMore, setMineHasMore] = useState(false);
+  const [targetHasMore, setTargetHasMore] = useState(false);
+  const candidatesVersion = useRef(0);
+
+  useEffect(() => {
+    if (!online) return;
+    const version = ++candidatesVersion.current;
+    setRemoteMine([]); setRemoteTarget([]);
+    setMineHasMore(false); setTargetHasMore(false);
+    setRequestedItemIds([]);
+    if (!isAuthenticated || !currentUser || !selectedUserId) return;
+    setCardsLoading(true);
+    setError('');
+    Promise.all([
+      TradeOnlineService.fetchCandidates(currentUser.id, currentUser.id),
+      TradeOnlineService.fetchCandidates(currentUser.id, selectedUserId),
+    ]).then(([mine, target]) => {
+      if (version !== candidatesVersion.current) return;
+      setRemoteMine(mine); setRemoteTarget(target);
+      setMineHasMore(mine.length === 100); setTargetHasMore(target.length === 100);
+    }).catch(e => {
+      if (version === candidatesVersion.current) setError(e instanceof Error ? e.message : 'Falha ao carregar cartas.');
+    }).finally(() => {
+      if (version === candidatesVersion.current) setCardsLoading(false);
+    });
+    return () => { ++candidatesVersion.current; };
+  }, [online, isAuthenticated, currentUser?.id, selectedUserId]);
+
+  const loadMoreCards = async (mine: boolean) => {
+    if (!currentUser || !isAuthenticated || cardsLoading) return;
+    const version = candidatesVersion.current;
+    setCardsLoading(true);
+    try {
+      const page = await TradeOnlineService.fetchCandidates(currentUser.id,
+        mine ? currentUser.id : selectedUserId, mine ? remoteMine.length : remoteTarget.length);
+      if (version !== candidatesVersion.current) return;
+      const merge = (prev: NexaAsset[]) => [...new Map([...prev, ...page].map(c => [c.id, c])).values()];
+      if (mine) { setRemoteMine(merge); setMineHasMore(page.length === 100); }
+      else { setRemoteTarget(merge); setTargetHasMore(page.length === 100); }
+    } catch (e) {
+      if (version === candidatesVersion.current) setError(e instanceof Error ? e.message : 'Falha ao carregar cartas.');
+    } finally {
+      if (version === candidatesVersion.current) setCardsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!otherUsers.some(profile => profile.id === selectedUserId)) {
@@ -41,28 +94,36 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
     }
   }, [publicUsers, user.id, selectedUserId]);
 
-  const myAvailableItems = assets.filter(
+  const myAvailableItems = online ? remoteMine : assets.filter(
     (a) => a.ownerId === user.id && (a.status === 'IDLE' || a.id === initialItem?.id)
   );
 
-  const targetUserItems = assets.filter(
+  const targetUserItems = online ? remoteTarget : assets.filter(
     (a) => a.ownerId === selectedUserId && (a.status === 'IDLE' || a.status === 'LISTED')
   );
 
   const toggleOfferItem = (id: string) => {
+    if (online && !offeredItemIds.includes(id) && offeredItemIds.length >= 10) {
+      setError('Selecione até 10 cartas por lado.'); return;
+    }
     setOfferedItemIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
   const toggleRequestItem = (id: string) => {
+    if (online && !requestedItemIds.includes(id) && requestedItemIds.length >= 10) {
+      setError('Selecione até 10 cartas por lado.'); return;
+    }
     setRequestedItemIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingRef.current || cardsLoading) return;
+    if (online && (!isAuthenticated || !currentUser)) { setError('Entre na sua conta para negociar.'); return; }
     if (!selectedUserId) {
       setError('Selecione um jogador destinatário.');
       return;
@@ -80,15 +141,23 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
       return;
     }
 
-    proposeTrade(
+    savingRef.current = true;
+    setSaving(true);
+    setError('');
+    try {
+      const confirmed = await proposeTrade(
       selectedUserId,
       offeredItemIds,
       offeredNXA,
       requestedItemIds,
       requestedNXA,
       note
-    );
-    onClose();
+      );
+      if (confirmed) onClose();
+      else setError('A operação não foi confirmada na tela. Confira a mensagem de erro e tente novamente com o mesmo pedido.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Falha ao enviar proposta.');
+    } finally { savingRef.current = false; setSaving(false); }
   };
 
   return (
@@ -100,6 +169,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
             <ArrowLeftRight className="w-5 h-5" /> Proposta de Troca Direta P2P
           </div>
           <button
+            disabled={saving}
             onClick={onClose}
             className="p-1 rounded-lg bg-black/50 text-slate-400 hover:text-white"
           >
@@ -109,6 +179,9 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
 
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6 flex-1">
+          <fieldset disabled={saving} className="contents">
+          {online && <p className="text-xs text-slate-400">Trocas online: Cards e NXA. Até 10 cartas por lado. Propostas duram 48 horas e não reservam cartas ou saldo; a disponibilidade será verificada no aceite.</p>}
+          {cardsLoading && <p className="text-xs text-cyan-300">Carregando cartas disponíveis...</p>}
           {error && (
             <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-mono flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" /> {error}
@@ -195,6 +268,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
               </div>
 
               {/* Extra NXA */}
+              {mineHasMore && <button type="button" disabled={cardsLoading} onClick={() => void loadMoreCards(true)} className="text-xs text-cyan-300 mt-2">Mais cartas</button>}
               <div className="mt-3 pt-3 border-t border-white/10">
                 <label className="text-[11px] font-mono text-slate-400 block mb-1">
                   Adicionar Tokens NXA à oferta (Saldo: {formatEconomicValue(user.balanceNXA)}):
@@ -202,7 +276,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
                 <input
                   type="number"
                   min="0"
-                  max={user.balanceNXA}
+                  max={online ? Math.min(user.balanceNXA, 1000000) : user.balanceNXA}
                   value={offeredNXA}
                   onChange={(e) => setOfferedNXA(Math.max(0, parseInt(e.target.value) || 0))}
                   className="w-full bg-[#161622] border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white"
@@ -251,6 +325,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
               </div>
 
               {/* Requested NXA */}
+              {targetHasMore && <button type="button" disabled={cardsLoading} onClick={() => void loadMoreCards(false)} className="text-xs text-purple-300 mt-2">Mais cartas</button>}
               <div className="mt-3 pt-3 border-t border-white/10">
                 <label className="text-[11px] font-mono text-slate-400 block mb-1">
                   Solicitar Tokens NXA extras:
@@ -259,6 +334,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
                   type="number"
                   min="0"
                   value={requestedNXA}
+                  max={online ? 1000000 : undefined}
                   onChange={(e) => setRequestedNXA(Math.max(0, parseInt(e.target.value) || 0))}
                   className="w-full bg-[#161622] border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white"
                 />
@@ -274,6 +350,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
             <input
               type="text"
               value={note}
+              maxLength={online ? 500 : undefined}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Ex: Ofereço lâmina + tokens pela sua relíquia temporal..."
               className="w-full bg-[#161622] border border-white/10 rounded-xl px-4 py-2.5 text-xs font-sans text-white focus:outline-none focus:border-purple-400"
@@ -291,11 +368,13 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
             </button>
             <button
               type="submit"
+              disabled={saving || cardsLoading}
               className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs font-bold transition-colors shadow-[0_0_15px_rgba(168,85,247,0.4)]"
             >
-              Transmitir Proposta
+              {saving ? 'Confirmando...' : 'Transmitir Proposta'}
             </button>
           </div>
+          </fieldset>
         </form>
       </div>
     </div>

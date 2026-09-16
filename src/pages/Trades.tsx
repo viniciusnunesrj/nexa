@@ -1,6 +1,7 @@
 import { formatEconomicValue } from '../utils/formatEconomicValue';
 import { CardImage } from '../components/common/CardImage';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
 import { TradeProposal, NexaAsset } from '../types';
@@ -19,8 +20,18 @@ import {
 } from 'lucide-react';
 
 export const Trades: React.FC = () => {
-  const { user } = useAuth();
-  const { trades, acceptTrade, rejectTrade, cancelTrade } = useGameState();
+  const { user, currentUser, isAuthenticated } = useAuth();
+  const { trades, acceptTrade, rejectTrade, cancelTrade, tradeBusy, tradeError, tradesHasMore, refreshTrades } = useGameState();
+  const refreshRef = useRef(refreshTrades);
+  refreshRef.current = refreshTrades;
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !isAuthenticated || !currentUser) return;
+    void refreshRef.current();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void refreshRef.current();
+    }, 30000);
+    return () => window.clearInterval(timer);
+  }, [isAuthenticated, currentUser?.id]);
 
   const [activeTab, setActiveTab] = useState<'received' | 'sent' | 'history'>('received');
   const [newTradeModalOpen, setNewTradeModalOpen] = useState(false);
@@ -89,7 +100,7 @@ export const Trades: React.FC = () => {
                 ? 'Permuta Concluída'
                 : trade.status === 'REJECTED'
                 ? 'Recusada'
-                : 'Cancelada'}
+                : trade.status === 'EXPIRED' ? 'Expirada' : 'Cancelada'}
             </span>
             <span className="text-[10px] font-mono text-slate-500">{trade.createdAt}</span>
           </div>
@@ -166,13 +177,15 @@ export const Trades: React.FC = () => {
             {isReceived && (
               <>
                 <button
-                  onClick={() => rejectTrade(trade.id)}
+                  disabled={tradeBusy}
+                  onClick={() => void rejectTrade(trade.id)}
                   className="px-4 py-2 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/30 text-xs font-mono font-bold transition-colors flex items-center gap-1.5"
                 >
                   <XCircle className="w-4 h-4" /> Recusar
                 </button>
                 <button
-                  onClick={() => acceptTrade(trade.id)}
+                  disabled={tradeBusy}
+                  onClick={() => void acceptTrade(trade.id)}
                   className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold transition-colors shadow-[0_0_15px_rgba(16,185,129,0.3)] flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4" /> Aceitar Permuta
@@ -182,7 +195,8 @@ export const Trades: React.FC = () => {
 
             {isSent && (
               <button
-                onClick={() => cancelTrade(trade.id)}
+                disabled={tradeBusy}
+                onClick={() => void cancelTrade(trade.id)}
                 className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono font-bold transition-colors"
               >
                 Cancelar Proposta
@@ -206,7 +220,7 @@ export const Trades: React.FC = () => {
             Central de Negociações (Trades)
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-1">
-            Permute itens, personagens e pacotes de NXA diretamente com outros jogadores com validação criptográfica do livro-razão.
+            {isSupabaseConfigured() ? 'Troque Cards e NXA com confirmação do servidor. Propostas pendentes não reservam cartas ou saldo.' : 'Permute itens, personagens e NXA com outros jogadores.'}
           </p>
         </div>
 
@@ -220,6 +234,11 @@ export const Trades: React.FC = () => {
       </div>
 
       {/* Tabs */}
+      {isSupabaseConfigured() && <div className="flex flex-wrap items-center gap-3 text-xs">
+        <button disabled={tradeBusy} onClick={() => void refreshTrades()} className="text-cyan-300 disabled:opacity-60">{tradeBusy ? 'Atualizando...' : 'Atualizar trocas e inventário'}</button>
+        {tradesHasMore && <button disabled={tradeBusy} onClick={() => void refreshTrades(true)} className="text-purple-300">Mais propostas</button>}
+        {tradeError && <p role="alert" className="text-rose-300">{tradeError}</p>}
+      </div>}
       <div className="border-b border-white/10 flex items-center gap-2 overflow-x-auto pb-px">
         <button
           onClick={() => setActiveTab('received')}

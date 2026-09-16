@@ -21,3 +21,13 @@ export interface TradeOffer {
 }
 
 export type TradeProposal = TradeOffer;
+
+export type TradeOperation = 'CREATE' | 'ACCEPT' | 'REJECT' | 'CANCEL';
+export interface OnlineTradeInput {
+  receiverId: string;
+  offeredItemIds: string[];
+  requestedItemIds: string[];
+  offeredNXA: number;
+  requestedNXA: number;
+  note?: string;
+}
