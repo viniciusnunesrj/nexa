@@ -6,6 +6,7 @@ import { RARITY_CONFIG } from '../config/designTokens';
 import { getTemplateById } from '../config/collectionsData';
 import { BOX_DEFINITIONS } from '../config/boxRates';
 import { RarityBadge } from '../components/common/RarityBadge';
+import { CardImage } from '../components/common/CardImage';
 import { BoxOpeningModal } from '../components/boxes/BoxOpeningModal';
 import { soundService } from '../services/soundService';
 import { EconomyService } from '../services/economyService';
@@ -373,7 +374,12 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
         } ${battleFlash === id ? 'animate-pulse ring-2 ring-rose-400' : ''}`}
       >
         <div className="flex items-center gap-2">
-          <img src={String(snapshot.image || (side === 'PLAYER' ? mainCard?.image : enemyData.avatar))} alt="" className="h-8 w-8 rounded-lg object-cover" />
+          <CardImage
+            templateId={snapshot.templateId ?? snapshot.template_id}
+            src={String(snapshot.image || (side === 'PLAYER' ? mainCard?.image || '' : enemyData.avatar))}
+            alt=""
+            className="h-8 w-8 rounded-lg object-cover"
+          />
           <div className="min-w-0 flex-1">
             <span className="block truncate text-[10px] font-bold text-white">{String(snapshot.name || 'Combatente')}</span>
             <span className="text-[9px] font-mono text-slate-400">{String(snapshot.rarity || '')} • {Number(snapshot.power || 0)} PWR</span>
@@ -466,8 +472,10 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             {mainCard ? (
               <>
                 <div className="relative w-36 h-36 sm:w-40 sm:h-40 rounded-2xl overflow-hidden border border-cyan-400/60 shadow-[0_0_22px_rgba(34,211,238,0.12)] mb-4 bg-slate-950">
-                  <img
-                    src={String(activePlayerSnapshot?.image || mainCard.image)}
+                  <CardImage
+                    asset={mainCard}
+                    templateId={activePlayerSnapshot?.templateId ?? activePlayerSnapshot?.template_id ?? mainCard.templateId}
+                    src={String(activePlayerSnapshot?.image || mainCard.image || '')}
                     alt={String(activePlayerSnapshot?.name || mainCard.name)}
                     className={`w-full h-full object-cover transition-transform duration-300 ${
                       inBattle ? 'scale-110 animate-pulse' : ''
@@ -534,7 +542,9 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                           className="flex items-center justify-between p-2 rounded-xl bg-black/25 border border-cyan-500/15 text-xs font-mono"
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <img
+                            <CardImage
+                              asset={card}
+                              templateId={card.templateId}
                               src={card.image}
                               alt={card.name}
                               className="w-7 h-7 rounded-lg object-cover bg-slate-900 shrink-0"
@@ -618,7 +628,8 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
             )}
 
             <div className="relative w-36 h-36 sm:w-40 sm:h-40 rounded-2xl overflow-hidden border border-rose-500/60 shadow-[0_0_22px_rgba(244,63,94,0.10)] mb-4 bg-slate-950">
-              <img
+              <CardImage
+                templateId={activeNpcSnapshot?.templateId ?? activeNpcSnapshot?.template_id}
                 src={String(activeNpcSnapshot?.image || enemyData.avatar)}
                 alt={String(activeNpcSnapshot?.name || enemyData.name)}
                 className={`w-full h-full object-cover transition-transform duration-300 ${
@@ -779,7 +790,9 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
 
                     {/* Card Artwork */}
                     <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-slate-950 border border-white/10">
-                      <img
+                      <CardImage
+                        asset={card}
+                        templateId={card.templateId}
                         src={card.image}
                         alt={card.name}
                         className="w-full h-full object-cover"
@@ -925,7 +938,8 @@ export const Play: React.FC<PlayProps> = ({ onNavigate }) => {
                   <Sparkles className="w-3.5 h-3.5" /> Novo Drop de Ativo Conquistado!
                 </div>
                 <div className="flex items-center gap-3">
-                  <img
+                  <CardImage
+                    asset={battleResult.droppedItem}
                     src={battleResult.droppedItem.image}
                     alt={battleResult.droppedItem.name}
                     className="w-14 h-14 rounded-xl object-cover border border-white/20 shrink-0"
