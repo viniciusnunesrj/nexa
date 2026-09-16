@@ -2,8 +2,8 @@ import { formatEconomicValue } from '../utils/formatEconomicValue';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
-import { BoxType, BoxRewardSummary, PlayerBox } from '../types';
-import { BOX_DEFINITIONS, BOX_CONFIG, PITY_CONFIG } from '../config/boxRates';
+import { BoxType, BoxRewardSummary } from '../types';
+import { BOX_DEFINITIONS } from '../config/boxRates';
 import { RarityBadge } from '../components/common/RarityBadge';
 import { BoxOpeningModal } from '../components/boxes/BoxOpeningModal';
 import { BoxRewardsModal } from '../components/boxes/BoxRewardsModal';
@@ -11,21 +11,11 @@ import { BoxSystemTestRunner, SystemTestSuiteReport } from '../services/boxSyste
 import {
   PackageOpen,
   Sparkles,
-  ShieldAlert,
   Coins,
   History,
-  Info,
-  Layers,
-  Flame,
-  ArrowRight,
   ShieldCheck,
-  CheckCircle2,
-  Clock,
   FlaskConical,
   X,
-  Play,
-  Check,
-  AlertTriangle,
 } from 'lucide-react';
 
 interface BoxesPageProps {
@@ -36,52 +26,67 @@ type CategoryFilter = 'ALL' | 'GENERAL' | 'COLLECTIONS';
 
 export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
   const { user } = useAuth();
+
   const {
     boxes,
     boxCounts,
-    userPity,
     boxHistory,
     isPurchasing,
     openBox,
     purchaseBox,
   } = useGameState();
 
-  const [activeOpeningSummary, setActiveOpeningSummary] = useState<BoxRewardSummary | null>(null);
-  const [openingBoxType, setOpeningBoxType] = useState<BoxType | null>(null);
-  const [rewardModalBoxType, setRewardModalBoxType] = useState<BoxType | null>(null);
-  const [selectedTab, setSelectedTab] = useState<'BOXES' | 'HISTORY'>('BOXES');
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('ALL');
+  const [activeOpeningSummary, setActiveOpeningSummary] =
+    useState<BoxRewardSummary | null>(null);
 
-  // Test Suite Modal State
+  const [openingBoxType, setOpeningBoxType] =
+    useState<BoxType | null>(null);
+
+  const [rewardModalBoxType, setRewardModalBoxType] =
+    useState<BoxType | null>(null);
+
+  const [selectedTab, setSelectedTab] =
+    useState<'BOXES' | 'HISTORY'>('BOXES');
+
+  const [categoryFilter, setCategoryFilter] =
+    useState<CategoryFilter>('ALL');
+
   const [testModalOpen, setTestModalOpen] = useState<boolean>(false);
-  const [testReport, setTestReport] = useState<SystemTestSuiteReport | null>(null);
-  const [isRunningTests, setIsRunningTests] = useState<boolean>(false);
+
+  const [testReport, setTestReport] =
+    useState<SystemTestSuiteReport | null>(null);
+
+  const [isRunningTests, setIsRunningTests] =
+    useState<boolean>(false);
 
   const myBoxes = boxes.filter((b) => b.ownerId === user.id);
   const totalBoxes = myBoxes.length;
 
-  // Handles clicking "ABRIR"
   const handleOpenBox = async (boxType: BoxType) => {
-    const availableBox = myBoxes.find((b) => b.boxType === boxType);
+    const availableBox = myBoxes.find(
+      (b) => b.boxType === boxType
+    );
+
     if (!availableBox) return;
 
     try {
       setOpeningBoxType(boxType);
+
       const summary = await openBox(availableBox.id);
+
       setActiveOpeningSummary(summary);
     } catch {
-      // Handled in context toast
+      // Erros são tratados pelo toast do contexto.
     }
   };
 
-  // Handles purchasing with NEX
   const handleBuyBox = (boxType: BoxType) => {
     purchaseBox(boxType);
   };
 
-  // Run Test Suite
   const handleRunTests = async () => {
     setIsRunningTests(true);
+
     try {
       const report = await BoxSystemTestRunner.runAllTests();
       setTestReport(report);
@@ -92,20 +97,12 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
     }
   };
 
-  // Pity metrics
-  const pityCount = userPity?.premiumBoxPity || 0;
-  const pityMax = PITY_CONFIG.PREMIUM_BOX_PITY_THRESHOLD;
-  const isPityReady = pityCount >= pityMax - 1;
-
-  // Full order of boxes
   const allBoxTypes: BoxType[] = [
-    // General boxes
     'RECRUIT',
     'BASIC',
     'ADVANCED',
     'EPIC',
     'LEGENDARY',
-    // Collection boxes
     'GUARDIANS',
     'COLLECTION_DRAGONS',
     'COLLECTION_KNIGHTS',
@@ -117,45 +114,69 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
   ];
 
   const filteredBoxTypes = allBoxTypes.filter((type) => {
-    const isCol = type.startsWith('COLLECTION_') || type === 'GUARDIANS';
-    if (categoryFilter === 'GENERAL') return !isCol;
-    if (categoryFilter === 'COLLECTIONS') return isCol;
+    const isCollection =
+      type.startsWith('COLLECTION_') ||
+      type === 'GUARDIANS';
+
+    if (categoryFilter === 'GENERAL') {
+      return !isCollection;
+    }
+
+    if (categoryFilter === 'COLLECTIONS') {
+      return isCollection;
+    }
+
     return true;
   });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Supply Command Header */}
+      {/* HEADER */}
       <section className="relative rounded-2xl overflow-hidden border border-cyan-500/15 bg-gradient-to-br from-[#0b1018] via-[#090b11] to-[#07080c] p-5 sm:p-6">
         <div className="absolute -top-24 right-0 w-80 h-80 bg-cyan-500/[0.07] rounded-full blur-3xl pointer-events-none" />
+
         <div className="absolute -bottom-28 left-1/3 w-72 h-72 bg-purple-500/[0.06] rounded-full blur-3xl pointer-events-none" />
+
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-cyan-400">
               <PackageOpen className="w-3.5 h-3.5" />
-              <span>Central de Suprimentos // Nexus</span>
+
+              <span>
+                Central de Suprimentos // Nexus
+              </span>
             </div>
+
             <h1 className="font-heading text-3xl sm:text-4xl font-black text-white tracking-tight mt-2">
               Caixas de Suprimento
             </h1>
+
             <p className="text-slate-400 text-xs sm:text-sm max-w-2xl leading-relaxed mt-1.5">
-              Adquira e abra suprimentos disponíveis, consulte garantias e acompanhe o histórico de operações.
+              Adquira e abra suprimentos disponíveis,
+              consulte probabilidades e acompanhe o
+              histórico de operações.
             </p>
           </div>
 
-          {/* Quick Counter Badges & Test Suite Button */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="px-4 py-3 rounded-xl bg-black/35 border border-white/[0.07] font-mono text-center">
-              <span className="text-[10px] text-slate-400 block uppercase">Caixas Disponíveis</span>
+              <span className="text-[10px] text-slate-400 block uppercase">
+                Caixas Disponíveis
+              </span>
+
               <span className="font-heading text-2xl font-black text-cyan-400">
                 {totalBoxes}
               </span>
             </div>
 
             <div className="px-4 py-3 rounded-xl bg-amber-500/[0.04] border border-amber-500/20 font-mono text-center">
-              <span className="text-[10px] text-slate-400 block uppercase">Seu Saldo NEX</span>
+              <span className="text-[10px] text-slate-400 block uppercase">
+                Seu Saldo NEX
+              </span>
+
               <span className="font-heading text-2xl font-black text-amber-400 flex items-center justify-center gap-1">
                 <Coins className="w-5 h-5 text-amber-400" />
+
                 {formatEconomicValue(user.balanceNEX)}
               </span>
             </div>
@@ -163,15 +184,20 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
             <button
               onClick={() => {
                 setTestModalOpen(true);
-                if (!testReport) handleRunTests();
+
+                if (!testReport) {
+                  handleRunTests();
+                }
               }}
               className="px-3 py-2.5 rounded-xl bg-white/[0.025] hover:bg-purple-500/[0.07] border border-white/[0.07] hover:border-purple-500/25 font-mono text-center transition-all flex flex-col items-center justify-center gap-0.5 group opacity-70 hover:opacity-100"
               title="Executar bateria automatizada de testes do sistema"
             >
               <span className="text-[10px] text-purple-300 uppercase font-bold flex items-center gap-1">
                 <FlaskConical className="w-3 h-3 group-hover:rotate-12 transition-transform" />
+
                 Validação
               </span>
+
               <span className="font-heading text-xs font-bold text-white">
                 8 Testes do Sistema
               </span>
@@ -179,50 +205,27 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Pity Tracker Bar */}
-        <div className="mt-5 pt-4 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-500/[0.06] border border-purple-500/20 text-purple-300">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-heading text-sm font-bold text-white">
-                  Proteção de Raridade
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-950 border border-purple-500/40 text-purple-300">
-                  {pityCount} / {pityMax}
-                </span>
-              </div>
-              <p className="text-xs font-mono text-slate-400 mt-0.5">
-                {isPityReady ? (
-                  <strong className="text-purple-300">
-                    Próxima abertura elegível com Épico ou superior garantido.
-                  </strong>
-                ) : (
-                  `Épico+ garantido em ${pityMax - pityCount} caixa${pityMax - pityCount === 1 ? '' : 's'}.`
-                )}
-              </p>
-            </div>
+        {/* INTEGRIDADE ONLINE */}
+        <div className="mt-5 pt-4 border-t border-white/[0.06] flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20 text-emerald-300">
+            <ShieldCheck className="w-5 h-5" />
           </div>
 
-          <div className="w-full sm:w-64">
-            <div className="h-2.5 rounded-full bg-slate-900 border border-white/10 overflow-hidden p-0.5">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${(pityCount / pityMax) * 100}%`,
-                  background: isPityReady
-                    ? 'linear-gradient(90deg, #a855f7, #ec4899)'
-                    : 'linear-gradient(90deg, #06b6d4, #a855f7)',
-                }}
-              />
-            </div>
+          <div>
+            <span className="font-heading text-sm font-bold text-white block">
+              Abertura protegida pelo servidor
+            </span>
+
+            <p className="text-xs font-mono text-slate-400 mt-0.5">
+              Compras, abertura, raridade sorteada e
+              fragmentos são processados de forma
+              autoritativa no sistema online.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Tabs and Filters */}
+      {/* TABS E FILTROS */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-[#090b10] p-2">
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -230,11 +233,14 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
             className={`px-4 py-2 rounded-lg border font-heading text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
               selectedTab === 'BOXES'
                 ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'
+                : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10'
             }`}
           >
             <PackageOpen className="w-4 h-4" />
-            <span>Caixas Disponíveis ({totalBoxes})</span>
+
+            <span>
+              Caixas Disponíveis ({totalBoxes})
+            </span>
           </button>
 
           <button
@@ -242,11 +248,14 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
             className={`px-4 py-2 rounded-lg border font-heading text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
               selectedTab === 'HISTORY'
                 ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'
+                : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10'
             }`}
           >
             <History className="w-4 h-4" />
-            <span>Histórico de Aberturas ({boxHistory.length})</span>
+
+            <span>
+              Histórico de Aberturas ({boxHistory.length})
+            </span>
           </button>
         </div>
 
@@ -262,8 +271,11 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
             >
               Todas ({allBoxTypes.length})
             </button>
+
             <button
-              onClick={() => setCategoryFilter('GENERAL')}
+              onClick={() =>
+                setCategoryFilter('GENERAL')
+              }
               className={`px-3 py-1.5 rounded-lg transition-colors ${
                 categoryFilter === 'GENERAL'
                   ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
@@ -272,8 +284,11 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
             >
               Gerais (5)
             </button>
+
             <button
-              onClick={() => setCategoryFilter('COLLECTIONS')}
+              onClick={() =>
+                setCategoryFilter('COLLECTIONS')
+              }
               className={`px-3 py-1.5 rounded-lg transition-colors ${
                 categoryFilter === 'COLLECTIONS'
                   ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
@@ -286,36 +301,45 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
         )}
       </div>
 
-      {/* TAB CONTENT 1: AVAILABLE BOXES */}
+      {/* CAIXAS */}
       {selectedTab === 'BOXES' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredBoxTypes.map((type) => {
             const def = BOX_DEFINITIONS[type];
-            if (!def) return null;
+
+            if (!def) {
+              return null;
+            }
+
             const count = boxCounts[type] || 0;
             const hasBox = count > 0;
             const isRecruit = type === 'RECRUIT';
-            const canAfford = user.balanceNEX >= def.priceNEX;
+
+            const canAfford =
+              user.balanceNEX >= def.priceNEX;
 
             return (
               <div
                 key={type}
                 className="rounded-2xl bg-[#090a0f] border border-white/[0.08] hover:border-cyan-500/30 transition-all flex flex-col justify-between overflow-hidden group"
               >
-                {/* Visual Header */}
+                {/* IMAGEM */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-slate-950">
                   <img
                     src={def.image}
                     alt={def.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
+
                   <div className="absolute inset-0 bg-gradient-to-t from-[#090a0f] via-[#090a0f]/35 to-black/10" />
+
                   <div
                     className="absolute inset-x-0 bottom-0 h-20 opacity-35 pointer-events-none"
-                    style={{ background: `linear-gradient(to top, ${def.accentColor}35, transparent)` }}
+                    style={{
+                      background: `linear-gradient(to top, ${def.accentColor}35, transparent)`,
+                    }}
                   />
 
-                  {/* Badge */}
                   <div className="absolute top-3 left-3">
                     <span
                       className="px-2.5 py-1 rounded-md text-[9px] font-mono font-bold tracking-wider uppercase border backdrop-blur-md"
@@ -329,7 +353,6 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                     </span>
                   </div>
 
-                  {/* Count Pill */}
                   <div className="absolute top-3 right-3">
                     <span
                       className={`px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border backdrop-blur-md ${
@@ -343,100 +366,147 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                   </div>
                 </div>
 
-                {/* Body Content */}
+                {/* CONTEÚDO */}
                 <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <div className="mb-3 h-px w-full opacity-60" style={{ background: `linear-gradient(90deg, ${def.accentColor}, transparent)` }} />
+                    <div
+                      className="mb-3 h-px w-full opacity-60"
+                      style={{
+                        background: `linear-gradient(90deg, ${def.accentColor}, transparent)`,
+                      }}
+                    />
+
                     <h3 className="font-heading text-lg font-black text-white">
                       {def.name}
                     </h3>
+
                     <p className="text-[11px] font-mono text-cyan-400 mt-0.5">
                       {def.tagline}
                     </p>
+
                     <p className="text-xs text-slate-300 mt-2 leading-relaxed">
                       {def.description}
                     </p>
                   </div>
 
-                  {/* Guarantees Box */}
+                  {/* GARANTIAS DEFINIDAS PELA CAIXA */}
                   <div className="p-3 rounded-xl bg-black/30 border border-white/[0.06] space-y-1">
                     <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 uppercase font-bold">
                       <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Garantias da Caixa</span>
+
+                      <span>
+                        Regras da Caixa
+                      </span>
                     </div>
+
                     <p className="text-xs font-mono text-slate-200">
                       {def.guarantees}
                     </p>
                   </div>
 
-                  {/* Price & Currency Tag */}
+                  {/* PREÇO */}
                   <div className="flex items-center justify-between p-3 rounded-xl bg-black/30 border border-white/[0.06] font-mono text-xs">
-                    <span className="text-slate-400">Preço:</span>
+                    <span className="text-slate-400">
+                      Preço:
+                    </span>
+
                     {def.purchasableWithNEX ? (
                       <span className="inline-flex items-center gap-1.5 font-bold text-amber-400 text-sm">
                         <Coins className="w-4 h-4" />
-                        {formatEconomicValue(def.priceNEX)} NEX
+
+                        {formatEconomicValue(
+                          def.priceNEX
+                        )}{' '}
+                        NEX
                       </span>
                     ) : (
                       <span className="text-cyan-400 font-bold">
-                        {isRecruit ? 'Inicial de Recruta (Grátis)' : 'Conquista / Evento'}
+                        {isRecruit
+                          ? 'Inicial de Recruta (Grátis)'
+                          : 'Conquista / Evento'}
                       </span>
                     )}
                   </div>
 
-                  {/* Probabilities Breakdown */}
+                  {/* RARIDADES */}
                   <div className="space-y-1.5">
                     <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
                       Raridades Possíveis
                     </span>
+
                     <div className="flex flex-wrap gap-1">
-                      {def.possibleRarities.map((r) => (
-                        <RarityBadge key={r} rarity={r} size="xs" />
-                      ))}
+                      {def.possibleRarities.map(
+                        (rarity) => (
+                          <RarityBadge
+                            key={rarity}
+                            rarity={rarity}
+                            size="xs"
+                          />
+                        )
+                      )}
                     </div>
                   </div>
 
-                  {/* Actions Area */}
+                  {/* AÇÕES */}
                   <div className="pt-2 border-t border-white/[0.06] space-y-2">
                     {hasBox && (
                       <button
-                        onClick={() => handleOpenBox(type)}
+                        onClick={() =>
+                          handleOpenBox(type)
+                        }
                         className="w-full py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center justify-center gap-2 hover:scale-[1.01]"
                       >
                         <PackageOpen className="w-4 h-4" />
-                        <span>ABRIR CAIXA ({count})</span>
+
+                        <span>
+                          ABRIR CAIXA ({count})
+                        </span>
                       </button>
                     )}
 
-                    {/* Purchase with NEX button */}
                     {def.purchasableWithNEX && (
                       <button
-                        onClick={() => handleBuyBox(type)}
-                        disabled={isPurchasing || !canAfford}
+                        onClick={() =>
+                          handleBuyBox(type)
+                        }
+                        disabled={
+                          isPurchasing ||
+                          !canAfford
+                        }
                         className={`w-full py-3 rounded-xl border text-xs font-heading font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                          canAfford && !isPurchasing
+                          canAfford &&
+                          !isPurchasing
                             ? 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40 text-emerald-300 shadow-md shadow-emerald-500/10'
                             : 'bg-white/5 border-white/10 text-slate-500 cursor-not-allowed opacity-60'
                         }`}
                       >
                         <Coins className="w-4 h-4 text-emerald-400" />
+
                         <span>
                           {isPurchasing
                             ? 'Processando...'
                             : canAfford
-                            ? `COMPRAR POR ${formatEconomicValue(def.priceNEX)} NEX`
-                            : `SALDO INSUFICIENTE (${formatEconomicValue(def.priceNEX)} NEX)`}
+                            ? `COMPRAR POR ${formatEconomicValue(
+                                def.priceNEX
+                              )} NEX`
+                            : `SALDO INSUFICIENTE (${formatEconomicValue(
+                                def.priceNEX
+                              )} NEX)`}
                         </span>
                       </button>
                     )}
 
-                    {/* VER RECOMPENSAS BUTTON */}
                     <button
-                      onClick={() => setRewardModalBoxType(type)}
+                      onClick={() =>
+                        setRewardModalBoxType(type)
+                      }
                       className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-mono font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Ver Recompensas & Probabilidades</span>
+
+                      <span>
+                        Ver Recompensas & Probabilidades
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -446,14 +516,18 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* TAB CONTENT 2: HISTORY */}
+      {/* HISTÓRICO */}
       {selectedTab === 'HISTORY' && (
         <div className="rounded-2xl bg-[#090a0f] border border-white/[0.08] p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-heading text-lg font-bold text-white flex items-center gap-2">
               <History className="w-5 h-5 text-cyan-400" />
-              <span>Registro de Aberturas de Caixas</span>
+
+              <span>
+                Registro de Aberturas de Caixas
+              </span>
             </h3>
+
             <span className="text-xs font-mono text-slate-400">
               {boxHistory.length} registros computados
             </span>
@@ -462,11 +536,15 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
           {boxHistory.length === 0 ? (
             <div className="p-8 rounded-2xl border border-dashed border-white/10 text-center">
               <PackageOpen className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+
               <p className="text-slate-400 text-sm font-mono">
                 Nenhuma caixa foi aberta ainda nesta conta.
               </p>
+
               <button
-                onClick={() => setSelectedTab('BOXES')}
+                onClick={() =>
+                  setSelectedTab('BOXES')
+                }
                 className="mt-3 px-4 py-2 rounded-xl bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 text-xs font-mono"
               >
                 Explorar caixas disponíveis
@@ -474,34 +552,49 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
             </div>
           ) : (
             <div className="space-y-3">
-              {boxHistory.map((rec) => (
+              {boxHistory.map((record) => (
                 <div
-                  key={rec.id}
+                  key={record.id}
                   className="p-4 rounded-xl bg-black/25 border border-white/[0.06] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-white/15 transition-all font-mono"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-xl bg-white/5 border border-white/10">
                       <PackageOpen className="w-4 h-4 text-cyan-400" />
                     </div>
+
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-white">
-                          {rec.boxName}
+                          {record.boxName}
                         </span>
-                        <RarityBadge rarity={rec.highestRarity} size="xs" />
+
+                        <RarityBadge
+                          rarity={
+                            record.highestRarity
+                          }
+                          size="xs"
+                        />
                       </div>
+
                       <span className="text-[11px] text-slate-400 block mt-0.5">
-                        {rec.rewardAssetNames.join(', ')}
+                        {record.rewardAssetNames.join(
+                          ', '
+                        )}
                       </span>
                     </div>
                   </div>
 
                   <div className="text-right text-xs text-slate-400">
                     <span className="block font-mono">
-                      {new Date(rec.openedAt).toLocaleString('pt-BR')}
+                      {new Date(
+                        record.openedAt
+                      ).toLocaleString('pt-BR')}
                     </span>
+
                     <span className="text-[10px] text-cyan-400">
-                      ID: {rec.id.substring(0, 12)}...
+                      ID:{' '}
+                      {record.id.substring(0, 12)}
+                      ...
                     </span>
                   </div>
                 </div>
@@ -511,7 +604,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* ROULETTE OPENING MODAL */}
+      {/* MODAL DE ABERTURA */}
       {activeOpeningSummary && (
         <BoxOpeningModal
           summary={activeOpeningSummary}
@@ -522,23 +615,37 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
           onOpenAnother={() => {
             if (openingBoxType) {
               setActiveOpeningSummary(null);
-              setTimeout(() => handleOpenBox(openingBoxType), 250);
+
+              setTimeout(
+                () =>
+                  handleOpenBox(
+                    openingBoxType
+                  ),
+                250
+              );
             }
           }}
-          hasMoreBoxes={openingBoxType ? (boxCounts[openingBoxType] || 0) > 0 : false}
+          hasMoreBoxes={
+            openingBoxType
+              ? (boxCounts[openingBoxType] ||
+                  0) > 0
+              : false
+          }
         />
       )}
 
-      {/* REWARDS & PROBABILITIES MODAL */}
+      {/* MODAL DE RECOMPENSAS */}
       {rewardModalBoxType && (
         <BoxRewardsModal
           boxType={rewardModalBoxType}
           isOpen={!!rewardModalBoxType}
-          onClose={() => setRewardModalBoxType(null)}
+          onClose={() =>
+            setRewardModalBoxType(null)
+          }
         />
       )}
 
-      {/* TEST SUITE RUNNER MODAL (8 TESTS) */}
+      {/* TESTES */}
       {testModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="relative w-full max-w-2xl bg-[#0e0e1a] border border-purple-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
@@ -547,17 +654,25 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                 <div className="p-2.5 rounded-2xl bg-purple-950/80 border border-purple-500/40 text-purple-300">
                   <FlaskConical className="w-6 h-6" />
                 </div>
+
                 <div>
                   <h3 className="font-heading text-xl font-black text-white">
-                    Bateria de Testes do Sistema (8 Testes)
+                    Bateria de Testes do Sistema
+                    (8 Testes)
                   </h3>
+
                   <p className="text-xs font-mono text-slate-400">
-                    Validação em tempo real de saldo atômico, limites, caixas e integridade.
+                    Validação em tempo real de saldo
+                    atômico, limites, caixas e
+                    integridade.
                   </p>
                 </div>
               </div>
+
               <button
-                onClick={() => setTestModalOpen(false)}
+                onClick={() =>
+                  setTestModalOpen(false)
+                }
                 className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10"
               >
                 <X className="w-5 h-5" />
@@ -566,63 +681,100 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
 
             <div className="flex items-center justify-between p-3 rounded-2xl bg-black/40 border border-white/10 text-xs font-mono">
               <div>
-                <span className="text-slate-400">Status geral: </span>
+                <span className="text-slate-400">
+                  Status geral:{' '}
+                </span>
+
                 {isRunningTests ? (
-                  <span className="text-cyan-400 font-bold animate-pulse">Executando asserções...</span>
+                  <span className="text-cyan-400 font-bold animate-pulse">
+                    Executando asserções...
+                  </span>
                 ) : testReport ? (
                   <span className="text-emerald-400 font-bold">
-                    {testReport.passed}/{testReport.total} Testes Aprovados ({Math.round((testReport.passed / testReport.total) * 100)}%)
+                    {testReport.passed}/
+                    {testReport.total} Testes
+                    Aprovados (
+                    {Math.round(
+                      (testReport.passed /
+                        testReport.total) *
+                        100
+                    )}
+                    %)
                   </span>
                 ) : (
-                  <span className="text-slate-400">Pronto para iniciar</span>
+                  <span className="text-slate-400">
+                    Pronto para iniciar
+                  </span>
                 )}
               </div>
+
               <button
                 onClick={handleRunTests}
                 disabled={isRunningTests}
                 className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-all disabled:opacity-50"
               >
-                {isRunningTests ? 'Testando...' : 'Reexecutar Testes'}
+                {isRunningTests
+                  ? 'Testando...'
+                  : 'Reexecutar Testes'}
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
-              {testReport?.results.map((r) => (
-                <div
-                  key={r.id}
-                  className={`p-3.5 rounded-2xl border transition-all text-xs font-mono ${
-                    r.passed
-                      ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
-                      : 'bg-red-950/20 border-red-500/30 text-red-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-white">{r.title}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        r.passed ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'
-                      }`}
-                    >
-                      {r.passed ? 'APROVADO' : 'FALHOU'}
-                    </span>
-                  </div>
-                  <div className="mt-2 text-[11px] space-y-0.5 text-slate-300">
-                    <div>
-                      <span className="text-slate-500">Esperado: </span>
-                      {r.expected}
+              {testReport?.results.map(
+                (result) => (
+                  <div
+                    key={result.id}
+                    className={`p-3.5 rounded-2xl border transition-all text-xs font-mono ${
+                      result.passed
+                        ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
+                        : 'bg-red-950/20 border-red-500/30 text-red-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-white">
+                        {result.title}
+                      </span>
+
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          result.passed
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'bg-red-500/20 text-red-300'
+                        }`}
+                      >
+                        {result.passed
+                          ? 'APROVADO'
+                          : 'FALHOU'}
+                      </span>
                     </div>
-                    <div>
-                      <span className="text-slate-500">Resultado: </span>
-                      {r.actual}
+
+                    <div className="mt-2 text-[11px] space-y-0.5 text-slate-300">
+                      <div>
+                        <span className="text-slate-500">
+                          Esperado:{' '}
+                        </span>
+
+                        {result.expected}
+                      </div>
+
+                      <div>
+                        <span className="text-slate-500">
+                          Resultado:{' '}
+                        </span>
+
+                        {result.actual}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
 
             <div className="pt-3 border-t border-white/10 flex justify-end">
               <button
-                onClick={() => setTestModalOpen(false)}
+                onClick={() =>
+                  setTestModalOpen(false)
+                }
                 className="px-6 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-mono text-xs font-bold"
               >
                 Fechar
