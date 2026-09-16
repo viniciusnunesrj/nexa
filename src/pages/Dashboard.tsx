@@ -49,7 +49,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     equipCharacter,
     listAsset,
     boxes,
-    userPity,
   } = useGameState();
 
   const [selectedAsset, setSelectedAsset] = useState<NexaAsset | null>(null);
@@ -83,8 +82,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   ).size;
   const completedCollections = distinctGuardiansCards >= 4 ? 1 : 0;
   const totalCollections = 1;
-  const pityCount = userPity?.premiumBoxPity || 0;
-  const pityRemaining = Math.max(0, 5 - pityCount);
 
   const cardPowers = userItems.filter(a => a.type === 'Card').map(getCardPower);
   const totalPower = cardPowers.some(power => power === null) ? null : cardPowers.reduce<number>((sum, power) => sum + power!, 0);
@@ -349,9 +346,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 Você possui {myBoxes.length} {myBoxes.length === 1 ? 'caixa' : 'caixas'}
               </h3>
               <p className="text-xs font-mono text-slate-400">
-                {pityRemaining === 1
-                  ? 'Garantia Pity ativa: Épico+ na próxima abertura!'
-                  : `Sistema Pity: ${pityRemaining} caixas restantes para Épico+`}
+                Adquira e abra caixas para expandir seu arsenal de cartas.
               </p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
@@ -393,7 +388,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
           <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
             <span className="text-xs font-mono text-slate-400">
-              Recompensa: Caixa Especial + 1.500 NEX
+              Complete coleções e acompanhe seu progresso no álbum
             </span>
             <button
               onClick={() => onNavigate('collections')}
