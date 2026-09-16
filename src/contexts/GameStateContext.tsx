@@ -174,6 +174,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isClaimingSynthesis, setIsClaimingSynthesis] = useState<boolean>(false);
   const [isStartingSynthesis, setIsStartingSynthesis] = useState(false);
   const synthesisPending = useRef(false);
+  const fusionPending = useRef(false);
   const [levelUpData, setLevelUpData] = useState<LevelUpResult | null>(null);
   const pendingBattles = useRef(new Set<string>());
   const [marketplaceBusy, setMarketplaceBusy] = useState(false);
@@ -920,52 +921,77 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const executeFusion = async (
     itemIds: string[]
   ): Promise<FusionExecutionResult> => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('A fusão online requer conexão com o servidor.');
+    }
+
+    if (!isAuthenticated || !currentUser) {
+      throw new Error('Entre na sua conta para utilizar a Forja Quântica.');
+    }
+
+    if (fusionPending.current) {
+      throw new Error('Aguarde a confirmação da fusão em andamento.');
+    }
+
+    fusionPending.current = true;
+
     try {
-      if (!isSupabaseConfigured()) {
-        throw new Error('A fusão online requer conexão com o servidor.');
-      }
-
-      if (!isAuthenticated || !currentUser) {
-        throw new Error('Entre na sua conta para utilizar a Forja Quântica.');
-      }
-
+      // A RPC é a única autoridade da operação. Depois que ela retorna,
+      // a fusão já foi confirmada no servidor e não deve ser tratada como
+      // falha apenas porque alguma atualização visual/local encontrou erro.
       const result = await FusionService.executeFusion(itemIds);
 
-      // O servidor é a autoridade para custo, chance, sorteio,
-      // consumo das cartas, criação da saída e ledger.
+      // Atualiza imediatamente o saldo confirmado pela própria RPC.
       if (
         typeof result.balanceNEX === 'number' &&
         Number.isFinite(result.balanceNEX)
       ) {
-        setUser((prev) => ({
-          ...prev,
-          balanceNEX: result.balanceNEX!,
-        }));
+        try {
+          syncUser({
+            ...currentUser,
+            balanceNEX: result.balanceNEX,
+          });
+        } catch (syncError) {
+          console.warn(
+            '[NEXA FUSION V2] RPC confirmada, mas o saldo não pôde ser sincronizado imediatamente:',
+            syncError
+          );
+        }
       }
 
-      // Reflete imediatamente as cartas que o servidor confirmou
-      // como destruídas e a eventual carta criada.
-      setAssets((prev) => {
-        const remaining = prev.filter(
-          (asset) => !result.burnedItemIds.includes(asset.id)
+      // Reflete imediatamente as cartas que o servidor confirmou como
+      // destruídas e a eventual carta criada.
+      try {
+        setAssets((prev) => {
+          const remaining = prev.filter(
+            (asset) => !result.burnedItemIds.includes(asset.id)
+          );
+
+          if (result.success && result.outputAsset) {
+            return [result.outputAsset, ...remaining];
+          }
+
+          return remaining;
+        });
+      } catch (assetSyncError) {
+        console.warn(
+          '[NEXA FUSION V2] RPC confirmada, mas o inventário local não pôde ser atualizado imediatamente:',
+          assetSyncError
         );
+      }
 
-        if (result.success && result.outputAsset) {
-          return [result.outputAsset, ...remaining];
-        }
-
-        return remaining;
-      });
-
-      // Recarrega o perfil oficial após a operação.
+      // Recarrega o perfil oficial. Falha de refresh NÃO transforma uma RPC
+      // já concluída em "Erro na Forja".
       try {
         const refreshedUser = await SupabaseService.getUser(currentUser.id);
         if (refreshedUser) {
-          setUser(refreshedUser);
+          SupabaseService.acceptConfirmedProfile(refreshedUser);
+          EconomyService.hydrateProfileFromSupabase(refreshedUser);
+          syncUser(refreshedUser);
         }
       } catch (refreshError) {
         console.warn(
-          '[NEXA FUSION V2] Não foi possível atualizar o perfil após a RPC:',
+          '[NEXA FUSION V2] Fusão confirmada; não foi possível atualizar o perfil após a RPC:',
           refreshError
         );
       }
@@ -986,6 +1012,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         err?.message || 'Não foi possível concluir a fusão.'
       );
       throw err;
+    } finally {
+      fusionPending.current = false;
     }
   };
 
