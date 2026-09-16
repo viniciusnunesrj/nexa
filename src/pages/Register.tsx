@@ -124,14 +124,10 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate, onSuccess }) => 
             <Gift className="w-4 h-4 text-cyan-400" />
             <span>KIT INICIAL DE BOAS-VINDAS GARANTIDO</span>
           </div>
-          <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-mono text-slate-300">
+          <div className="grid grid-cols-2 gap-2 text-center text-[11px] font-mono text-slate-300">
             <div className="p-2 rounded-xl bg-white/5 border border-white/5">
               <span className="block text-cyan-400 font-bold">+1.000 NEX</span>
-              <span className="text-[10px] text-slate-400">Moeda de Jogo</span>
-            </div>
-            <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-              <span className="block text-amber-400 font-bold">+100 NXA</span>
-              <span className="text-[10px] text-slate-400">Tokens Mercado</span>
+              <span className="text-[10px] text-slate-400">Para sua primeira caixa</span>
             </div>
             <div className="p-2 rounded-xl bg-white/5 border border-white/5">
               <span className="block text-emerald-400 font-bold">1 Herói</span>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Sparkles, Swords, Package, Zap, Coins, CheckCircle, Shield } from 'lucide-react';
+import { Sparkles, PackageOpen, Coins, CheckCircle, Shield } from 'lucide-react';
 
 interface FirstAccessModalProps {
   onNavigate: (page: string) => void;
@@ -24,7 +24,6 @@ export const FirstAccessModal: React.FC<FirstAccessModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className="relative w-full max-w-2xl bg-gradient-to-b from-[#0f111a] via-[#0a0c14] to-[#07080d] border border-cyan-500/40 rounded-3xl p-6 sm:p-8 shadow-[0_0_60px_rgba(6,182,212,0.25)] text-white space-y-6">
-        {/* Glow Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-bold">
             <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
@@ -40,9 +39,7 @@ export const FirstAccessModal: React.FC<FirstAccessModalProps> = ({
           </p>
         </div>
 
-        {/* Rewards & Starter Kit Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {/* Starter Character */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <div className="p-4 rounded-2xl bg-white/[0.04] border border-cyan-500/30 flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-cyan-400/40">
               <img
@@ -67,7 +64,6 @@ export const FirstAccessModal: React.FC<FirstAccessModalProps> = ({
             </div>
           </div>
 
-          {/* Currency NEX */}
           <div className="p-4 rounded-2xl bg-white/[0.04] border border-cyan-500/20 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0">
               <Coins className="w-6 h-6 text-cyan-400" />
@@ -80,30 +76,11 @@ export const FirstAccessModal: React.FC<FirstAccessModalProps> = ({
                 +1.000 NEX
               </div>
               <p className="text-[11px] text-slate-400 font-mono">
-                Moeda do jogo para batalhas e fusão
+                Use para adquirir sua primeira Caixa Básica
               </p>
             </div>
           </div>
 
-          {/* Tokens NXA */}
-          <div className="p-4 rounded-2xl bg-white/[0.04] border border-amber-500/20 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
-              <Sparkles className="w-6 h-6 text-amber-400" />
-            </div>
-            <div>
-              <span className="text-[10px] font-mono text-slate-400 font-bold block">
-                NXA RECEBIDO
-              </span>
-              <div className="font-heading font-black text-amber-400 text-xl">
-                +100 NXA
-              </div>
-              <p className="text-[11px] text-slate-400 font-mono">
-                Tokens para negociações no Marketplace
-              </p>
-            </div>
-          </div>
-
-          {/* Level & XP */}
           <div className="p-4 rounded-2xl bg-white/[0.04] border border-purple-500/20 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center shrink-0">
               <Shield className="w-6 h-6 text-purple-400" />
@@ -122,30 +99,20 @@ export const FirstAccessModal: React.FC<FirstAccessModalProps> = ({
           </div>
         </div>
 
-        {/* Starter Kit Summary */}
         <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-500/20 flex items-center gap-3 text-xs font-mono text-slate-300">
           <CheckCircle className="w-4 h-4 text-cyan-400 shrink-0" />
           <span>
-            <strong>Inventário inicial ativo:</strong> 1x Recruta da Vanguarda (Equipado) + 1x Lâmina Cinética de Treino prontos para ação.
+            <strong>Próximo passo:</strong> use seus 1.000 NEX para adquirir uma Caixa Básica, abra sua primeira carta e então entre na Arena.
           </span>
         </div>
 
-        {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <button
-            onClick={() => handleAction('play')}
+            onClick={() => handleAction('boxes')}
             className="flex-1 py-3.5 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.4)]"
           >
-            <Swords className="w-4 h-4" />
-            <span>Ir para a Arena e Batalhar</span>
-          </button>
-
-          <button
-            onClick={() => handleAction('inventory')}
-            className="flex-1 py-3.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-heading font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2"
-          >
-            <Package className="w-4 h-4 text-cyan-300" />
-            <span>Ver Meu Inventário</span>
+            <PackageOpen className="w-4 h-4" />
+            <span>Adquirir Primeira Carta</span>
           </button>
 
           <button
