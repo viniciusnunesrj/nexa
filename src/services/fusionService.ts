@@ -35,6 +35,20 @@ interface FusionRpcResult {
 
 export class FusionService {
   /**
+   * Gera o identificador de uma operação lógica de fusão.
+   * O mesmo ID deve ser reutilizado caso a mesma operação precise
+   * ser reenviada ao servidor.
+   */
+  public static createRequestId(): string {
+    return typeof crypto !== 'undefined' &&
+      typeof crypto.randomUUID === 'function'
+      ? `fusion-${crypto.randomUUID()}`
+      : `fusion-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}`;
+  }
+
+  /**
    * Fusão online server-authoritative V2.
    *
    * O cliente envia somente:
@@ -43,9 +57,14 @@ export class FusionService {
    *
    * Custo, raridade, chance, sorteio, consumo das cartas
    * e criação da carta resultante são decididos pelo servidor.
+   *
+   * IMPORTANTE:
+   * requestId identifica uma única operação lógica.
+   * Em caso de retry, reutilize exatamente o mesmo requestId.
    */
   public static async executeFusion(
-    itemIds: string[]
+    itemIds: string[],
+    requestId: string
   ): Promise<FusionExecutionResult> {
     if (!isSupabaseConfigured()) {
       throw new Error(
@@ -67,18 +86,21 @@ export class FusionService {
       );
     }
 
-    const requestId =
-      typeof crypto !== 'undefined' &&
-      typeof crypto.randomUUID === 'function'
-        ? `fusion-${crypto.randomUUID()}`
-        : `fusion-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2)}`;
+    if (
+      typeof requestId !== 'string' ||
+      requestId.trim().length === 0
+    ) {
+      throw new Error(
+        'Identificador da operação de fusão inválido.'
+      );
+    }
+
+    const normalizedRequestId = requestId.trim();
 
     const { data, error } = await supabase.rpc(
       'execute_fusion_v2',
       {
-        p_request_id: requestId,
+        p_request_id: normalizedRequestId,
         p_card_ids: itemIds,
       }
     );
@@ -171,7 +193,7 @@ export class FusionService {
       outputRarity:
         result.output_rarity || undefined,
 
-      requestId,
+      requestId: normalizedRequestId,
 
       idempotent: Boolean(
         result.idempotent

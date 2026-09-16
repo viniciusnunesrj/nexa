@@ -1,6 +1,6 @@
 import { formatEconomicValue } from '../utils/formatEconomicValue';
 import { CardImage } from '../components/common/CardImage';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
 import { NexaAsset, Rarity } from '../types';
@@ -8,6 +8,7 @@ import { FUSION_RULES, NEXT_RARITY_MAP } from '../config/fusionRules';
 import { RARITY_CONFIG } from '../config/designTokens';
 import { RarityBadge } from '../components/common/RarityBadge';
 import { soundService } from '../services/soundService';
+import { FusionService } from '../services/fusionService';
 import confetti from 'canvas-confetti';
 import {
   Flame,
@@ -23,6 +24,7 @@ export const Fusion: React.FC = () => {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const pendingRequestId = useRef<string | null>(null);
   const [fusionResult, setFusionResult] = useState<{
     success: boolean;
     outputAsset?: NexaAsset;
@@ -76,7 +78,11 @@ export const Fusion: React.FC = () => {
     await new Promise((resolve) => setTimeout(resolve, 2200));
 
     try {
-      const result = await executeFusion(selectedIds);
+      if (!pendingRequestId.current) {
+        pendingRequestId.current = FusionService.createRequestId();
+      }
+
+      const result = await executeFusion(selectedIds, pendingRequestId.current);
 
       setFusionResult({
         success: result.success,
@@ -86,6 +92,7 @@ export const Fusion: React.FC = () => {
       });
 
       setSelectedIds([]);
+      pendingRequestId.current = null;
 
       if (result.success) {
         try {
@@ -100,6 +107,7 @@ export const Fusion: React.FC = () => {
         }
       }
     } catch {
+      // Mantém o mesmo requestId para uma eventual repetição da mesma operação.
       // O GameStateContext já exibe a mensagem de erro.
     } finally {
       setIsSynthesizing(false);

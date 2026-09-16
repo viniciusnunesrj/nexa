@@ -111,7 +111,10 @@ interface GameStateContextType {
     droppedBox: PlayerBox | null;
     serverBattle?: BattleRunResult;
   }>;
-  executeFusion: (itemIds: string[]) => Promise<FusionExecutionResult>;
+  executeFusion: (
+  itemIds: string[],
+  requestId: string
+) => Promise<FusionExecutionResult>;
   proposeTrade: (
     receiverId: string,
     offeredItemIds: string[],
@@ -919,8 +922,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // EXECUTE FUSION — SERVER-AUTHORITATIVE V2
   const executeFusion = async (
-    itemIds: string[]
-  ): Promise<FusionExecutionResult> => {
+  itemIds: string[],
+  requestId: string
+): Promise<FusionExecutionResult> => {
     if (!isSupabaseConfigured()) {
       throw new Error('A fusão online requer conexão com o servidor.');
     }
@@ -939,7 +943,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // A RPC é a única autoridade da operação. Depois que ela retorna,
       // a fusão já foi confirmada no servidor e não deve ser tratada como
       // falha apenas porque alguma atualização visual/local encontrou erro.
-      const result = await FusionService.executeFusion(itemIds);
+      const result = await FusionService.executeFusion(itemIds, requestId);
 
       // Atualiza imediatamente o saldo confirmado pela própria RPC.
       if (
