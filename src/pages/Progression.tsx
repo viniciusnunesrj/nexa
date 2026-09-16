@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
 import { ProgressionService } from '../services/progressionService';
-import { LEVEL_REWARDS, MAX_GAME_LEVEL, getXpRequiredForLevel, SLOTS_CONFIG } from '../config/levelConfig';
+import { MAX_GAME_LEVEL, getXpRequiredForLevel, SLOTS_CONFIG } from '../config/levelConfig';
 import {
   TrendingUp,
   Award,
@@ -12,8 +12,6 @@ import {
   Lock,
   Sparkles,
   ArrowRight,
-  Package,
-  Coins,
   Shield,
   Layers,
   Clock,
@@ -32,16 +30,11 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'timeline' | 'slots' | 'history'>('timeline');
 
   const history = ProgressionService.getLevelUpHistory(user.id);
-  const timeline = ProgressionService.getProgressionTimeline(user.level, user.levelRewardsClaimed || []);
 
   const progressPercent = Math.min(
     100,
     Math.round(((user.experience || 0) / (user.maxExperience || getXpRequiredForLevel(user.level))) * 100)
   );
-
-  const nextReward = ProgressionService.getNextRewards(user.level, 1)[0];
-  const nextMilestone = [10, 20, 25, 30, 40, 50].find((l) => l > user.level);
-  const milestoneReward = nextMilestone ? LEVEL_REWARDS[nextMilestone] : null;
 
   return (
     <div className="space-y-7 max-w-7xl mx-auto pb-10">
@@ -114,43 +107,34 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Col 2: Next Rewards Card */}
+          {/* Col 2: Online progression status */}
           <div className="p-5 rounded-2xl bg-black/25 border border-white/10 backdrop-blur-sm space-y-3">
             <span className="text-[10px] font-mono uppercase text-slate-400 font-bold block">
-              PRÓXIMO DESBLOQUEIO
+              PRÓXIMO OBJETIVO
             </span>
-
-            {nextReward ? (
+            {user.level < MAX_GAME_LEVEL ? (
               <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-2xl shrink-0">
-                  {nextReward.icon}
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-6 h-6 text-cyan-300" />
                 </div>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/30 font-bold">
-                      Nível {nextReward.level}
-                    </span>
-                  </div>
-                  <h4 className="font-heading font-bold text-white text-sm mt-0.5 truncate">
-                    {nextReward.name}
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/30 font-bold">
+                    Nível {user.level + 1}
+                  </span>
+                  <h4 className="font-heading font-bold text-white text-sm mt-1">
+                    Avançar patente do piloto
                   </h4>
-                  <p className="text-[11px] font-mono text-slate-400 line-clamp-1 mt-0.5">
-                    {nextReward.description}
+                  <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                    Ganhe XP em combates da Arena para continuar sua progressão permanente.
                   </p>
                 </div>
               </div>
             ) : (
-              <p className="text-xs font-mono text-emerald-400">Prestígio máximo atingido!</p>
+              <p className="text-xs font-mono text-emerald-400">Nível máximo atingido!</p>
             )}
-
-            {milestoneReward && nextMilestone !== nextReward?.level && (
-              <div className="pt-2.5 border-t border-white/10 flex items-center justify-between text-xs font-mono">
-                <span className="text-slate-400">Marco Épico Nv. {nextMilestone}:</span>
-                <span className="text-purple-300 font-bold truncate max-w-[150px]">
-                  {milestoneReward.icon} {milestoneReward.name}
-                </span>
-              </div>
-            )}
+            <div className="pt-2.5 border-t border-white/10 text-[11px] font-mono text-slate-500">
+              A progressão online não concede caixas, NEX, NXA ou personagens automaticamente ao subir de nível.
+            </div>
           </div>
         </div>
 
@@ -177,12 +161,12 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
           </div>
 
           <div>
-            <span className="text-[10px] font-mono text-slate-500 uppercase block">Recompensas Resgatadas</span>
+            <span className="text-[10px] font-mono text-slate-500 uppercase block">Patente Atual</span>
             <span className="font-heading text-xl font-bold text-purple-300">
-              {(user.levelRewardsClaimed || [1]).length} Marcos
+              Nível {user.level}
             </span>
             <span className="text-[10px] font-mono text-slate-400 block">
-              Sem recompensas duplicadas
+              Máximo: Nível {MAX_GAME_LEVEL}
             </span>
           </div>
 
@@ -192,7 +176,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
               {history.length} Avanços
             </span>
             <span className="text-[10px] font-mono text-slate-400 block">
-              Registrados no ledger
+              Avanços registrados
             </span>
           </div>
         </div>
@@ -209,7 +193,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
           }`}
         >
           <Award className="w-4 h-4" />
-          <span>Trilha de Recompensas ({timeline.length})</span>
+          <span>Trilha de Progressão</span>
         </button>
 
         <button
@@ -237,123 +221,53 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
         </button>
       </div>
 
-      {/* Tab Content 1: TIMELINE */}
+      {/* Tab Content 1: ONLINE PROGRESSION */}
       {activeTab === 'timeline' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-[#0b0b12] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono text-slate-400">
-            <span className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Marcos concluídos já foram adicionados diretamente ao inventário.</span>
-            </span>
-            <span className="text-cyan-400">
-              Nível Atual: <strong>{user.level}</strong>
-            </span>
-          </div>
+          <div className="p-5 sm:p-6 rounded-3xl bg-[#0b0b12] border border-white/10">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                <Award className="w-6 h-6 text-cyan-300" />
+              </div>
+              <div>
+                <h3 className="font-heading text-xl font-bold text-white">
+                  Progressão permanente do piloto
+                </h3>
+                <p className="text-xs font-mono text-slate-400 mt-1 max-w-3xl leading-relaxed">
+                  A Arena concede XP de forma autoritativa no servidor. Ao atingir a experiência necessária,
+                  seu nível é atualizado automaticamente. A trilha online atual representa patente e progresso
+                  da conta; recompensas antigas de caixas, moedas e personagens por nível não fazem parte da economia online V1.
+                </p>
+              </div>
+            </div>
 
-          <div className="relative pl-6 sm:pl-8 space-y-4 before:absolute before:left-3 sm:before:left-4 before:top-4 before:bottom-4 before:w-px before:bg-gradient-to-b before:from-cyan-400/70 before:via-blue-500/30 before:to-slate-800/40">
-            {timeline.map((item) => {
-              const isReached = item.isReached;
-              const isCurrent = item.level === user.level;
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+                <span className="text-[10px] font-mono text-slate-500 uppercase block">Nível Atual</span>
+                <span className="font-heading text-2xl font-black text-cyan-300">Nível {user.level}</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+                <span className="text-[10px] font-mono text-slate-500 uppercase block">Experiência</span>
+                <span className="font-heading text-2xl font-black text-white">
+                  {user.experience} / {user.maxExperience} XP
+                </span>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+                <span className="text-[10px] font-mono text-slate-500 uppercase block">Capacidade de Síntese</span>
+                <span className="font-heading text-2xl font-black text-purple-300">
+                  {unlockedSlots} {unlockedSlots === 1 ? 'Slot' : 'Slots'}
+                </span>
+              </div>
+            </div>
 
-              return (
-                <div key={item.level} className="relative group">
-                  {/* Timeline Indicator Dot */}
-                  <div
-                    className={`absolute -left-6 sm:-left-8 top-4 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      isCurrent
-                        ? 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(34,211,238,0.8)] ring-4 ring-cyan-500/20 animate-pulse'
-                        : isReached
-                        ? 'bg-emerald-500 text-black'
-                        : 'bg-[#151520] border border-slate-700 text-slate-500'
-                    }`}
-                  >
-                    {isReached ? <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" /> : <Lock className="w-3 h-3" />}
-                  </div>
-
-                  {/* Level Item Card */}
-                  <div
-                    className={`p-5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                      isCurrent
-                        ? 'bg-gradient-to-r from-cyan-950/40 via-[#0d0d1a] to-[#0b0b12] border-cyan-500/50 shadow-[0_0_20px_rgba(34,211,238,0.15)]'
-                        : isReached
-                        ? 'bg-[#0a0a14] border-white/10 hover:border-white/20'
-                        : 'bg-[#08080f] border-white/5 opacity-75 hover:opacity-100 hover:border-white/10'
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0 border ${
-                          isReached
-                            ? 'bg-cyan-500/10 border-cyan-500/30'
-                            : 'bg-white/5 border-white/10'
-                        }`}
-                      >
-                        {item.icon}
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={`font-mono text-xs font-black uppercase px-2 py-0.5 rounded-md ${
-                              isCurrent
-                                ? 'bg-cyan-500 text-black'
-                                : isReached
-                                ? 'bg-emerald-950 border border-emerald-500/40 text-emerald-300'
-                                : 'bg-slate-900 border border-slate-800 text-slate-400'
-                            }`}
-                          >
-                            NÍVEL {item.level}
-                          </span>
-
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300">
-                            {item.badge}
-                          </span>
-
-                          {item.unlockedSlots && (
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/80 border border-purple-500/40 text-purple-300 font-bold">
-                              +{item.unlockedSlots}º Slot Ativo
-                            </span>
-                          )}
-
-                          {isCurrent && (
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-400 text-cyan-300 font-bold animate-pulse">
-                              ⚡ NÍVEL ATUAL
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 className="font-heading text-lg font-bold text-white">
-                          {item.name}
-                        </h3>
-
-                        <p className="text-xs font-mono text-slate-400 max-w-xl">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="sm:text-right shrink-0">
-                      {isReached ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Desbloqueado</span>
-                        </span>
-                      ) : (
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-slate-400 text-xs font-mono font-bold">
-                            <Lock className="w-3 h-3" />
-                            <span>Bloqueado</span>
-                          </span>
-                          <span className="text-[10px] font-mono text-slate-500 block">
-                            Requer Nível {item.level}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            <button
+              onClick={() => onNavigate('play')}
+              className="mt-5 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading font-black text-xs uppercase tracking-wider transition-all inline-flex items-center gap-2"
+            >
+              <Zap className="w-4 h-4" />
+              Ganhar XP na Arena
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
@@ -432,7 +346,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
       {activeTab === 'history' && (
         <div className="space-y-4">
           <div className="p-4 rounded-2xl bg-[#0b0b12] border border-white/10 flex items-center justify-between text-xs font-mono text-slate-400">
-            <span>Registro imutável de todos os eventos de Level Up ocorridos na sua conta.</span>
+            <span>Histórico disponível de avanços de nível da sua conta.</span>
             <span>Total: {history.length} eventos</span>
           </div>
 
@@ -456,8 +370,8 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
                           CONFIRMADO
                         </span>
                       </div>
-                      <p className="text-xs font-mono text-white mt-0.5">
-                        Recompensa: {record.reward}
+                      <p className="text-xs font-mono text-slate-400 mt-0.5">
+                        Progressão confirmada para o Nível {record.newLevel}
                       </p>
                     </div>
                   </div>

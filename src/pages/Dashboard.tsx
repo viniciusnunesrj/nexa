@@ -34,7 +34,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { ProgressionService } from '../services/progressionService';
-import { LEVEL_REWARDS, getXpRequiredForLevel, MAX_GAME_LEVEL } from '../config/levelConfig';
+import { getXpRequiredForLevel, MAX_GAME_LEVEL } from '../config/levelConfig';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
@@ -99,10 +99,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const maxExp = user.maxExperience || getXpRequiredForLevel(currentLevel);
   const xpPercent = Math.min(100, Math.round((currentExp / maxExp) * 100));
 
-  const nextLevel = currentLevel + 1;
-  const nextReward = LEVEL_REWARDS[nextLevel];
-  const nextMilestone = [10, 20, 25, 30, 40, 50].find((lvl) => lvl > currentLevel) || 10;
-  const milestoneReward = LEVEL_REWARDS[nextMilestone];
+  const nextLevel = Math.min(MAX_GAME_LEVEL, currentLevel + 1);
+  const isMaxLevel = currentLevel >= MAX_GAME_LEVEL;
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -288,63 +286,49 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Right: Próximo Nível e Marco Épico (Level 10) */}
+          {/* Right: Online progression objectives */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Próximo Nível Card */}
             <div className="p-4 rounded-2xl bg-[#0a0914] border border-cyan-500/30 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-[10px] font-mono uppercase text-cyan-400 font-bold mb-1">
-                  <span>PRÓXIMO NÍVEL</span>
-                  <span className="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-500/40">Nv. {nextLevel}</span>
+                  <span>PRÓXIMO OBJETIVO</span>
+                  <span className="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-500/40">
+                    {isMaxLevel ? `Nv. ${MAX_GAME_LEVEL}` : `Nv. ${nextLevel}`}
+                  </span>
                 </div>
-                <span className="text-xs text-slate-400 font-mono block">Recompensa:</span>
-                {nextReward ? (
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="text-xl">{nextReward.icon}</span>
-                    <div className="min-w-0">
-                      <h4 className="font-heading font-bold text-white text-xs truncate">
-                        {nextReward.name}
-                      </h4>
-                      <span className="text-[10px] font-mono text-slate-400 line-clamp-1">
-                        {nextReward.badge}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs font-mono text-emerald-400 mt-1">Nível máximo!</p>
-                )}
+                <span className="text-xs text-slate-400 font-mono block">
+                  {isMaxLevel ? 'Progressão concluída' : 'Avance sua patente na Arena'}
+                </span>
+                <div className="mt-2 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-cyan-400" />
+                  <h4 className="font-heading font-bold text-white text-xs">
+                    {isMaxLevel ? 'Nível máximo atingido' : `Alcançar o Nível ${nextLevel}`}
+                  </h4>
+                </div>
               </div>
-              <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-slate-400">
-                <span>{nextReward?.description || 'Prestígio'}</span>
+              <div className="mt-3 pt-2 border-t border-white/10 text-[10px] font-mono text-slate-400">
+                {isMaxLevel ? 'Patente máxima do piloto.' : `Faltam ${Math.max(0, maxExp - currentExp)} XP`}
               </div>
             </div>
 
-            {/* Marco Especial Nível 10 */}
             <div className="p-4 rounded-2xl bg-[#0d091a] border border-purple-500/30 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-[10px] font-mono uppercase text-purple-300 font-bold mb-1">
-                  <span>PRÓXIMO MARCO</span>
-                  <span className="px-1.5 py-0.5 rounded bg-purple-950 border border-purple-500/40">Nv. {nextMilestone}</span>
+                  <span>ECONOMIA ONLINE V1</span>
+                  <Shield className="w-4 h-4 text-purple-300" />
                 </div>
-                <span className="text-xs text-slate-400 font-mono block">Desbloqueio:</span>
-                {milestoneReward ? (
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="text-xl">{milestoneReward.icon}</span>
-                    <div className="min-w-0">
-                      <h4 className="font-heading font-bold text-white text-xs truncate">
-                        {milestoneReward.name}
-                      </h4>
-                      <span className="text-[10px] font-mono text-purple-300 line-clamp-1">
-                        {milestoneReward.badge}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs font-mono text-emerald-400 mt-1">Concluído!</p>
-                )}
+                <span className="text-xs text-slate-400 font-mono block">Progressão permanente</span>
+                <div className="mt-2">
+                  <h4 className="font-heading font-bold text-white text-xs">
+                    Nível e XP confirmados pela Arena
+                  </h4>
+                  <span className="text-[10px] font-mono text-purple-300">
+                    Recompensas econômicas vêm das atividades do jogo.
+                  </span>
+                </div>
               </div>
-              <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-purple-300">
-                <span>{currentLevel >= nextMilestone ? '✓ Conquistado' : `Faltam ${nextMilestone - currentLevel} níveis`}</span>
+              <div className="mt-3 pt-2 border-t border-white/10 text-[10px] font-mono text-slate-400">
+                Sem caixas ou moedas automáticas por level-up.
               </div>
             </div>
           </div>
