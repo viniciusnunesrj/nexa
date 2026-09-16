@@ -111,7 +111,7 @@ interface GameStateContextType {
     droppedBox: PlayerBox | null;
     serverBattle?: BattleRunResult;
   }>;
-  executeFusion: (itemIds: string[]) => FusionExecutionResult;
+  executeFusion: (itemIds: string[]) => Promise<FusionExecutionResult>;
   proposeTrade: (
     receiverId: string,
     offeredItemIds: string[],
@@ -916,35 +916,59 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return res;
   };
 
-  // EXECUTE FUSION
-  const executeFusion = (itemIds: string[]): FusionExecutionResult => {
+  // EXECUTE FUSION — SERVER-AUTHORITATIVE V2
+  const executeFusion = async (
+    itemIds: string[]
+  ): Promise<FusionExecutionResult> => {
     try {
-      const selectedItems = assets.filter((a) => itemIds.includes(a.id));
-      const result = FusionService.executeFusion(selectedItems, user);
+      if (!isSupabaseConfigured()) {
+        throw new Error('A fusão online requer conexão com o servidor.');
+      }
 
-      // Deduct NEX cost
-      updateUserBalance(-result.costNEX, 0);
+      if (!isAuthenticated || !currentUser) {
+        throw new Error('Entre na sua conta para utilizar a Forja Quântica.');
+      }
 
-      // Burn items
+      const result = await FusionService.executeFusion(itemIds);
+
+      // O servidor é a autoridade para custo, chance, sorteio,
+      // consumo das cartas, criação da saída e ledger.
+      if (
+        typeof result.balanceNEX === 'number' &&
+        Number.isFinite(result.balanceNEX)
+      ) {
+        setUser((prev) => ({
+          ...prev,
+          balanceNEX: result.balanceNEX!,
+        }));
+      }
+
+      // Reflete imediatamente as cartas que o servidor confirmou
+      // como destruídas e a eventual carta criada.
       setAssets((prev) => {
-        const remaining = prev.filter((a) => !result.burnedItemIds.includes(a.id));
+        const remaining = prev.filter(
+          (asset) => !result.burnedItemIds.includes(asset.id)
+        );
+
         if (result.success && result.outputAsset) {
           return [result.outputAsset, ...remaining];
         }
+
         return remaining;
       });
 
-      // Record ledger
-      const ledg = LedgerService.recordEntry(
-        user.id,
-        user.username,
-        'NEX',
-        -result.costNEX,
-        user.balanceNEX - result.costNEX,
-        'FUSION_COST',
-        `Síntese no Reator (${selectedItems[0].rarity} -> ${result.outputAsset?.rarity || 'Falha'})`
-      );
-      setLedger((prev) => [ledg, ...prev]);
+      // Recarrega o perfil oficial após a operação.
+      try {
+        const refreshedUser = await SupabaseService.getUser(currentUser.id);
+        if (refreshedUser) {
+          setUser(refreshedUser);
+        }
+      } catch (refreshError) {
+        console.warn(
+          '[NEXA FUSION V2] Não foi possível atualizar o perfil após a RPC:',
+          refreshError
+        );
+      }
 
       if (result.success) {
         soundService.playMythicDrop();
@@ -955,7 +979,12 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       return result;
     } catch (err: any) {
-      notify('error', 'Erro na Forja', err.message || 'Erro desconhecido.');
+      console.error('[NEXA FUSION V2]', err);
+      notify(
+        'error',
+        'Erro na Forja',
+        err?.message || 'Não foi possível concluir a fusão.'
+      );
       throw err;
     }
   };

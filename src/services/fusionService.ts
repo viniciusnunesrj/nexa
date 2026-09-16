@@ -1,86 +1,181 @@
-import { NexaAsset, NexaUser } from '../types';
-import { FUSION_RULES } from '../config/fusionRules';
-import { SecurityService } from './securityService';
-import { RewardService } from './rewardService';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export interface FusionExecutionResult {
   success: boolean;
   message: string;
-  outputAsset?: NexaAsset;
+  outputAsset?: any;
   costNEX: number;
   burnedItemIds: string[];
+  preservedItemId?: string;
+  balanceNEX?: number;
+  outputRarity?: string;
+  requestId?: string;
+  idempotent?: boolean;
+}
+
+interface FusionRpcResult {
+  success: boolean;
+  message?: string;
+
+  input_rarity?: string;
+  output_rarity?: string;
+
+  success_rate?: number;
+  charged_nex?: number;
+  balance_nex?: number;
+
+  burned_card_ids?: string[];
+  preserved_card_id?: string | null;
+
+  output_template_id?: string | null;
+  output_card?: any | null;
+
+  idempotent?: boolean;
 }
 
 export class FusionService {
   /**
-   * Execute 3-to-1 asset fusion
+   * Fusão online server-authoritative V2.
+   *
+   * O cliente envia somente:
+   * - request_id
+   * - IDs das 3 cartas
+   *
+   * Custo, raridade, chance, sorteio, consumo das cartas
+   * e criação da carta resultante são decididos pelo servidor.
    */
-  public static executeFusion(
-    items: NexaAsset[],
-    user: NexaUser
-  ): FusionExecutionResult {
-    // 1. Structural checks
-    if (items.length !== 3) {
-      throw new Error('A forja do reator requer exatamente 3 itens como matéria-prima.');
+  public static async executeFusion(
+    itemIds: string[]
+  ): Promise<FusionExecutionResult> {
+    if (!isSupabaseConfigured()) {
+      throw new Error(
+        'A Fusão V2 requer conexão com o servidor.'
+      );
     }
 
-    // 2. Ownership & Status
-    for (const item of items) {
-      SecurityService.validateOwnership(item, user.id);
-      SecurityService.validateAssetAvailable(item);
+    if (!Array.isArray(itemIds) || itemIds.length !== 3) {
+      throw new Error(
+        'A forja do reator requer exatamente 3 cartas como matéria-prima.'
+      );
     }
 
-    // 3. Same rarity
-    const baseRarity = items[0].rarity;
-    const sameRarity = items.every((i) => i.rarity === baseRarity);
-    if (!sameRarity) {
-      throw new Error('Todos os 3 itens devem possuir a mesma raridade para sintetização.');
+    const uniqueIds = new Set(itemIds);
+
+    if (uniqueIds.size !== 3) {
+      throw new Error(
+        'Selecione 3 cartas diferentes para realizar a fusão.'
+      );
     }
 
-    // 4. Rule check
-    const rule = FUSION_RULES[baseRarity];
-    if (!rule) {
-      throw new Error(`Itens de raridade "${baseRarity}" já atingiram o ápice e não podem ser fundidos.`);
+    const requestId =
+      typeof crypto !== 'undefined' &&
+      typeof crypto.randomUUID === 'function'
+        ? `fusion-${crypto.randomUUID()}`
+        : `fusion-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2)}`;
+
+    const { data, error } = await supabase.rpc(
+      'execute_fusion_v2',
+      {
+        p_request_id: requestId,
+        p_card_ids: itemIds,
+      }
+    );
+
+    if (error) {
+      console.error(
+        '[NEXA FUSION V2 RPC ERROR]',
+        error
+      );
+
+      throw new Error(
+        error.message ||
+          'Não foi possível concluir a fusão no servidor.'
+      );
     }
 
-    // 5. Balance check
-    SecurityService.validateSufficientBalance(user, rule.costNEX, 'NEX');
-
-    // 6. Roll success
-    const roll = Math.random();
-    const isSuccess = roll <= rule.successRate;
-
-    const burnedItemIds = items.map((i) => i.id);
-
-    if (isSuccess) {
-      // Create new asset of outputRarity
-      const newItem = RewardService.mintItem(rule.outputRarity, user.id, user.username);
-      // Boost power by average of inputs
-      const avgPower = Math.floor(items.reduce((acc, curr) => acc + ('power' in curr ? curr.power : 200), 0) / 3);
-      newItem.power = Math.floor(avgPower * rule.bonusPowerMultiplier);
-      newItem.name = `${newItem.name} (Sintetizado)`;
-      newItem.edition = 'Forja Quântica';
-      newItem.description = `${newItem.description} Forjado com sucesso através da fusão de 3 itens ${baseRarity}.`;
-
-      return {
-        success: true,
-        message: `Fusão bem-sucedida! Você sintetizou um item de raridade ${rule.outputRarity}!`,
-        outputAsset: newItem,
-        costNEX: rule.costNEX,
-        burnedItemIds,
-      };
-    } else {
-      // Partial failure on risky tiers (Epic/Legendary)
-      // Burn 2 items, return 1 as residue
-      const preservedId = items[0].id;
-      const actualBurned = [items[1].id, items[2].id];
-
-      return {
-        success: false,
-        message: `Instabilidade no Reator! A síntese falhou (${Math.round(rule.successRate * 100)}% de chance). 2 itens foram desintegrados, mas 1 foi recuperado.`,
-        costNEX: Math.floor(rule.costNEX * 0.5), // 50% cost on failure
-        burnedItemIds: actualBurned,
-      };
+    if (!data || typeof data !== 'object') {
+      throw new Error(
+        'O servidor retornou um resultado inválido para a fusão.'
+      );
     }
+
+    const result = data as FusionRpcResult;
+
+    if (typeof result.success !== 'boolean') {
+      throw new Error(
+        'O servidor não confirmou o resultado da fusão.'
+      );
+    }
+
+    const burnedItemIds = Array.isArray(
+      result.burned_card_ids
+    )
+      ? result.burned_card_ids.filter(
+          (id): id is string =>
+            typeof id === 'string'
+        )
+      : [];
+
+    const chargedNEX = Number(
+      result.charged_nex ?? 0
+    );
+
+    if (
+      !Number.isFinite(chargedNEX) ||
+      chargedNEX < 0
+    ) {
+      throw new Error(
+        'O servidor retornou um custo inválido para a fusão.'
+      );
+    }
+
+    const balanceNEX =
+      result.balance_nex === undefined ||
+      result.balance_nex === null
+        ? undefined
+        : Number(result.balance_nex);
+
+    if (
+      balanceNEX !== undefined &&
+      (!Number.isFinite(balanceNEX) ||
+        balanceNEX < 0)
+    ) {
+      throw new Error(
+        'O servidor retornou um saldo inválido após a fusão.'
+      );
+    }
+
+    return {
+      success: result.success,
+
+      message:
+        result.message ||
+        (result.success
+          ? 'Fusão concluída com sucesso.'
+          : 'A fusão não foi bem-sucedida.'),
+
+      outputAsset:
+        result.output_card || undefined,
+
+      costNEX: chargedNEX,
+
+      burnedItemIds,
+
+      preservedItemId:
+        result.preserved_card_id || undefined,
+
+      balanceNEX,
+
+      outputRarity:
+        result.output_rarity || undefined,
+
+      requestId,
+
+      idempotent: Boolean(
+        result.idempotent
+      ),
+    };
   }
 }

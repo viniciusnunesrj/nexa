@@ -58,41 +58,46 @@ export const Fusion: React.FC = () => {
     setSelectedIds((prev) => [...prev, asset.id]);
   };
 
-  const handleStartFusion = () => {
-    if (selectedIds.length !== 3 || !rule) return;
+  const handleStartFusion = async () => {
+    if (selectedIds.length !== 3 || !rule || isSynthesizing) return;
 
     setIsSynthesizing(true);
     setFusionResult(null);
     soundService.playFusionCharge();
 
-    setTimeout(() => {
-      try {
-        const result = executeFusion(selectedIds);
-        setIsSynthesizing(false);
-        setFusionResult({
-          success: result.success,
-          outputAsset: result.outputAsset,
-          message: result.message,
-          costNEX: result.costNEX,
-        });
-        setSelectedIds([]);
+    // Mantém a animação de carga, mas o resultado econômico
+    // vem exclusivamente da RPC server-authoritative.
+    await new Promise((resolve) => setTimeout(resolve, 2200));
 
-        if (result.success) {
-          try {
-            confetti({
-              particleCount: 150,
-              spread: 80,
-              origin: { y: 0.5 },
-              colors: ['#a855f7', '#06b6d4', '#f59e0b', '#ec4899'],
-            });
-          } catch {
-            // Ignore
-          }
+    try {
+      const result = await executeFusion(selectedIds);
+
+      setFusionResult({
+        success: result.success,
+        outputAsset: result.outputAsset,
+        message: result.message,
+        costNEX: result.costNEX,
+      });
+
+      setSelectedIds([]);
+
+      if (result.success) {
+        try {
+          confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.5 },
+            colors: ['#a855f7', '#06b6d4', '#f59e0b', '#ec4899'],
+          });
+        } catch {
+          // Ignore
         }
-      } catch (err: any) {
-        setIsSynthesizing(false);
       }
-    }, 2200);
+    } catch {
+      // O GameStateContext já exibe a mensagem de erro.
+    } finally {
+      setIsSynthesizing(false);
+    }
   };
 
   return (
