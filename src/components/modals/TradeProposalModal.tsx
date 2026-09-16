@@ -1,7 +1,7 @@
 import { formatEconomicValue } from '../../utils/formatEconomicValue';
 import { CardImage } from '../common/CardImage';
-import React, { useState } from 'react';
-import { NexaAsset, NexaUser } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { NexaAsset } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGameState } from '../../contexts/GameStateContext';
 import { X, ArrowLeftRight, Plus, Minus, AlertCircle } from 'lucide-react';
@@ -16,10 +16,10 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
   initialItem,
   onClose,
 }) => {
-  const { user, allUsers } = useAuth();
+  const { user, publicUsers, publicUsersLoading, publicUsersError, publicUsersHasMore, loadMorePublicUsers } = useAuth();
   const { assets, proposeTrade } = useGameState();
 
-  const otherUsers = allUsers.filter((u) => u.id !== user.id);
+  const otherUsers = publicUsers.filter((u) => u.id !== user.id);
   const [selectedUserId, setSelectedUserId] = useState<string>(
     otherUsers[0]?.id || ''
   );
@@ -33,6 +33,13 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
   const [requestedNXA, setRequestedNXA] = useState<number>(0);
   const [note, setNote] = useState<string>('');
   const [error, setError] = useState<string>('');
+
+  useEffect(() => {
+    if (!otherUsers.some(profile => profile.id === selectedUserId)) {
+      setSelectedUserId(otherUsers[0]?.id || '');
+      setRequestedItemIds([]);
+    }
+  }, [publicUsers, user.id, selectedUserId]);
 
   const myAvailableItems = assets.filter(
     (a) => a.ownerId === user.id && (a.status === 'IDLE' || a.id === initialItem?.id)
@@ -129,7 +136,7 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
                   }`}
                 >
                   <img
-                    src={target.avatar}
+                    src={target.avatar || undefined}
                     alt={target.username}
                     className="w-8 h-8 rounded-full object-cover border border-purple-400/40"
                   />
@@ -141,6 +148,9 @@ export const TradeProposalModal: React.FC<TradeProposalModalProps> = ({
               ))}
             </div>
           </div>
+
+          {publicUsersError && <p role="alert" className="text-xs text-rose-300">{publicUsersError}</p>}
+          {publicUsersHasMore && <button type="button" disabled={publicUsersLoading} onClick={() => void loadMorePublicUsers()} className="text-xs text-cyan-300 disabled:opacity-60">{publicUsersLoading ? 'Carregando...' : publicUsersError ? 'Tentar novamente' : 'Mais jogadores'}</button>}
 
           {/* Two-column barter picker */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

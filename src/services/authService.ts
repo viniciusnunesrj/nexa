@@ -162,14 +162,11 @@ class AuthServiceClass {
       }
       authCreated = true;
       if (!authData.session) {
-        // A public profile may be read while email confirmation is pending, but
-        // never insert it anonymously or manufacture an authenticated session.
-        const profile = await SupabaseService.fetchRemoteProfile(authData.user.id);
-        if (!profile) throw new Error('Perfil correspondente não encontrado em profiles.');
+        // Auth accepted the signup; hydrate the profile only after a verified session.
         return {
           success: true,
           requiresEmailConfirmation: true,
-          message: 'Cadastro e perfil confirmados no Supabase. Confirme seu e-mail antes de fazer login.',
+          message: 'Cadastro recebido pelo Supabase. Confirme seu e-mail antes de fazer login.',
         };
       }
       const { data: verified, error: verificationError } = await supabase.auth.getUser();
@@ -247,17 +244,23 @@ class AuthServiceClass {
       const cleanId = identifier.trim().toLowerCase();
       if (!cleanId) throw new Error('Informe seu nome de usuário ou e-mail.');
       if (!password) throw new Error('A senha de acesso é obrigatória.');
-      let email = cleanId;
-      if (!cleanId.includes('@')) {
+      let data;
+      if (cleanId.includes('@')) {
+        const result = await supabase.auth.signInWithPassword({ email: cleanId, password });
+        if (result.error) throw result.error;
+        data = result.data;
+      } else {
         if (!/^[a-z0-9_-]+$/.test(cleanId)) throw new Error('Nome de usuário inválido.');
-        const { data: profile, error } = await supabase.from('profiles')
-          .select('email').ilike('username', cleanId.replace(/_/g, '\\_')).maybeSingle();
-        if (error) throw new Error('Não foi possível consultar o usuário. Tente entrar com seu e-mail.');
-        if (!profile?.email) throw new Error('Perfil não encontrado. Tente entrar com seu e-mail para verificar a conta no Supabase.');
-        email = profile.email;
+        const result = await supabase.functions.invoke('username-login', { body: { username: cleanId, password } });
+        if (result.error || typeof result.data?.access_token !== 'string' || !result.data.access_token ||
+          typeof result.data?.refresh_token !== 'string' || !result.data.refresh_token) {
+          throw new Error('Não foi possível entrar. Verifique suas credenciais ou tente novamente mais tarde. Você também pode entrar por e-mail.');
+        }
+        if (revision !== this.revision) throw new Error('Autenticação interrompida.');
+        const session = await supabase.auth.setSession({ access_token: result.data.access_token, refresh_token: result.data.refresh_token });
+        if (session.error) throw new Error('Não foi possível confirmar a sessão.');
+        data = session.data;
       }
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
       if (!data.user || !data.session || data.session.user.id !== data.user.id) throw new Error('O Supabase não retornou uma sessão válida.');
       const { data: verified, error: verificationError } = await supabase.auth.getUser();
       if (verificationError) throw verificationError;
@@ -302,8 +305,9 @@ class AuthServiceClass {
     if (this.currentUser?.id === userId) this.updateUser({ ...this.currentUser, isFirstAccess: false });
   }
 
-  // Legacy list is retained for existing non-authentication consumers only.
+  // Legacy full profiles are available only to offline consumers.
   public getAllUsers(): NexaUser[] {
+    if (isSupabaseConfigured()) return [];
     try { return this.getStoredAccounts().map(({ passwordHash, salt, ...user }) => user); }
     catch { return []; }
   }

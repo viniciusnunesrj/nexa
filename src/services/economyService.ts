@@ -172,50 +172,12 @@ export class EconomyServiceClass {
 
   /**
    * Retorna todos os usuários cadastrados sem credenciais confidenciais.
-   * Conecta com a base remota compartilhada do Supabase para unificar PC, Celular e outros navegadores.
+   * Lista legada exclusiva da simulação offline; online usa contratos públicos.
    */
   public getAllUsers(): NexaUser[] {
-    const accounts = this.getRawAccounts();
-    const localUsers = accounts.map(({ passwordHash, salt, ...user }) => user);
-
-    // If Supabase has fetched profiles, merge any user created on other devices
-    if (isSupabaseConfigured()) {
-      // Trigger background fetch to keep profiles fresh across devices
-      SupabaseService.fetchAllProfiles().then((remoteUsers) => {
-        if (remoteUsers && remoteUsers.length > 0) {
-          const currentAccounts = this.getRawAccounts();
-          let changed = false;
-          for (const ru of remoteUsers) {
-            const idx = currentAccounts.findIndex((a) => a.id === ru.id);
-            if (idx >= 0) {
-              if (
-                currentAccounts[idx].balanceNEX !== ru.balanceNEX ||
-                currentAccounts[idx].experience !== ru.experience ||
-                currentAccounts[idx].level !== ru.level
-              ) {
-                currentAccounts[idx] = { ...currentAccounts[idx], ...ru };
-                changed = true;
-              }
-            } else {
-              currentAccounts.push({
-                ...ru,
-                passwordHash: 'remote_synced',
-                salt: 'remote_salt',
-              });
-              changed = true;
-            }
-          }
-          if (changed) {
-            this.saveRawAccounts(currentAccounts);
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new Event('nexa_ranking_updated'));
-            }
-          }
-        }
-      }).catch(() => {});
-    }
-
-    return localUsers;
+    // Full cached profiles are only available to the legacy offline simulation.
+    if (isSupabaseConfigured()) return [];
+    return this.getRawAccounts().map(({ passwordHash, salt, ...user }) => user);
   }
 
   /**

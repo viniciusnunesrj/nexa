@@ -1,4 +1,5 @@
 import { TradeOffer, NexaAsset, NexaUser } from '../types';
+import type { PublicProfile } from '../types/publicProfile';
 import { SecurityService } from './securityService';
 
 export class TradeService {
@@ -7,7 +8,7 @@ export class TradeService {
    */
   public static createTradeOffer(
     sender: NexaUser,
-    receiver: NexaUser,
+    receiver: Pick<PublicProfile, 'id' | 'username'>,
     offeredItems: NexaAsset[],
     offeredNXA: number,
     requestedItems: NexaAsset[],

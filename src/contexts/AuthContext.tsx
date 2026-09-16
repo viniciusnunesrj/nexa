@@ -5,7 +5,8 @@ import { EconomyService } from '../services/economyService';
 import { ProgressionService } from '../services/progressionService';
 import { CURRENT_USER } from '../data/mockUsers';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { SupabaseService } from '../services/supabaseService';
+import { PublicProfileService } from '../services/publicProfileService';
+import type { PublicProfile } from '../types/publicProfile';
 
 interface AuthContextType {
   currentUser: NexaUser | null;
@@ -13,7 +14,11 @@ interface AuthContextType {
   user: NexaUser; // Backwards-compatible alias for existing components
   isAuthenticated: boolean;
   isFirstAccess: boolean;
-  allUsers: NexaUser[];
+  publicUsers: PublicProfile[];
+  publicUsersLoading: boolean;
+  publicUsersError: string | null;
+  publicUsersHasMore: boolean;
+  loadMorePublicUsers: () => Promise<void>;
   login: (identifier: string, password?: string) => Promise<AuthResult>;
   loginAsDemo: () => Promise<AuthResult>;
   register: (data: RegisterData) => Promise<AuthResult>;
@@ -34,23 +39,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Legacy local sessions never unlock protected routes, even briefly.
   const [currentUser, setCurrentUser] = useState<NexaUser | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [allUsers, setAllUsers] = useState<NexaUser[]>([]);
+  const [directory, setDirectory] = useState<{ ownerId: string; users: PublicProfile[]; offset: number; hasMore: boolean }>({ ownerId: '', users: [], offset: 0, hasMore: true });
+  const [publicUsersLoading, setPublicUsersLoading] = useState(false);
+  const [publicUsersError, setPublicUsersError] = useState<string | null>(null);
+  const directoryRequest = useRef(0);
+  const directoryPending = useRef(false);
   const activeOperation = useRef(false);
   const revision = useRef(0);
   const mounted = useRef(false);
   const profileSavePending = useRef(false);
   const profileSaveVersion = useRef(0);
 
-  // Kept for existing consumers; this list cannot grant authentication.
-  const refreshUsersList = async () => {
-    if (!isSupabaseConfigured()) return;
+  // Dedicated authenticated directory. Never hydrate account/economy caches from it.
+  const loadPublicPage = async (ownerId: string, offset: number) => {
+    if (!isSupabaseConfigured() || !ownerId || directoryPending.current) return;
+    directoryPending.current = true;
+    const request = ++directoryRequest.current;
+    setPublicUsersLoading(true);
+    setPublicUsersError(null);
     try {
-      const profiles = await SupabaseService.fetchAllProfiles();
-      if (mounted.current) {
-        setAllUsers(profiles);
-        window.dispatchEvent(new Event('nexa_ranking_updated'));
+      const page = await PublicProfileService.fetchDirectory(ownerId, 100, offset);
+      if (!mounted.current || request !== directoryRequest.current) return;
+      setDirectory(previous => ({
+        ownerId, offset: offset + page.length, hasMore: page.length === 100 && offset + page.length <= 1000000,
+        users: Array.from(new Map([
+          ...(offset > 0 && previous.ownerId === ownerId ? previous.users : []), ...page,
+        ].map(profile => [profile.id, profile])).values()),
+      }));
+    } catch {
+      if (mounted.current && request === directoryRequest.current) setPublicUsersError('Não foi possível carregar os jogadores. Tente novamente.');
+    } finally {
+      if (request === directoryRequest.current) {
+        directoryPending.current = false;
+        setPublicUsersLoading(false);
       }
-    } catch { /* Authentication does not depend on the community list. */ }
+    }
+  };
+  useEffect(() => {
+    ++directoryRequest.current;
+    directoryPending.current = false;
+    setDirectory({ ownerId: currentUser?.id || '', users: [], offset: 0, hasMore: true });
+    setPublicUsersError(null);
+    setPublicUsersLoading(false);
+    // Deferred until the provider is mounted; cleanup invalidates late pages.
+    const timer = setTimeout(() => { if (currentUser) void loadPublicPage(currentUser.id, 0); }, 0);
+    return () => { clearTimeout(timer); ++directoryRequest.current; directoryPending.current = false; };
+  }, [currentUser?.id]);
+  const publicUsers = currentUser && directory.ownerId === currentUser.id ? directory.users : [];
+  const loadMorePublicUsers = async () => {
+    if (currentUser && directory.ownerId === currentUser.id && directory.hasMore) {
+      await loadPublicPage(currentUser.id, directory.offset);
+    }
   };
 
   useEffect(() => {
@@ -66,7 +105,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (disposed || request !== revision.current || saveVersion !== profileSaveVersion.current || profileSavePending.current) return;
         setCurrentUser(profile);
         setAuthError(null);
-        if (profile) void refreshUsersList();
       } catch (err: any) {
         if (disposed || request !== revision.current || saveVersion !== profileSaveVersion.current || profileSavePending.current) return;
         setCurrentUser(null);
@@ -108,7 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!mounted.current || request !== revision.current) return { success: false, error: 'Autenticação interrompida. Tente novamente.' };
       if (result.success && result.user && !result.requiresEmailConfirmation) {
         setCurrentUser(result.user);
-        void refreshUsersList();
       } else if (!result.success) {
         setAuthError(result.error || 'Falha na autenticação.');
       }
@@ -141,7 +178,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const syncUser = (updatedUser: NexaUser) => {
     setCurrentUser(previous => previous?.id === updatedUser.id ? updatedUser : previous);
-    void refreshUsersList();
   };
 
   const dismissFirstAccess = () => {
@@ -172,7 +208,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const updated = EconomyService.getUser(currentUser.id);
     if (updated) {
       setCurrentUser(updated);
-      refreshUsersList();
     }
     return result;
   };
@@ -196,7 +231,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     EconomyService.saveUser(updated);
     setCurrentUser(updated);
-    refreshUsersList();
   };
 
   const claimSeasonReward = (level: number) => {
@@ -210,7 +244,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     EconomyService.saveUser(updated);
     setCurrentUser(updated);
-    refreshUsersList();
   };
 
   const updateUserProfile = async (updates: ProfileUpdates): Promise<NexaUser> => {
@@ -225,7 +258,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentUser(previous => previous?.id === confirmed.id ? {
         ...previous, bio: confirmed.bio, title: confirmed.title, avatar: confirmed.avatar,
       } : previous);
-      void refreshUsersList();
       return confirmed;
     } finally {
       profileSavePending.current = false;
@@ -245,7 +277,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user: fallbackUser,
         isAuthenticated,
         isFirstAccess,
-        allUsers,
+        publicUsers,
+        publicUsersLoading,
+        publicUsersError,
+        publicUsersHasMore: Boolean(currentUser && directory.ownerId === currentUser.id && directory.hasMore),
+        loadMorePublicUsers,
         login,
         loginAsDemo,
         register,

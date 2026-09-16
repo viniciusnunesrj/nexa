@@ -51,12 +51,18 @@ function setup(options = {}) {
   const auth = {
     async signUp(params) { calls.push(['signUp', params]); if (state.networkError) throw new Error('Network unavailable'); return { data: { user: state.noUser ? null : state.obfuscated ? { ...user, identities: [] } : user, session: state.pending ? null : session }, error: state.authError ? { message: state.authError } : null }; },
     async signInWithPassword(params) { calls.push(['signIn', params]); return { data: { user, session: state.noSession ? null : session }, error: state.authError ? { message: state.authError } : null }; },
+    async setSession(tokens) { calls.push(['setSession', tokens]); return { data: { user, session: state.noSession ? null : session }, error: state.sessionError ? { message: 'Session rejected' } : null }; },
     async getSession() { return { data: { session: state.noSession ? null : session }, error: null }; },
     async getUser() { calls.push(['getUser']); if (state.verifyPromise) return state.verifyPromise; return { data: { user: state.wrongIdentity ? { ...user, id: 'other-id' } : user }, error: state.verifyError ? { message: state.verifyError } : null }; },
     async signOut() { calls.push(['signOut']); return { error: null }; },
   };
   const supabase = {
     auth,
+    functions: { async invoke(name, options) {
+      calls.push(['invoke', name, options]);
+      if (state.edgePromise) return state.edgePromise;
+      return { data: state.edgeData || { access_token: 'verified-access', refresh_token: 'verified-refresh' }, error: state.edgeError ? new Error('Endpoint rejected') : null };
+    } },
     from(table) {
       const query = { table, action: 'select' };
       const result = () => {
@@ -90,6 +96,7 @@ function setup(options = {}) {
   const mappers = load('src/lib/supabaseMappers.ts', {});
   const profiles = load('src/services/supabaseService.ts', {
     '../lib/supabase': lib, '../lib/supabaseMappers': mappers,
+    '../config/collectionsData': { getTemplateById() { throw new Error('No card lookup expected in auth'); } },
     '../data/mockUsers': { MOCK_COMMUNITY_USERS: [{ ...row, id: user.id, level: 99 }], CURRENT_USER: { id: 'usr_demo' } },
   }).SupabaseService;
   const service = load('src/services/authService.ts', {
@@ -191,7 +198,7 @@ test('successful online signup uses Auth, verifies identity/profile, preserves l
   assert.deepEqual(JSON.parse(s.storage.get(ASSETS))[0], JSON.parse(s.before.get(ASSETS))[0]);
 });
 
-test('email confirmation with confirmed profile succeeds without granting a session or changing local data', async () => {
+test('email confirmation from Auth succeeds without granting a session or changing local data', async () => {
   const s = setup({ pending: true });
   const result = await s.service.register(registration);
   assert.equal(result.success, true);
@@ -200,12 +207,12 @@ test('email confirmation with confirmed profile succeeds without granting a sess
   unchanged(s);
 });
 
-test('pending email with missing profile does not report completion or insert anonymously', async () => {
-  const s = setup({ pending: true, row: null });
+test('pending email with missing profile requires no anonymous query or write', async () => {
+  const s = setup({ pending: true, row: null, readError: true });
   const result = await s.service.register(registration);
-  assert.equal(result.success, false);
-  assert.match(result.error, /Não é necessário criar outra conta/);
-  assert.equal(s.calls.some(c => c[0] === 'query' && c[1].action === 'insert'), false);
+  assert.equal(result.success, true);
+  assert.equal(result.requiresEmailConfirmation, true);
+  assert.equal(s.calls.some(c => c[0] === 'query'), false);
   unchanged(s);
 });
 
@@ -217,11 +224,39 @@ for (const options of [{ configError: 'Missing configuration' }, { authError: 'I
   });
 }
 
-test('username login resolves only remote profile and escapes underscore wildcard', async () => {
+test('username login uses backend tokens, then verifies and hydrates own full profile', async () => {
   const s = setup();
-  assert.equal((await s.service.login('Pilot_1', 'correct-password')).success, true);
-  assert.equal(s.calls.find(c => c[0] === 'query')[1].filter[1], 'pilot\\_1');
-  assert.equal(s.calls.find(c => c[0] === 'signIn')[1].email, user.email);
+  const result = await s.service.login('Pilot_1', 'correct-password');
+  assert.equal(result.success, true);
+  assert.equal(result.user.balanceNEX, 4321);
+  assert.equal(result.user.experience, 123);
+  assert.deepEqual(clone(s.calls[0]), ['invoke', 'username-login', { body: { username: 'pilot_1', password: 'correct-password' } }]);
+  assert.equal(s.calls.some(c => c[0] === 'signIn'), false);
+  const firstQuery = s.calls.findIndex(c => c[0] === 'query');
+  assert.ok(firstQuery > s.calls.findIndex(c => c[0] === 'getUser'));
+  assert.ok(s.calls.filter(c => c[0] === 'query').every(c => c[1].filter[0] === 'id' && c[1].filter[1] === user.id));
+});
+for (const options of [{ edgeError: true }, { edgeData: {} }, { sessionError: true }]) test('username errors never fallback to anonymous profiles: ' + JSON.stringify(options), async () => {
+  const s = setup(options);
+  assert.equal((await s.service.login('Pilot_1', 'password')).success, false);
+  assert.equal(s.calls.some(c => ['query', 'signIn'].includes(c[0])), false);
+  unchanged(s);
+});
+test('late username response after logout cannot install a session', async () => {
+  let resolve;
+  const s = setup({ edgePromise: new Promise(done => { resolve = done; }) });
+  const login = s.service.login('Pilot_1', 'password');
+  await s.service.logout();
+  resolve({ data: { access_token: 'access', refresh_token: 'refresh' }, error: null });
+  assert.equal((await login).success, false);
+  assert.equal(s.calls.some(c => c[0] === 'setSession'), false);
+  unchanged(s);
+});
+test('email login remains direct Auth, no Edge or directory lookup', async () => {
+  const s = setup();
+  assert.equal((await s.service.login(user.email, 'correct-password')).success, true);
+  assert.equal(s.calls[0][0], 'signIn');
+  assert.equal(s.calls.some(c => c[0] === 'invoke'), false);
 });
 
 test('missing authenticated profile is inserted with identity only and reread', async () => {
@@ -248,6 +283,26 @@ test('strict profile query never returns seeded memory on empty/error response',
   assert.equal(await s.profiles.fetchRemoteProfile(user.id), null);
   s.state.readError = true;
   await assert.rejects(s.profiles.fetchRemoteProfile(user.id), /Read denied/);
+});
+
+test('own-profile refresh keeps confirmed post-RPC state when an older read finishes late', async () => {
+  const s = setup();
+  const initial = await s.profiles.fetchRemoteProfile(user.id);
+  let finish;
+  const from = s.supabase.from;
+  s.supabase.from = () => {
+    const query = { select: () => query, eq: () => query, maybeSingle: () => new Promise(resolve => { finish = resolve; }) };
+    return query;
+  };
+  const stale = s.profiles.fetchRemoteProfile(user.id);
+  const confirmed = { ...initial, level: 8, balanceNEX: 9000, experience: 50 };
+  s.profiles.acceptConfirmedProfile(confirmed);
+  finish({ data: row, error: null });
+  assert.equal(await stale, confirmed);
+  assert.equal(s.profiles.getProfileSync(user.id).balanceNEX, 9000);
+  s.supabase.from = from;
+  await assert.rejects(s.profiles.fetchAllProfiles(), /Diretório legado desativado/);
+  assert.deepEqual(clone(s.service.getAllUsers()), []);
 });
 
 test('profile upsert rejects another identity and propagates write errors', async () => {
@@ -356,7 +411,7 @@ function contextHarness(options = {}) {
     '../lib/supabase': { isSupabaseConfigured: () => true, supabase: { auth: {
       onAuthStateChange(cb) { callback = cb; return { data: { subscription: { unsubscribe() { unsubscribed = true; } } } }; },
     } } },
-    '../services/supabaseService': { SupabaseService: { async fetchAllProfiles() { return []; } } },
+    '../services/publicProfileService': { PublicProfileService: { async fetchDirectory() { return []; } } },
   }, { window: { dispatchEvent() {} }, Event: class {} });
   const render = () => { cursor = 0; return result.AuthProvider({ children: null }).props.value; };
   render();

@@ -138,7 +138,7 @@ const TRADES_KEY = 'nexa_trades_v1';
 const STATS_KEY = 'nexa_stats_v1';
 
 export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, currentUser, isAuthenticated, allUsers, syncUser, updateUserBalance, addXP, addSeasonXP, claimSeasonReward } = useAuth();
+  const { user, currentUser, isAuthenticated, publicUsers, syncUser, updateUserBalance, addXP, addSeasonXP, claimSeasonReward } = useAuth();
 
   const [assets, setAssets] = useState<NexaAsset[]>(() => {
     try {
@@ -860,7 +860,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     note?: string
   ) => {
     try {
-      const receiver = allUsers.find((u) => u.id === receiverId);
+      if (isSupabaseConfigured() && (!isAuthenticated || !currentUser)) throw new Error('Entre na sua conta para propor uma troca.');
+      const receiver = publicUsers.find((u) => u.id === receiverId);
       if (!receiver) throw new Error('Destinatário da troca não encontrado.');
 
       const offered = assets.filter((a) => offeredItemIds.includes(a.id));

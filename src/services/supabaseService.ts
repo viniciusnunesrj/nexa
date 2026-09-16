@@ -116,29 +116,7 @@ class SupabaseServiceClass {
   }
 
   public async fetchAllProfiles(): Promise<NexaUser[]> {
-    const revision = this.profileRevision;
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('level', { ascending: false });
-
-        if (error) {
-          console.warn('[SupabaseService] Erro ao buscar todos os perfis:', error.message);
-        } else if (data && data.length > 0) {
-          if (revision !== this.profileRevision) return Array.from(this.inMemoryProfiles.values());
-          const users = data.map(mapProfileToNexaUser);
-          for (const u of users) {
-            this.inMemoryProfiles.set(u.id, u);
-          }
-          return users;
-        }
-      } catch (err) {
-        console.warn('[SupabaseService] Exceção ao listar perfis:', err);
-      }
-    }
-
+    if (isSupabaseConfigured()) throw new Error('Diretório legado desativado online. Use PublicProfileService.');
     return Array.from(this.inMemoryProfiles.values());
   }
 

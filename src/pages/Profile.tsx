@@ -31,7 +31,7 @@ interface ProfileProps {
 }
 
 export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
-  const { user, updateUserProfile, allUsers, switchUser } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const { assets, transactions, notify, unlockedSlots, activeSynthesizingCardsCount } = useGameState();
 
   const [isEditing, setIsEditing] = useState(false);
