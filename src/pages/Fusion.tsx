@@ -30,12 +30,18 @@ export const Fusion: React.FC = () => {
     costNEX: number;
   } | null>(null);
 
-  // Available items for fusion (user-owned, IDLE)
+  // Apenas cartas físicas reais e livres podem entrar na Fusão V2.
+  // Isso exclui personagens, equipamentos e outros assets locais/legados
+  // que também possam possuir status IDLE.
   const availableItems = assets.filter(
-    (a) => a.ownerId === user.id && a.status === 'IDLE'
+    (a) =>
+      a.ownerId === user.id &&
+      (a.type === 'Card' || (a as any).type === 'card') &&
+      (a as any).state === 'FREE'
   );
 
-  const selectedItems = assets.filter((a) => selectedIds.includes(a.id));
+  // A seleção também é resolvida exclusivamente dentro da lista validada.
+  const selectedItems = availableItems.filter((a) => selectedIds.includes(a.id));
   const baseRarity: Rarity | null = selectedItems.length > 0 ? selectedItems[0].rarity : null;
   const targetRarity = baseRarity ? NEXT_RARITY_MAP[baseRarity] : null;
   const rule = baseRarity ? FUSION_RULES[baseRarity] : null;
