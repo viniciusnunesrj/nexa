@@ -18,6 +18,7 @@ import {
   TrendingUp,
   MessageCircle,
   ChevronLeft,
+  Gamepad2,
 } from 'lucide-react';
 import { useGameState } from '../contexts/GameStateContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -67,6 +68,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       label: 'JOGAR',
       items: [
+        {
+          id: 'games',
+          label: 'Jogos',
+          icon: Gamepad2,
+        },
         {
           id: 'play',
           label: 'Jogar & Batalhar',

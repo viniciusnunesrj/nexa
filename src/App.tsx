@@ -8,6 +8,8 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { Play } from './pages/Play';
+import { Games } from './pages/Games';
+import { Arena } from './pages/Arena';
 import { Marketplace } from './pages/Marketplace';
 import { Inventory } from './pages/Inventory';
 import { Fusion } from './pages/Fusion';
@@ -38,6 +40,8 @@ const AppContent: React.FC = () => {
     if (path === 'progression' || path === 'progressao') return 'progression';
     if (path === 'ranking' || path === 'leaderboard') return 'ranking';
     if (path === 'play' || path === 'batalha') return 'play';
+    if (path === 'games' || path === 'jogos') return 'games';
+    if (path === 'arena') return 'arena';
     return 'dashboard';
   });
 
@@ -81,6 +85,11 @@ const AppContent: React.FC = () => {
         return <Dashboard onNavigate={handleNavigate} />;
       case 'play':
         return <Play onNavigate={handleNavigate} />;
+      case 'games':
+      case 'jogos':
+        return <Games onNavigate={handleNavigate} />;
+      case 'arena':
+        return <Arena onNavigate={handleNavigate} />;
       case 'boxes':
       case 'caixas':
         return <Boxes onNavigate={handleNavigate} />;
