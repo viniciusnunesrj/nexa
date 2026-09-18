@@ -14,7 +14,7 @@ interface DuelState {
   roundDamage: number; result: MatchResult;
 }
 
-const MAX_DECK_SIZE = 6;
+const MAX_DECK_SIZE = 4;
 const MAX_ROUNDS = 4;
 const ELEMENT_ICONS: Record<string, string> = { Fogo: '🔥', Água: '💧', Ar: '🌪', Terra: '🌿', Luz: '✨', Sombra: '🌑', Éter: '☄', Metal: '⚙', NEXA: '✦', Gelo: '❄' };
 const freshDuel = (deck: ArenaCard[]): DuelState => {
@@ -40,8 +40,8 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
       </div>
     </header>
     <section className="rounded-2xl border border-purple-500/25 bg-[#100d19]/90 p-4 sm:p-6">
-      <div className="mb-4 flex items-center justify-between"><div><h2 className="font-heading text-xl font-black text-white">Seu Deck <span className="text-purple-300">{deck.length}/{MAX_DECK_SIZE}</span></h2><p className="mt-1 text-xs text-slate-400">Escolha 6 cartas para começar.</p></div><button type="button" onClick={() => setDeck([])} disabled={!deck.length} className="rounded-lg border border-white/10 px-3 py-2 text-[10px] font-bold uppercase text-slate-300 disabled:opacity-40">Limpar Deck</button></div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">{Array.from({ length: MAX_DECK_SIZE }, (_, index) => deck[index] ? <BattleCard key={deck[index].id} card={deck[index]} compact /> : <div key={index} className="flex min-h-[112px] items-center justify-center rounded-xl border border-dashed border-white/15 text-xs text-slate-600">Slot {index + 1}</div>)}</div>
+      <div className="mb-4 flex items-center justify-between"><div><h2 className="font-heading text-xl font-black text-white">Seu Deck <span className="text-purple-300">{deck.length}/{MAX_DECK_SIZE}</span></h2><p className="mt-1 text-xs text-slate-400">Escolha 4 cartas para começar.</p></div><button type="button" onClick={() => setDeck([])} disabled={!deck.length} className="rounded-lg border border-white/10 px-3 py-2 text-[10px] font-bold uppercase text-slate-300 disabled:opacity-40">Limpar Deck</button></div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{Array.from({ length: MAX_DECK_SIZE }, (_, index) => deck[index] ? <BattleCard key={deck[index].id} card={deck[index]} compact /> : <div key={index} className="flex min-h-[112px] items-center justify-center rounded-xl border border-dashed border-white/15 text-xs text-slate-600">Slot {index + 1}</div>)}</div>
     </section>
     <section><div className="mb-4 flex items-end justify-between"><div><h2 className="font-heading text-xl font-black text-white">Coleção da Arena</h2><p className="mt-1 text-xs text-slate-400">Clique para adicionar ou remover uma carta.</p></div><span className="text-xs font-mono text-slate-500">{ARENA_CARDS.length} cartas</span></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{ARENA_CARDS.map((card) => <button key={card.id} type="button" onClick={() => toggleCard(card)} className={`text-left ${deck.some((item) => item.id === card.id) ? 'ring-2 ring-purple-400' : ''}`}><BattleCard card={card} selected={deck.some((item) => item.id === card.id)} /></button>)}</div></section>
     <button type="button" disabled={deck.length !== MAX_DECK_SIZE} onClick={() => setDuel(freshDuel(deck))} className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-5 py-4 font-heading text-sm font-black uppercase tracking-[0.14em] text-white hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-40"><Swords className="h-5 w-5" /> Iniciar Batalha</button>
