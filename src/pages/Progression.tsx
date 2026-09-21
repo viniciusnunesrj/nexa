@@ -613,6 +613,13 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
                         Capacidade Atual do Piloto
                       </span>
                     )}
+                    {!isUnlocked && tier.minLevel === nextSlotMilestone?.minLevel && (
+                      <div className="mt-3 pt-3 border-t border-white/10">
+                        <span className="text-[10px] font-mono text-cyan-300 font-bold uppercase">
+                          Próximo desbloqueio · faltam {Math.max(0, tier.minLevel - user.level)} níveis
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
