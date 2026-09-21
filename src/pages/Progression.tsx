@@ -242,6 +242,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
   const nextMilestone = progressionMilestones.find((reward) => reward.level > user.level);
   const currentMilestone = [...progressionMilestones].reverse().find((reward) => reward.level <= user.level);
   const progressionTimeline = ProgressionService.getProgressionTimeline(user.level, user.levelRewardsClaimed || []);
+  const nextSlotMilestone = SLOTS_CONFIG.find((config) => config.minLevel > user.level);
 
   const progressPercent = Math.min(
     100,
@@ -351,7 +352,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
         </div>
 
         {/* Quick Stats Footer */}
-        <div className="mt-6 pt-5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="mt-6 pt-5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <div>
             <span className="text-[10px] font-mono text-slate-500 uppercase block">Slots Desbloqueados</span>
             <span className="font-heading text-xl font-bold text-cyan-300">
@@ -369,6 +370,16 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
             </span>
             <span className="text-[10px] font-mono text-slate-400 block">
               {user.level >= 5 ? 'Acesso ativo' : `Faltam ${Math.max(0, 5 - user.level)} níveis`}
+            </span>
+          </div>
+
+          <div>
+            <span className="text-[10px] font-mono text-slate-500 uppercase block">Próximo Slot</span>
+            <span className="font-heading text-xl font-bold text-cyan-300">
+              {nextSlotMilestone ? `Nível ${nextSlotMilestone.minLevel}` : 'Máximo'}
+            </span>
+            <span className="text-[10px] font-mono text-slate-400 block">
+              {nextSlotMilestone ? `Libera ${nextSlotMilestone.slots} slots de síntese` : '6 slots liberados'}
             </span>
           </div>
 
