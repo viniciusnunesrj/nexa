@@ -253,11 +253,13 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
   const advancing = !duel.result && !['SELECT', 'LOCK', 'CPU', 'NEXT'].includes(duel.phase);
   const showdown = ['REVEAL', 'CALC', 'VS', 'IMPACT', 'DAMAGE', 'RESULT'].includes(duel.phase);
   const nexosActive = ['CALC', 'VS', 'IMPACT'].includes(duel.phase);
+  const playerWonRound = (duel.playerAttack ?? 0) > (duel.cpuAttack ?? 0);
+  const cpuWonRound = (duel.cpuAttack ?? 0) > (duel.playerAttack ?? 0);
   const cpuFaceUp = !['SELECT', 'LOCK', 'CPU', 'ENTER'].includes(duel.phase);
   const calculationStep = duel.phase === 'CALC' ? duel.calcStep : ['VS', 'IMPACT', 'DAMAGE', 'RESULT'].includes(duel.phase) ? 4 : 0;
   const roundOutcome = duel.playerAttack === duel.cpuAttack ? 'EMPATE' : duel.playerAttack! > duel.cpuAttack! ? 'VITÓRIA NA RODADA' : 'DERROTA NA RODADA';
   const stageText: Record<DuelPhase, string> = { SELECT: 'Escolha uma carta e seus Nexos', LOCK: 'Jogada confirmada', CPU: 'CPU prepara sua carta', ENTER: 'Cartas em confronto', REVEAL: 'Revelando a CPU', CALC: 'Calculando ataque', VS: 'Ataques finais', IMPACT: 'Impacto!', DAMAGE: duel.roundMessage || 'Dano aplicado', RESULT: roundOutcome, NEXT: 'Preparando próxima rodada' };
-  return <div ref={boardRef} className="duel-canvas" data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase}>
+  return <div ref={boardRef} className="duel-canvas" data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase} data-winner={playerWonRound ? 'player' : cpuWonRound ? 'cpu' : 'draw'}>
     <style>{`
       .duel-canvas { position: relative; width: min(100%, max(0px, calc((100dvh - var(--nexa-board-top, 160px) - 24px) * 16 / 9))); aspect-ratio: 16 / 9; margin-inline: auto; min-height: 0; box-sizing: border-box; overflow: hidden; isolation: isolate; container-type: inline-size; color: #eef6ff; border: 1px solid #22445a; border-radius: 1.4cqw; background: linear-gradient(145deg, #091726, #111529 60%, #0b1020); }
       .duel-layout { position: absolute; inset: 0; display: grid; grid-template-rows: 9% 38% 6% 38% 9%; min-height: 0; }
@@ -289,6 +291,10 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-canvas[data-phase="VS"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-ready 520ms ease-out; }
       .duel-canvas[data-nexos="true"] .duel-slot[data-active="true"]::after { content: '◆ ◆ ◆'; position: absolute; z-index: 7; left: 50%; bottom: -1.15cqw; transform: translateX(-50%); color: #fde047; font-size: .72cqw; letter-spacing: .24cqw; text-shadow: 0 0 .8cqw #facc15aa; animation: nexa-nexos-feed 720ms ease-in-out infinite alternate; }
       .duel-canvas[data-phase="IMPACT"] .duel-confrontation::before { content: ''; position: absolute; z-index: 3; left: 50%; top: 50%; width: 8cqw; height: 8cqw; transform: translate(-50%,-50%); border-radius: 999px; background: radial-gradient(circle,#fff 0 3%,#67e8f9bb 8%,#a78bfa66 25%,transparent 67%); animation: nexa-burst 520ms ease-out forwards; }
+      .duel-canvas[data-phase="IMPACT"][data-winner="player"] .duel-row[aria-label="Suas cartas"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-strike-up 620ms cubic-bezier(.2,.85,.25,1); }
+      .duel-canvas[data-phase="IMPACT"][data-winner="cpu"] .duel-row[aria-label="Cartas da CPU"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-strike-down 620ms cubic-bezier(.2,.85,.25,1); }
+      .duel-canvas[data-phase="DAMAGE"][data-winner="player"] .duel-hud:first-child { animation: nexa-hud-hit 720ms ease-out; }
+      .duel-canvas[data-phase="DAMAGE"][data-winner="cpu"] .duel-hud:last-child { animation: nexa-hud-hit 720ms ease-out; }
       .duel-portrait { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; min-width: 0; aspect-ratio: .70 / 1; box-sizing: border-box; overflow: hidden; border: 1px solid #627393; border-radius: .8cqw; background: #0d1b2c; }
       .duel-portrait[data-selected="true"] { border-color: #67e8f9; box-shadow: 0 0 1.2cqw #22d3ee55; }
       .duel-portrait[data-used="true"], .duel-turn[data-used="true"] { opacity: .35; filter: grayscale(1); }
@@ -358,6 +364,9 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       @keyframes nexa-announcement-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.75); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
       @keyframes nexa-nexos-feed { from { opacity: .35; transform: translateX(-50%) translateY(.25cqw) scale(.9); } to { opacity: 1; transform: translateX(-50%) translateY(-.2cqw) scale(1.08); } }
       @keyframes nexa-burst { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.2); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(2.8); } }
+      @keyframes nexa-strike-up { 0% { transform: translateY(0) scale(1); } 32% { transform: translateY(-5.5cqw) scale(1.08) rotate(-1deg); filter: brightness(1.55); } 46% { transform: translateY(-6.2cqw) scale(1.11); } 72% { transform: translateY(-1.2cqw) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
+      @keyframes nexa-strike-down { 0% { transform: translateY(0) scale(1); } 32% { transform: translateY(5.5cqw) scale(1.08) rotate(1deg); filter: brightness(1.55); } 46% { transform: translateY(6.2cqw) scale(1.11); } 72% { transform: translateY(1.2cqw) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
+      @keyframes nexa-hud-hit { 0% { filter: none; transform: translateX(0); } 16% { filter: brightness(1.9); transform: translateX(-.45cqw); } 30% { transform: translateX(.35cqw); } 45% { transform: translateX(-.2cqw); } 70% { filter: brightness(1.15); transform: translateX(.08cqw); } 100% { filter: none; transform: translateX(0); } }
     `}</style>
     <div className="duel-layout">
       <header className="duel-hud">
