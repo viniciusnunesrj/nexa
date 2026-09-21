@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -23,8 +24,126 @@ interface ProgressionProps {
   onNavigate: (page: string) => void;
 }
 
+interface DueloReward {
+  request_id: string;
+  outcome: 'VICTORY' | 'DEFEAT' | 'DRAW';
+  nex_gained: number;
+  xp_gained: number;
+  nxa_gained: number;
+  created_at: string;
+}
+
+const dueloOutcomes = {
+  VICTORY: { label: 'Vitória', color: 'text-cyan-300' },
+  DEFEAT: { label: 'Derrota', color: 'text-rose-400' },
+  DRAW: { label: 'Empate', color: 'text-slate-300' },
+};
+const formatDueloNumber = (value: number) => value.toLocaleString('pt-BR');
+
+const DueloPveStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
+  const [records, setRecords] = useState<DueloReward[]>([]);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const load = async () => {
+      setStatus('loading');
+      try {
+        const rewards: DueloReward[] = [];
+        // Fetch every page: the API row limit must not truncate lifetime totals.
+        while (!controller.signal.aborted) {
+          const { data, error } = await supabase
+            .from('duelo_nexal_rewards')
+            .select('request_id,outcome,nex_gained,xp_gained,nxa_gained,created_at')
+            .eq('owner_id', ownerId)
+            .order('created_at', { ascending: false })
+            .order('request_id', { ascending: false })
+            .range(rewards.length, rewards.length + 499)
+            .abortSignal(controller.signal);
+          if (error) throw error;
+          if (!data?.length) break;
+          rewards.push(...(data as DueloReward[]));
+        }
+        if (!controller.signal.aborted) {
+          setRecords(rewards);
+          setStatus('ready');
+        }
+      } catch {
+        if (!controller.signal.aborted) setStatus('error');
+      }
+    };
+    void load();
+    return () => controller.abort();
+  }, [ownerId, attempt]);
+
+  const totals = records.reduce((sum, record) => ({
+    ...sum,
+    [record.outcome]: sum[record.outcome] + 1,
+    nex: sum.nex + Number(record.nex_gained),
+    xp: sum.xp + Number(record.xp_gained),
+    nxa: sum.nxa + Number(record.nxa_gained),
+  }), { VICTORY: 0, DEFEAT: 0, DRAW: 0, nex: 0, xp: 0, nxa: 0 });
+  const stats = [
+    ['Partidas disputadas', formatDueloNumber(records.length)],
+    ['Vitórias', formatDueloNumber(totals.VICTORY)],
+    ['Derrotas', formatDueloNumber(totals.DEFEAT)],
+    ['Empates', formatDueloNumber(totals.DRAW)],
+    ['Taxa de vitória', `${(records.length ? totals.VICTORY / records.length * 100 : 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`],
+    ['NEX conquistado', formatDueloNumber(totals.nex)],
+    ['XP conquistado', formatDueloNumber(totals.xp)],
+    ...(totals.nxa > 0 ? [['NXA conquistado', formatDueloNumber(totals.nxa)]] : []),
+  ];
+
+  return (
+    <section aria-labelledby="duelo-pve-title" className="p-5 sm:p-6 rounded-3xl bg-[#0b0b12] border border-cyan-400/20 space-y-5">
+      <div>
+        <p className="text-xs font-mono text-cyan-400 uppercase tracking-wider">ESTATÍSTICAS PVE</p>
+        <h2 id="duelo-pve-title" className="font-heading text-2xl font-black text-white mt-1">Duelo Nexal</h2>
+      </div>
+      {status === 'loading' ? (
+        <p role="status" className="text-xs font-mono text-slate-400">Carregando histórico do Duelo Nexal...</p>
+      ) : status === 'error' ? (
+        <div role="alert" className="text-xs font-mono text-slate-400 space-y-3">
+          <p>Não foi possível carregar o histórico do Duelo Nexal.</p>
+          <button onClick={() => setAttempt(value => value + 1)} className="px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 transition-colors">
+            Tentar novamente
+          </button>
+        </div>
+      ) : (
+        <>
+          <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {stats.map(([label, value]) => (
+              <div key={label} className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 min-w-0">
+                <dt className="text-[10px] font-mono text-slate-400 uppercase">{label}</dt>
+                <dd className="font-heading text-xl sm:text-2xl font-black text-cyan-300 break-words">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="pt-4 border-t border-white/10 space-y-3">
+            <h3 className="text-xs font-mono text-slate-300 font-bold tracking-wider">PARTIDAS RECENTES</h3>
+            {records.length === 0 ? (
+              <p className="text-xs font-mono text-slate-400">Nenhuma partida PVE registrada. Jogue Duelo Nexal para acompanhar seus resultados aqui.</p>
+            ) : (
+              <ul className="space-y-2">
+                {records.slice(0, 5).map(record => (
+                  <li key={record.request_id} className="p-3 rounded-xl bg-black/25 border border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-mono">
+                    <span className={`font-bold ${dueloOutcomes[record.outcome].color}`}>{dueloOutcomes[record.outcome].label}</span>
+                    <span className="text-cyan-300">+{formatDueloNumber(Number(record.nex_gained))} NEX <span className="text-slate-400 mx-1">/</span> +{formatDueloNumber(Number(record.xp_gained))} XP</span>
+                    <time dateTime={record.created_at} className="text-slate-400 text-[11px]">{new Date(record.created_at).toLocaleString('pt-BR')}</time>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+};
+
 export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
-  const { user } = useAuth();
+  const { user, currentUser } = useAuth();
   const { unlockedSlots, activeSynthesizingCardsCount } = useGameState();
 
   const [activeTab, setActiveTab] = useState<'timeline' | 'slots' | 'history'>('timeline');
@@ -181,6 +300,8 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+
+      {currentUser && <DueloPveStats key={currentUser.id} ownerId={currentUser.id} />}
 
       {/* Tabs Navigation */}
       <div className="flex items-center gap-2 overflow-x-auto border-b border-white/10 pb-3 scrollbar-none">
