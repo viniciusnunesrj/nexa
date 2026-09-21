@@ -50,6 +50,10 @@ export const BOX_CONFIG: Record<BoxType, BoxConfigItem> = {
     badge: 'BOAS-VINDAS',
     guarantees: '1 Carta Garantida (75% Comum, 25% Incomum)',
     possibleRarities: ['Comum', 'Incomum'],
+    rewardPoolTemplateIds: ALL_CARD_TEMPLATES
+      .filter((card) => card.rarity === 'Comum' || card.rarity === 'Incomum')
+      .slice(0, 12)
+      .map((card) => card.templateId),
     rarityWeights: {
       Comum: 75,
       Incomum: 25,
@@ -518,7 +522,9 @@ export const BOX_DEFINITIONS: Record<BoxType, BoxDefinition> = Object.keys(BOX_C
 );
 
 export const GAMEPLAY_BOX_DROP_RATES = {
-  VICTORY_BASIC_BOX_CHANCE: 0.25,
+  RIFT_VICTORY_BASIC_BOX_CHANCE: 0.08,
+  NEXUS_DUEL_PVE_VICTORY_BASIC_BOX_CHANCE: 0.15,
+  NEXUS_DUEL_PVP_VICTORY_BASIC_BOX_CHANCE: 0.18,
   DEFEAT_BASIC_BOX_CHANCE: 0.0,
 };
 
