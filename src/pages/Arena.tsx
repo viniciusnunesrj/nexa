@@ -221,7 +221,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     const phase = duel.phase;
     const delays: Record<Exclude<DuelPhase, 'SELECT'>, number> = {
       LOCK: 150, CPU: 200, ENTER: 350, REVEAL: 1150, CALC: 1450,
-      VS: 850, IMPACT: 500, DAMAGE: 900, RESULT: 1200, NEXT: 350,
+      VS: 1150, IMPACT: 650, DAMAGE: 950, RESULT: 1250, NEXT: 450,
     };
     const timer = window.setTimeout(() => setDuel((current) => {
       if (!current || current.result || current.phase !== phase) return current;
@@ -349,6 +349,12 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-versus { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .7cqw; width: 100%; }
       .duel-versus b { font-size: 2.7cqw; font-variant-numeric: tabular-nums; }
       .duel-versus span { font-size: 1.4cqw; color: #c4b5fd; }
+      .duel-attack-meter { display:grid; grid-template-columns:1fr 1fr; gap:.35cqw; width:100%; height:.32cqw; margin-top:.2cqw; }
+      .duel-attack-meter i { display:block; width:0; height:100%; border-radius:999px; background:linear-gradient(90deg,#f59e0b,#fde047); box-shadow:0 0 .7cqw #facc1588; animation:nexa-attack-count 900ms cubic-bezier(.15,.75,.2,1) forwards; }
+      .duel-attack-meter i:last-child { justify-self:end; background:linear-gradient(90deg,#22d3ee,#a78bfa); box-shadow:0 0 .7cqw #22d3ee88; }
+      .duel-canvas[data-phase="IMPACT"] .duel-attack-race { animation:nexa-announcement-hit 650ms ease-out both; }
+      @keyframes nexa-attack-count { from { width:0; opacity:.35; } to { width:min(calc(var(--attack) * 5%),100%); opacity:1; } }
+      @keyframes nexa-announcement-hit { 0% { transform:translate(-50%,-50%) scale(1); } 35% { transform:translate(-50%,-50%) scale(1.08); filter:brightness(1.45); } 100% { transform:translate(-50%,-50%) scale(.96); opacity:.25; } }
       .duel-damage { position: absolute; z-index: 40; top: 28%; transform: translateX(-50%); color: #fda4af; text-shadow: 0 2px 5px #000; font-size: 3cqw; font-weight: 900; pointer-events: none; animation: duel-damage-in 800ms ease-out; }
       .duel-damage-cpu { left: 32%; }
       .duel-damage-player { left: 68%; }
@@ -431,7 +437,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     <div ref={cpuTarget} className="duel-anchor duel-anchor-cpu" />
     <div ref={playerTarget} className="duel-anchor duel-anchor-player" />
     {!playing && selectedCard && <aside className="duel-invest"><InvestPanel card={selectedCard} duel={duel} setDuel={setDuel} confirm={confirm} /></aside>}
-    {['VS', 'IMPACT'].includes(duel.phase) && <div className="duel-announcement" role="status"><small>ATAQUE · CPU × VOCÊ</small><strong className="duel-versus"><b>{duel.cpuAttack}</b><span>VS</span><b>{duel.playerAttack}</b></strong></div>}
+    {['VS', 'IMPACT'].includes(duel.phase) && <div className="duel-announcement duel-attack-race" role="status"><small>ATAQUE · CPU × VOCÊ</small><strong className="duel-versus"><b>{duel.cpuAttack}</b><span>VS</span><b>{duel.playerAttack}</b></strong><div className="duel-attack-meter"><i style={{ '--attack': Math.max(1, duel.cpuAttack ?? 1) } as React.CSSProperties} /><i style={{ '--attack': Math.max(1, duel.playerAttack ?? 1) } as React.CSSProperties} /></div></div>}
     {duel.phase === 'DAMAGE' && <div className={`duel-damage ${duel.playerAttack! > duel.cpuAttack! ? 'duel-damage-cpu' : 'duel-damage-player'}`} role="status">{duel.roundDamage ? `−${duel.roundDamage} PV` : 'SEM DANO'}</div>}
     {duel.phase === 'RESULT' && <div className="duel-announcement" role="status"><small>RESULTADO DA RODADA</small><strong>{roundOutcome}</strong><small>{duel.roundMessage}</small></div>}
     {duel.result && duel.matchSummary && <DuelResult summary={duel.matchSummary} rewardStatus={rewardStatus.requestId === duel.requestId ? rewardStatus : { requestId: duel.requestId, status: 'pending' }} onAgain={() => { setSecondsLeft(ROUND_TIME_SECONDS); setDuel(freshDuel(duel.playerCards)); }} onGames={onGames} />}
