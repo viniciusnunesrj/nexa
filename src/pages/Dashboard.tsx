@@ -7,7 +7,6 @@ import { useGameState } from '../contexts/GameStateContext';
 import { Character, NexaAsset } from '../types';
 import { RARITY_CONFIG } from '../config/designTokens';
 import { RarityBadge } from '../components/common/RarityBadge';
-import { AssetModal } from '../components/modals/AssetModal';
 import { SellModal } from '../components/modals/SellModal';
 import { TradeProposalModal } from '../components/modals/TradeProposalModal';
 import { FirstAccessModal } from '../components/dashboard/FirstAccessModal';
@@ -47,12 +46,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     assets,
     transactions,
     marketStats,
-    equipCharacter,
     listAsset,
     boxes,
   } = useGameState();
 
-  const [selectedAsset, setSelectedAsset] = useState<NexaAsset | null>(null);
   const [sellingAsset, setSellingAsset] = useState<NexaAsset | null>(null);
   const [tradingAsset, setTradingAsset] = useState<NexaAsset | null>(null);
   const [showFirstAccess, setShowFirstAccess] = useState(isFirstAccess);
@@ -65,11 +62,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const userCharacters = assets.filter(
     (a) => a.ownerId === user.id && a.type === 'Character'
   ) as Character[];
-
-  const equippedChar =
-    userCharacters.find((c) => c.isEquipped) ||
-    userCharacters[0] ||
-    null;
 
   const userItems = assets.filter((a) => a.ownerId === user.id);
   const userCards = userItems.filter((a) => a.type === 'Card');
@@ -106,7 +98,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <div className="relative rounded-[28px] overflow-hidden border border-cyan-500/25 bg-gradient-to-br from-[#0a0c14] via-[#0c0d18] to-[#090a10] p-5 sm:p-6 lg:p-7 shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
         <div className="absolute -top-40 right-10 w-[460px] h-[460px] bg-cyan-500/[0.08] rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] items-center gap-6 lg:gap-8">
+        <div className="relative z-10 grid grid-cols-1 items-center gap-6">
           {/* Left: Player status & CTAs */}
           <div className="space-y-4 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold">
@@ -128,54 +120,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Right: Hero Character Showcase Card */}
-          {equippedChar ? (
-            <div
-              onClick={() => setSelectedAsset(equippedChar)}
-              className="w-full rounded-2xl border border-cyan-500/30 bg-[#07090e]/90 p-3 backdrop-blur-xl shadow-[0_18px_50px_rgba(0,0,0,0.3)] cursor-pointer hover:border-cyan-400/60 transition-all group"
-            >
-              <div className="relative aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-slate-950">
-                <img
-                  src={equippedChar.image}
-                  alt={equippedChar.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-2 left-2">
-                  <RarityBadge rarity={equippedChar.rarity} size="sm" />
-                </div>
-                <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-mono text-cyan-300">
-                  Herói em Destaque
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-heading font-bold text-white text-base truncate">
-                    {equippedChar.name}
-                  </h4>
-                  <span className="text-xs font-mono text-slate-400">
-                    Classe: {equippedChar.class}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-mono text-slate-500 block">PODER</span>
-                  <span className="font-heading font-bold text-cyan-400 text-lg">
-                    {equippedChar.power}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="w-full sm:w-80 p-6 rounded-2xl border border-dashed border-white/20 text-center">
-              <p className="text-xs text-slate-400 font-mono">Nenhum personagem equipado.</p>
-              <button
-                onClick={() => onNavigate('inventory')}
-                className="mt-3 text-xs font-mono text-cyan-400 underline"
-              >
-                Abrir inventário e equipar
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -551,16 +495,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </button>
         </div>
       </div>
-
-      {/* Asset Inspection Modal */}
-      <AssetModal
-        asset={selectedAsset}
-        onClose={() => setSelectedAsset(null)}
-        isOwner={selectedAsset?.ownerId === user.id}
-        onEquip={(id) => equipCharacter(id)}
-        onSell={(asset) => setSellingAsset(asset)}
-        onTrade={(asset) => setTradingAsset(asset)}
-      />
 
       {/* Sell Modal */}
       <SellModal
