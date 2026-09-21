@@ -215,3 +215,39 @@
  .pvp-battle-board[data-game-mode="true"] .sticky button{height:30px!important;min-height:30px!important;padding:3px 8px!important}
  .pvp-battle-board[data-game-mode="true"] .sticky input{height:22px!important}
 }
+
+/* Runtime-detected phone landscape. This intentionally overrides earlier media-query sizing:
+   mobile browser fullscreen APIs report inconsistent CSS viewport/orientation values. */
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"]{
+ position:fixed!important;inset:0!important;z-index:2147483647!important;
+ width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;
+ transform:none!important;margin:0!important;border:0!important;border-radius:0!important;
+ padding:4px 8px 6px!important;overflow-x:hidden!important;overflow-y:auto!important;
+ display:flex!important;flex-direction:column!important;gap:3px!important;background:#07101f!important;
+}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] header{min-height:24px!important;margin:0!important;padding:0!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] header h1{font-size:11px!important;line-height:1!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] header p{font-size:7px!important;line-height:1!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"]>div.space-y-3.rounded-xl{padding:3px!important;min-height:74px!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"]>div.space-y-3.rounded-xl .mx-auto{max-width:150px!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"]>h2{font-size:10px!important;line-height:1!important;margin:0!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"]>p.flex{font-size:8px!important;line-height:1!important;margin:0!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .pvp-selection-grid{
+ display:grid!important;grid-template-columns:repeat(4,1fr)!important;
+ width:min(68vw,440px)!important;max-width:440px!important;margin:0 auto!important;
+ gap:4px!important;overflow:visible!important;padding:0!important;align-items:start!important;
+}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .pvp-selection-grid>button{width:100%!important;min-width:0!important;padding:2px!important;overflow:visible!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .pvp-selection-grid img{
+ display:block!important;width:100%!important;height:auto!important;max-height:92px!important;
+ aspect-ratio:3/4!important;object-fit:contain!important;
+}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .pvp-selection-grid p{font-size:6.5px!important;line-height:1!important;margin:1px 0 0!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .pvp-selection-grid span{font-size:6px!important;line-height:1!important;margin-top:1px!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .sticky{
+ position:static!important;padding:3px 5px!important;margin:0!important;gap:2px!important;
+}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .sticky label{font-size:7px!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .sticky strong{font-size:12px!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .sticky input{height:18px!important}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .sticky button{height:25px!important;min-height:25px!important;padding:2px 7px!important;font-size:8px!important}
