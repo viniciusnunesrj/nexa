@@ -70,8 +70,21 @@ const lockRound = (current: DuelState | null, automatic: boolean, cardRoll: numb
   const cpuAvailable = current.cpuCards.filter((card) => !current.usedCpu.includes(card.id));
   if (!playerCard || !cpuAvailable.length) return current;
   const investment = automatic ? 0 : Math.max(0, Math.min(current.playerNexos, current.investment));
-  const cpuCard = cpuAvailable[Math.floor(cardRoll * cpuAvailable.length)];
-  const cpuInvestment = Math.min(current.cpuNexos, Math.floor(investmentRoll * Math.min(4, current.cpuNexos + 1)));
+  // CPU chooses without reading the player's selected card or investment.
+  // It manages its 12 Nexos across the remaining rounds instead of spending randomly 0-3 every time.
+  const roundsLeft = Math.max(1, MAX_ROUNDS - current.round + 1);
+  const reservePerRound = Math.floor(current.cpuNexos / roundsLeft);
+  const pressure = current.cpuHp < current.playerHp ? 1 : current.cpuHp > current.playerHp ? -1 : 0;
+  const targetInvestment = Math.max(0, Math.min(4, reservePerRound + pressure));
+  const investmentVariance = investmentRoll < 0.22 ? -1 : investmentRoll > 0.78 ? 1 : 0;
+  const cpuInvestment = Math.max(0, Math.min(current.cpuNexos, targetInvestment + investmentVariance));
+  const cardScores = cpuAvailable.map((card) => {
+    const impulseValue = card.abilityKind === 'IMPULSO' && cpuInvestment >= 3 ? 2 : 0;
+    const utilityValue = card.abilityKind === 'BLINDAGEM' ? 0.7 : card.abilityKind === 'DRENO' && current.cpuHp < 12 ? 0.6 : card.abilityKind === 'ECO' && current.cpuNexos < 12 ? 0.5 : 0;
+    return { card, score: card.power + impulseValue + card.damage * 0.35 + utilityValue };
+  }).sort((a, b) => b.score - a.score);
+  const choiceWindow = Math.min(cardScores.length, current.round >= 3 || pressure > 0 ? 2 : 3);
+  const cpuCard = cardScores[Math.floor(cardRoll * choiceWindow)]?.card ?? cpuAvailable[0];
   return { ...current, selectedId: playerCard.id, investment, revealedCpu: cpuCard, playerAttack: attackValue(playerCard, investment), cpuAttack: attackValue(cpuCard, cpuInvestment), cpuInvestment, usedPlayer: [...current.usedPlayer, playerCard.id], usedCpu: [...current.usedCpu, cpuCard.id], calcStep: 1, phase: 'LOCK' };
 };
 export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
