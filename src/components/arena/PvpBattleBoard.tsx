@@ -5,6 +5,7 @@ import { CardImage } from '../common/CardImage';
 import { pvpPerspective, readPvpSnapshot } from './pvpBattleState';
 import type { PvpSnapshot } from './pvpBattleState';
 import { PvpRoundReveal } from './PvpRoundReveal';
+import './pvpRoundReveal.css';
 
 function PvpCard({ id }: { id: string }) {
   const card = ARENA_CARDS.find(item => item.id === id);
