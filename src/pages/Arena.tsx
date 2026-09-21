@@ -209,10 +209,6 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
   const pvpOpponentResultCard = pvpIsHost ? pvpRoundResult?.guestCard : pvpRoundResult?.hostCard;
   const pvpMyAttack = pvpIsHost ? pvpRoundResult?.hostAttack : pvpRoundResult?.guestAttack;
   const pvpOpponentAttack = pvpIsHost ? pvpRoundResult?.guestAttack : pvpRoundResult?.hostAttack;
-  const pvpMySpent = pvpIsHost ? pvpRoundResult?.hostNexosSpent : pvpRoundResult?.guestNexosSpent;
-  const pvpOpponentSpent = pvpIsHost ? pvpRoundResult?.guestNexosSpent : pvpRoundResult?.hostNexosSpent;
-  const pvpIWonRound = pvpRoundResult?.winner === (pvpIsHost ? 'HOST' : 'GUEST');
-  const pvpOpponentWonRound = pvpRoundResult?.winner === (pvpIsHost ? 'GUEST' : 'HOST');
   const cancelWaitingPvp = async () => {
     if (!pvpRoomId || pvpRoomState?.status !== 'WAITING') return;
     const { error } = await supabase.rpc('cancel_duelo_nexal_pvp_room', { p_room_id: pvpRoomId });
