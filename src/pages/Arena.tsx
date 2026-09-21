@@ -113,8 +113,11 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
     try {
       const ids = JSON.parse(localStorage.getItem(deckStorageKey) || '[]');
       if (!Array.isArray(ids)) return;
-      const restored = ids.map((id) => ARENA_CARDS.find((card) => card.id === id)).filter((card): card is ArenaCard => !!card);
-      setDeck(restored);
+      const restored = ids
+        .map((id) => ARENA_CARDS.find((card) => card.id === id))
+        .filter((card): card is ArenaCard => !!card && isAvailable(card));
+      setDeck(deckCompositionIssue(restored) === null ? restored : []);
+      setActivePreset(null);
     } catch { setDeck([]); }
   }, [deckStorageKey]);
   useEffect(() => {
@@ -127,11 +130,19 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
   const loadPreset = (slot: number) => {
     if (!presetsStorageKey) return;
     const ids = savedPresets[String(slot)];
-    if (!Array.isArray(ids) || ids.length !== MAX_DECK_SIZE) return;
+    if (!Array.isArray(ids) || ids.length !== MAX_DECK_SIZE) {
+      setPresetStatus(`Deck ${slot} ainda não foi salvo.`);
+      return;
+    }
     const restored = ids.map((id: string) => ARENA_CARDS.find((card) => card.id === id)).filter((card: ArenaCard | undefined): card is ArenaCard => !!card && isAvailable(card));
-    if (deckCompositionIssue(restored) !== null) return;
+    const issue = deckCompositionIssue(restored);
+    if (issue !== null) {
+      setPresetStatus(`Deck ${slot} precisa ser atualizado: alguma carta não está mais disponível.`);
+      return;
+    }
     setDeck(restored);
     setActivePreset(slot);
+    setPresetStatus(`Deck ${slot} carregado.`);
   };
   const savePreset = (slot: number) => {
     if (!presetsStorageKey) { setPresetStatus('Entre na sua conta para salvar decks.'); return; }
