@@ -238,21 +238,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             <div className="p-4 rounded-2xl bg-[#0d091a] border border-purple-500/30 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-[10px] font-mono uppercase text-purple-300 font-bold mb-1">
-                  <span>ECONOMIA ONLINE V1</span>
+                  <span>REDE NEXUS</span>
                   <Shield className="w-4 h-4 text-purple-300" />
                 </div>
-                <span className="text-xs text-slate-400 font-mono block">Progressão permanente</span>
+                <span className="text-xs text-slate-400 font-mono block">Progressão compartilhada</span>
                 <div className="mt-2">
                   <h4 className="font-heading font-bold text-white text-xs">
                     Nível e XP compartilhados nos jogos
                   </h4>
                   <span className="text-[10px] font-mono text-purple-300">
-                    Recompensas econômicas vêm das atividades do jogo.
+                    Rift Battle e Nexus Duel alimentam a mesma conta.
                   </span>
                 </div>
               </div>
               <div className="mt-3 pt-2 border-t border-white/10 text-[10px] font-mono text-slate-400">
-                Sem caixas ou moedas automáticas por level-up.
+                Nível concede progressão e recursos de conta, sem bônus direto de combate.
               </div>
             </div>
           </div>
@@ -417,7 +417,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             {userItems.slice(0, 6).map((item) => (
               <div
                 key={item.id}
-                onClick={() => setSelectedAsset(item)}
+                onClick={() => onNavigate('inventory')}
                 className="group p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-cyan-500/40 transition-all cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="aspect-square rounded-lg overflow-hidden bg-slate-950 relative">
