@@ -283,15 +283,15 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-portrait { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; min-width: 0; aspect-ratio: .70 / 1; box-sizing: border-box; overflow: hidden; border: 1px solid #627393; border-radius: .8cqw; background: #0d1b2c; }
       .duel-portrait[data-selected="true"] { border-color: #67e8f9; box-shadow: 0 0 1.2cqw #22d3ee55; }
       .duel-portrait[data-used="true"], .duel-turn[data-used="true"] { opacity: .35; filter: grayscale(1); }
-       .duel-front { display: grid; grid-template-rows: 8% 12% minmax(0, 1fr) 13% 14%; padding: .65cqw; gap: .2cqw; }
+       .duel-front { display: grid; grid-template-rows: 7% 10% minmax(0, 1fr) 9% 8%; padding: .45cqw; gap: .12cqw; }
       .duel-meta { display: flex; align-items: center; justify-content: space-between; gap: .3cqw; overflow: hidden; font-size: .68cqw; text-transform: uppercase; color: #a5b4fc; white-space: nowrap; }
-      .duel-name { align-self: center; margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-size: 1.25cqw; font-weight: 900; line-height: 1.2; }
+      .duel-name { align-self: center; margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-size: 1.12cqw; font-weight: 900; line-height: 1.1; }
        .duel-art { position: relative; display: grid; place-items: center; min-height: 0; overflow: hidden; border-block: 1px solid #ffffff1c; background: linear-gradient(150deg, #1c3b52, #282347); font-size: 5.3cqw; line-height: 1; }
       .duel-art > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
-      .duel-card-stats { display: flex; align-items: center; justify-content: space-between; gap: .4cqw; min-width: 0; overflow: hidden; font-size: .86cqw; white-space: nowrap; }
+      .duel-card-stats { display: flex; align-items: center; justify-content: space-between; gap: .4cqw; min-width: 0; overflow: hidden; font-size: .78cqw; white-space: nowrap; }
       .duel-card-stats b { color: #67e8f9; }
       .duel-card-stats span:last-child b { color: #fda4af; }
-      .duel-ability { align-self: center; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin: 0; overflow: hidden; text-align: center; font-size: .86cqw; line-height: 1.2; color: #cbd5e1; }
+      .duel-ability { align-self: center; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-size: .72cqw; line-height: 1; color: #cbd5e1; }
       .duel-back { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1cqw; border-color: #8b7ac9; background: repeating-linear-gradient(135deg, #ffffff03 0 1px, transparent 1px 1cqw), linear-gradient(145deg, #142039, #241c3a); }
       .duel-back::before { content: ''; position: absolute; inset: .7cqw; border: 1px solid #a5b4fc40; border-radius: .5cqw; }
       .duel-back strong { font-size: 1.5cqw; letter-spacing: .2em; color: #ddd6fe; }
