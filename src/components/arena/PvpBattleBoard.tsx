@@ -22,6 +22,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
   const [snapshot, setSnapshot] = useState<PvpSnapshot | null>(null);
   const [choice, setChoice] = useState<{ round: number; card: string | null; nexos: number }>({ round: 0, card: null, nexos: 0 });
   const [busy, setBusy] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(30);
   const [error, setError] = useState('');
   const [syncing, setSyncing] = useState(true);
   const [reward, setReward] = useState<{ outcome: string; nex_gained: number; xp_gained: number; rewarded: boolean; pair_match_number: number } | null>(null);
@@ -121,8 +122,8 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
     }).finally(() => { settlingReward.current = false; });
   }, [room?.status, roomId, userId, reward, updateUserBalance, addXP]);
 
-  const submit = async () => {
-    if (sending.current || locked || !selected || !snapshot || !perspective || perspective.used.has(selected)) return;
+  const submitMove = async (cardId: string, investedNexos: number) => {
+    if (sending.current || locked || !cardId || !snapshot || !perspective || perspective.used.has(cardId)) return;
     sending.current = true;
     setBusy(true);
     const signal = controller.current!.signal;
@@ -132,9 +133,9 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
       if (reading.current) await reading.current;
       const current = await sync.current();
       if (signal.aborted || current.room.round !== round || current.submitted || !['READY', 'PLAYING'].includes(current.room.status)) return;
-      if (!current.deck.includes(selected) || pvpPerspective(current, userId).used.has(selected)) return;
+      if (!current.deck.includes(cardId) || pvpPerspective(current, userId).used.has(cardId)) return;
       const { error: rpcError } = await supabase.rpc('submit_duelo_nexal_pvp_move', {
-        p_room_id: roomId, p_card_id: selected, p_nexos: nexos,
+        p_room_id: roomId, p_card_id: cardId, p_nexos: investedNexos,
       }).abortSignal(signal);
       if (rpcError) throw new Error('Não foi possível confirmar o envio. Sincronizando com o servidor...');
       if (!signal.aborted) {
@@ -153,6 +154,24 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
       sending.current = false;
     }
   };
+
+  const submit = async () => { if (selected) await submitMove(selected, nexos); };
+
+  useEffect(() => {
+    if (!snapshot || !perspective || !active || finished || snapshot.submitted) { setSecondsLeft(30); return; }
+    setSecondsLeft(30);
+    const round = snapshot.room.round;
+    const interval = window.setInterval(() => {
+      setSecondsLeft(value => {
+        if (value > 1) return value - 1;
+        window.clearInterval(interval);
+        const fallback = snapshot.deck.find(id => !perspective.used.has(id));
+        if (fallback && snapshot.room.round === round && !snapshot.submitted) void submitMove(fallback, 0);
+        return 0;
+      });
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [snapshot?.room.round, snapshot?.submitted, active, finished]);
 
   const forfeit = async () => {
     if (sending.current || finished || !window.confirm('Desistir desta partida PvP? O adversário receberá a vitória.')) return;
@@ -201,7 +220,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
         <p className="flex flex-wrap justify-between gap-2 text-sm"><strong>Adversário · PV {perspective.opponentHp}</strong><span>{perspective.opponentNexos} Nexos</span></p>
         <div className="mx-auto grid max-w-[210px] grid-cols-4 gap-1.5 sm:max-w-[240px] sm:gap-2">{[0, 1, 2, 3].map(index => <div key={index} className={`flex aspect-[3/4] min-w-0 items-center justify-center rounded-lg border border-purple-300/20 bg-[#15172e] text-[10px] font-bold ${index < snapshot.history.length ? 'opacity-40' : ''}`}>{index < snapshot.history.length ? 'USADA' : 'NEXA'}</div>)}</div>
       </div>
-      <h2 className="text-center text-lg font-bold">{finished ? 'PARTIDA ENCERRADA' : `RODADA ${room.round}`}</h2>
+      <h2 className="text-center text-lg font-bold">{finished ? 'PARTIDA ENCERRADA' : `RODADA ${room.round} · ${snapshot.submitted ? 'AGUARDANDO ADVERSÁRIO' : `00:${String(secondsLeft).padStart(2, '0')}`}`}</h2>
       <p className="flex flex-wrap justify-between gap-2 text-sm text-cyan-200"><strong>Você · PV {perspective.hp}</strong><span>{perspective.nexos} Nexos</span></p>
       <div className="pvp-selection-grid -mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0">{snapshot.deck.map(id => {
         const used = perspective.used.has(id);
@@ -222,7 +241,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
           <button onClick={submit} disabled={locked || !selected} className="min-w-0 flex-1 rounded-lg bg-cyan-400 px-5 py-3.5 text-sm font-black text-slate-950 disabled:opacity-40">{busy ? 'ENVIANDO...' : 'CONFIRMAR'}</button>
         </div>
       </div>}
-      <p role="status" className="text-center text-sm text-cyan-200">{finished ? room.winnerId ? room.winnerId === userId ? 'VITÓRIA' : 'DERROTA' : room.status === 'CANCELLED' ? 'SALA CANCELADA' : 'EMPATE' : syncing ? 'Sincronizando com o servidor...' : snapshot.submitted ? 'Jogada confirmada. Aguardando adversário' : 'Escolha uma carta e confirme sua jogada.'}</p>
+      <p role="status" className="text-center text-sm text-cyan-200">{finished ? room.winnerId ? room.winnerId === userId ? 'VITÓRIA' : 'DERROTA' : room.status === 'CANCELLED' ? 'SALA CANCELADA' : 'EMPATE' : syncing ? 'Sincronizando com o servidor...' : snapshot.submitted ? 'Jogada confirmada. Aguardando adversário' : secondsLeft <= 10 ? `Jogue agora · ${secondsLeft}s restantes. Ao zerar, uma carta disponível será enviada com 0 Nexos.` : 'Escolha uma carta e confirme sua jogada.'}</p>
 
       {/* Results remain visible while the server advances. No animation or timer gates play. */}
       {snapshot.history.length > 0 && <div className="space-y-3 border-t border-white/10 pt-4">
