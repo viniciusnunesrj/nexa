@@ -352,6 +352,14 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-damage { position: absolute; z-index: 40; top: 28%; transform: translateX(-50%); color: #fda4af; text-shadow: 0 2px 5px #000; font-size: 3cqw; font-weight: 900; pointer-events: none; animation: duel-damage-in 800ms ease-out; }
       .duel-damage-cpu { left: 32%; }
       .duel-damage-player { left: 68%; }
+      .duel-ability-flash { position:absolute; z-index:43; left:50%; transform:translateX(-50%); padding:.35cqw .8cqw; border-radius:999px; font-size:.78cqw; letter-spacing:.08em; pointer-events:none; animation:nexa-ability-pop 850ms ease-out both; }
+      .duel-ability-cpu { top:35%; }
+      .duel-ability-player { bottom:35%; }
+      .duel-ability-dreno { color:#f0abfc; border:1px solid #e879f955; background:#581c8755; box-shadow:0 0 1.5cqw #d946ef44; }
+      .duel-ability-eco { color:#67e8f9; border:1px solid #22d3ee55; background:#164e6355; box-shadow:0 0 1.5cqw #22d3ee44; }
+      .duel-ability-impulso { color:#fde68a; border:1px solid #facc1555; background:#713f1255; box-shadow:0 0 1.5cqw #facc1544; }
+      .duel-ability-blindagem { color:#bfdbfe; border:1px solid #60a5fa55; background:#1e3a8a55; box-shadow:0 0 1.5cqw #60a5fa44; }
+      @keyframes nexa-ability-pop { 0%{opacity:0;transform:translateX(-50%) scale(.65)} 25%{opacity:1;transform:translateX(-50%) scale(1.08)} 72%{opacity:1} 100%{opacity:0;transform:translateX(-50%) translateY(-.35cqw) scale(.96)} }
       @keyframes duel-damage-in { from { opacity: 0; margin-top: 1cqw; } 25% { opacity: 1; } to { margin-top: -1cqw; } }
       .duel-turn[data-used="true"] .duel-portrait { opacity: 1; filter: none; }
       .duel-round span { font-size: 1cqw; color: #67e8f9; }
@@ -450,6 +458,11 @@ const AttackBreakdown: React.FC<{ card: ArenaCard; nexos: number; attack: number
     {step >= 3 && <span>{bonus ? '+ BÔNUS · IMPULSO' : 'BÔNUS DE ATAQUE'} <b>{bonus ? `+${bonus}` : '—'}</b></span>}
     {step >= 4 && <strong>= ATAQUE FINAL <b>{attack}</b></strong>}
   </div>;
+};
+const AbilityFlash: React.FC<{ card?: ArenaCard; won: boolean; visible: boolean; side: 'cpu' | 'player' }> = ({ card, won, visible, side }) => {
+  if (!visible || !card || !won) return null;
+  const text = card.abilityKind === 'DRENO' ? 'DRENO · +1 PV' : card.abilityKind === 'ECO' ? 'ECO · +1 NEXO' : card.abilityKind === 'IMPULSO' ? 'IMPULSO ATIVO' : card.abilityKind === 'BLINDAGEM' ? 'BLINDAGEM' : card.ability;
+  return <div className={`duel-ability-flash duel-ability-${side} duel-ability-${card.abilityKind.toLowerCase()}`}><strong>{text}</strong></div>;
 };
 const DuelStats: React.FC<{ label: string; hp: number; nexos: number; player?: boolean }> = ({ label, hp, nexos, player = false }) => <div className="flex items-center gap-x-2 text-[10px] font-bold whitespace-nowrap"><span className={player ? 'text-cyan-300' : 'text-rose-300'}>{label}</span><span>{hp}/12 PV</span><LifeBar hp={hp} player={player} /><span className={player ? 'text-cyan-300' : 'text-amber-300'}>◆ {nexos}</span></div>;
 const InvestPanel: React.FC<{ card: ArenaCard; duel: DuelState; setDuel: React.Dispatch<React.SetStateAction<DuelState | null>>; confirm: () => void }> = ({ card, duel, setDuel, confirm }) => <div className="duel-invest-panel">
