@@ -2,6 +2,10 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, Swords } from 'lucide-react';
 import { ARENA_CARDS } from '../config/arenaCards';
 import type { ArenaCard } from '../config/arenaCards';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { SupabaseService } from '../services/supabaseService';
+import { EconomyService } from '../services/economyService';
 
 interface ArenaProps { onNavigate: (page: string) => void; }
 type MatchResult = 'VICTORY' | 'DEFEAT' | 'DRAW' | null;
@@ -12,7 +16,13 @@ export interface ArenaMatchSummary {
   playerRoundsWon: number; cpuRoundsWon: number; roundsPlayed: number;
   playerNexosRemaining: number; cpuNexosRemaining: number;
 }
+interface ArenaRewards {
+  nex: number; xp: number; nxa: number; levelUps: number;
+  profileSynced: boolean;
+}
+type RewardStatus = { requestId: string; status: 'pending' | 'success' | 'error'; rewards?: ArenaRewards };
 interface DuelState {
+  requestId: string;
   playerCards: ArenaCard[]; cpuCards: ArenaCard[]; usedPlayer: string[]; usedCpu: string[];
   playerHp: number; cpuHp: number; playerNexos: number; cpuNexos: number; round: number;
   selectedId: string | null; investment: number; cpuInvestment: number; revealedCpu: ArenaCard | null;
@@ -29,7 +39,7 @@ const freshDuel = (deck: ArenaCard[]): DuelState => {
   const playerCards = deck.slice(0, MAX_ROUNDS);
   const playerIds = new Set(playerCards.map((card) => card.id));
   const different = ARENA_CARDS.filter((card) => !playerIds.has(card.id));
-  return { playerCards, cpuCards: [...different, ...ARENA_CARDS.filter((card) => playerIds.has(card.id))].slice(0, MAX_ROUNDS), usedPlayer: [], usedCpu: [], playerHp: 12, cpuHp: 12, playerNexos: 12, cpuNexos: 12, round: 1, selectedId: null, investment: 0, cpuInvestment: 0, revealedCpu: null, phase: 'SELECT', playerAttack: null, cpuAttack: null, roundMessage: null, roundDamage: 0, result: null, matchSummary: null, calcStep: 1, playerWins: 0, cpuWins: 0 };
+  return { requestId: crypto.randomUUID(), playerCards, cpuCards: [...different, ...ARENA_CARDS.filter((card) => playerIds.has(card.id))].slice(0, MAX_ROUNDS), usedPlayer: [], usedCpu: [], playerHp: 12, cpuHp: 12, playerNexos: 12, cpuNexos: 12, round: 1, selectedId: null, investment: 0, cpuInvestment: 0, revealedCpu: null, phase: 'SELECT', playerAttack: null, cpuAttack: null, roundMessage: null, roundDamage: 0, result: null, matchSummary: null, calcStep: 1, playerWins: 0, cpuWins: 0 };
 };
 const attackValue = (card: ArenaCard, nexos: number) => card.power + nexos * 2 + (card.abilityKind === 'IMPULSO' && nexos >= 3 ? 2 : 0);
 
@@ -64,6 +74,61 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
 
 const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetStateAction<DuelState | null>>; onBack: () => void; onGames: () => void }> = ({ duel, setDuel, onBack, onGames }) => {
   const selectedCard = duel.playerCards.find((card) => card.id === duel.selectedId) || null;
+  const { currentUser, syncUser } = useAuth();
+  const rewardRequests = useRef(new Map<string, Promise<ArenaRewards>>());
+  const [rewardStatus, setRewardStatus] = useState<RewardStatus>({ requestId: duel.requestId, status: 'pending' });
+  useEffect(() => {
+    if (!duel.result || !duel.matchSummary) return;
+    const requestId = duel.requestId;
+    const outcome = duel.result;
+    const summary = duel.matchSummary;
+    const userId = currentUser?.id;
+    let subscribed = true;
+    let request = rewardRequests.current.get(requestId);
+    if (!request) {
+      // Cache the promise before awaiting it, including failures. StrictMode and
+      // profile-driven renders subscribe to this request instead of sending again.
+      request = (async (): Promise<ArenaRewards> => {
+        if (!isSupabaseConfigured() || !userId) throw new Error('Sessão online necessária.');
+        const { data, error } = await supabase.rpc('complete_duelo_nexal_pve', {
+          p_request_id: requestId,
+          p_outcome: outcome,
+          p_result_snapshot: {
+            playerFinalHp: summary.playerFinalHp, cpuFinalHp: summary.cpuFinalHp,
+            playerRoundsWon: summary.playerRoundsWon, cpuRoundsWon: summary.cpuRoundsWon,
+            roundsPlayed: summary.roundsPlayed, playerNexosRemaining: summary.playerNexosRemaining,
+            cpuNexosRemaining: summary.cpuNexosRemaining,
+          },
+        });
+        if (error || data?.success !== true) throw new Error('Recompensa não confirmada.');
+        const amounts = [data.nex_gained, data.xp_gained, data.nxa_gained];
+        if (amounts.some((value) => typeof value !== 'number' || !Number.isFinite(value) || value < 0)) throw new Error('Resposta de recompensa inválida.');
+        // An idempotent response may omit level_ups; never infer extra rewards.
+        const levelUps = data.level_ups === undefined ? 0 : data.level_ups;
+        if (typeof levelUps !== 'number' || !Number.isInteger(levelUps) || levelUps < 0) throw new Error('Resposta de nível inválida.');
+        let profileSynced = false;
+        try {
+          const profile = await SupabaseService.fetchRemoteProfile(userId);
+          if (!profile) throw new Error('Perfil não encontrado.');
+          SupabaseService.acceptConfirmedProfile(profile);
+          EconomyService.hydrateProfileFromSupabase(profile);
+          syncUser(profile);
+          profileSynced = true;
+        } catch {
+          // A profile refresh failure must not retry the reward RPC or grant locally.
+          console.warn('[NEXA ARENA] Recompensa registrada; atualização do perfil pendente.');
+        }
+        return { nex: data.nex_gained, xp: data.xp_gained, nxa: data.nxa_gained, levelUps, profileSynced };
+      })();
+      rewardRequests.current.set(requestId, request);
+    }
+    setRewardStatus({ requestId, status: 'pending' });
+    void request.then(
+      (rewards) => { if (subscribed) setRewardStatus({ requestId, status: 'success', rewards }); },
+      () => { if (subscribed) setRewardStatus({ requestId, status: 'error' }); },
+    );
+    return () => { subscribed = false; };
+  }, [duel.requestId, duel.result, duel.matchSummary, currentUser?.id, syncUser]);
   const boardRef = useRef<HTMLDivElement>(null);
   const cpuTarget = useRef<HTMLDivElement>(null);
   const playerTarget = useRef<HTMLDivElement>(null);
@@ -285,7 +350,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     {['VS', 'IMPACT'].includes(duel.phase) && <div className="duel-announcement" role="status"><small>ATAQUE · CPU × VOCÊ</small><strong className="duel-versus"><b>{duel.cpuAttack}</b><span>VS</span><b>{duel.playerAttack}</b></strong></div>}
     {duel.phase === 'DAMAGE' && <div className={`duel-damage ${duel.playerAttack! > duel.cpuAttack! ? 'duel-damage-cpu' : 'duel-damage-player'}`} role="status">{duel.roundDamage ? `−${duel.roundDamage} PV` : 'SEM DANO'}</div>}
     {duel.phase === 'RESULT' && <div className="duel-announcement" role="status"><small>RESULTADO DA RODADA</small><strong>{roundOutcome}</strong><small>{duel.roundMessage}</small></div>}
-    {duel.result && duel.matchSummary && <DuelResult summary={duel.matchSummary} onAgain={() => { setSecondsLeft(ROUND_TIME_SECONDS); setDuel(freshDuel(duel.playerCards)); }} onGames={onGames} />}
+    {duel.result && duel.matchSummary && <DuelResult summary={duel.matchSummary} rewardStatus={rewardStatus.requestId === duel.requestId ? rewardStatus : { requestId: duel.requestId, status: 'pending' }} onAgain={() => { setSecondsLeft(ROUND_TIME_SECONDS); setDuel(freshDuel(duel.playerCards)); }} onGames={onGames} />}
   </div>;
 };
 
@@ -327,13 +392,24 @@ const InvestPanel: React.FC<{ card: ArenaCard; duel: DuelState; setDuel: React.D
 const LifeBar: React.FC<{ hp: number; player?: boolean }> = ({ hp, player = false }) => <div className="h-2 w-20 overflow-hidden rounded-full bg-black/50 sm:w-32"><div className={`h-full transition-[width] duration-700 ease-out ${player ? 'bg-gradient-to-r from-cyan-400 to-emerald-300' : 'bg-gradient-to-r from-rose-500 to-orange-400'}`} style={{ width: `${Math.max(0, hp) / 12 * 100}%` }} /></div>;
 const NexoBar: React.FC<{ count: number; highlighted?: boolean; player?: boolean }> = ({ count, highlighted = false, player = false }) => <div className={`mt-1 flex max-w-[145px] flex-wrap gap-0.5 text-[11px] ${highlighted || player ? 'text-cyan-300' : 'text-amber-400'}`}>{Array.from({ length: 12 }, (_, index) => <span key={index} className={index < count ? 'opacity-100 drop-shadow-[0_0_4px_currentColor]' : 'opacity-20'}>◆</span>)}</div>;
 const HiddenCard: React.FC<{ compact?: boolean }> = ({ compact = false }) => <div className={`relative flex ${compact ? 'min-h-[110px]' : 'h-[220px] w-[165px]'} w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-purple-300/50 bg-[radial-gradient(circle_at_50%_35%,rgba(97,58,178,.55),transparent_35%),linear-gradient(145deg,#11162e,#090b19)] text-center shadow-[inset_0_0_25px_rgba(168,85,247,.22),0_0_16px_rgba(168,85,247,.18)]`}><div className="absolute inset-2 rounded-lg border border-cyan-300/20" /><span className="relative font-heading text-sm font-black tracking-[.25em] text-purple-200">NEXA</span><span className="relative my-1 text-3xl text-cyan-300 drop-shadow-[0_0_10px_currentColor]">◇</span><span className="relative text-[7px] font-bold uppercase tracking-[.2em] text-purple-300">DUEL<br />CARTA OCULTA</span></div>;
-const DuelResult: React.FC<{ summary: ArenaMatchSummary; onAgain: () => void; onGames: () => void }> = ({ summary, onAgain, onGames }) => <div className="duel-finish" role="dialog" aria-modal="true" aria-labelledby="duel-final-title">
+const DuelResult: React.FC<{ summary: ArenaMatchSummary; rewardStatus: RewardStatus; onAgain: () => void; onGames: () => void }> = ({ summary, rewardStatus, onAgain, onGames }) => <div className="duel-finish" role="dialog" aria-modal="true" aria-labelledby="duel-final-title">
   <span>NEXA · FIM DA PARTIDA</span>
   <h2 id="duel-final-title">{summary.winner === 'PLAYER' ? 'VITÓRIA' : summary.winner === 'CPU' ? 'DERROTA' : 'EMPATE'}</h2>
   <p>PV FINAL · VOCÊ {summary.playerFinalHp} × CPU {summary.cpuFinalHp}</p>
   <p>RODADAS VENCIDAS · VOCÊ {summary.playerRoundsWon} × CPU {summary.cpuRoundsWon}</p>
   <p>NEXOS RESTANTES · VOCÊ {summary.playerNexosRemaining} × CPU {summary.cpuNexosRemaining}</p>
   <p>{summary.roundsPlayed}/{MAX_ROUNDS} RODADAS DISPUTADAS</p>
+  <section aria-live="polite" style={{ fontSize: '1.4cqw' }}>
+    {rewardStatus.status === 'pending' && <p>Calculando recompensas...</p>}
+    {rewardStatus.status === 'error' && <p>Não foi possível registrar a recompensa.</p>}
+    {rewardStatus.status === 'success' && rewardStatus.rewards && <>
+      <strong>RECOMPENSAS</strong>
+      <p>+ {rewardStatus.rewards.nex} NEX · + {rewardStatus.rewards.xp} XP</p>
+      {rewardStatus.rewards.nxa > 0 && <p>+ {rewardStatus.rewards.nxa} NXA</p>}
+      {rewardStatus.rewards.levelUps > 0 && <p>LEVEL UP!</p>}
+      {!rewardStatus.rewards.profileSynced && <p>Recompensa registrada. Atualização do perfil pendente.</p>}
+    </>}
+  </section>
   <div><button type="button" autoFocus onClick={onAgain}>JOGAR NOVAMENTE</button><button type="button" onClick={onGames}>VOLTAR AOS JOGOS</button></div>
 </div>;
 const FlipCard: React.FC<{ card: ArenaCard; active: boolean; revealed: boolean; used: boolean; details?: React.ReactNode }> = ({ card, active, revealed, used, details }) => <div className="duel-turn" data-used={used} style={{ transform: revealed ? 'rotateY(180deg)' : 'rotateY(0deg)', transition: active ? 'transform 450ms ease-out' : 'none' }}><div className="duel-turn-face"><DuelPortrait card={card} hidden /></div><div className="duel-turn-face" style={{ transform: 'rotateY(180deg)' }}><DuelPortrait card={card} selected={active} used={used} details={details} /></div></div>;
