@@ -131,7 +131,7 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
     setPvpLastResolvedRound(resolvedRound);
     setPvpWaitingMove(false);
     setPvpReveal(true);
-    pvpRevealTimers.current.push(window.setTimeout(() => { setPvpReveal(false); setPvpRevealStep(0); if (resetChoice) { setPvpCardId(null); setPvpNexos(0); setPvpRoundTransition(true); pvpRevealTimers.current.push(window.setTimeout(() => setPvpRoundTransition(false), 850)); } }, 4200));
+    pvpRevealTimers.current.push(window.setTimeout(() => { setPvpReveal(false); if (resetChoice) { setPvpCardId(null); setPvpNexos(0); } }, 4200));
   };
   // Revalidate against the current inventory, including after returning from battle.
   const deck = selectedDeck.filter(isAvailable);
