@@ -11,7 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 function PvpCard({ id }: { id: string }) {
   const card = ARENA_CARDS.find(item => item.id === id);
   return <div className="min-w-0 space-y-1">
-    <CardImage templateId={id} alt={card?.name || 'Carta da partida'} className="aspect-[3/4] w-full rounded-xl object-cover" />
+    <CardImage templateId={id} alt={card?.name || 'Carta da partida'} className="pvp-card-image aspect-[3/4] w-full rounded-xl object-contain" />
     <p className="break-words text-base font-bold text-white sm:text-xs">{card?.name || id}</p>
     {card && <p className="text-sm text-slate-300 sm:text-[10px]">PODER {card.power} · DANO {card.damage}<br />{card.ability}</p>}
   </div>;
@@ -175,7 +175,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
     }
   };
 
-  return <><div className="pvp-portrait-gate"><div><strong>GIRE O CELULAR</strong><p>O Duelo Nexal foi preparado para jogar com o celular deitado.</p><button type="button" onClick={enterGameMode}>TELA CHEIA E JOGAR</button></div></div><section ref={boardRef} data-game-mode={gameMode ? 'true' : 'false'} data-phone-landscape={mobileLandscape ? 'true' : 'false'} className="pvp-battle-board mx-auto w-full min-w-0 max-w-4xl space-y-3 rounded-2xl border border-cyan-400/20 bg-[#07101f] p-3 text-white sm:space-y-4 sm:p-6" aria-label="Tabuleiro PvP">
+  return <><section ref={boardRef} data-game-mode={gameMode ? 'true' : 'false'} data-phone={window.innerWidth <= 1100 ? 'true' : 'false'} data-phone-landscape={mobileLandscape ? 'true' : 'false'} className="pvp-battle-board mx-auto w-full min-w-0 max-w-4xl space-y-3 rounded-2xl border border-cyan-400/20 bg-[#07101f] p-3 text-white sm:space-y-4 sm:p-6" aria-label="Tabuleiro PvP">
     <button type="button" onClick={enterGameMode} className="pvp-mobile-play-button">TELA CHEIA</button>
     <PvpRoundReveal snapshot={snapshot} userId={userId} />
     <header className="flex flex-wrap items-center justify-between gap-3">
