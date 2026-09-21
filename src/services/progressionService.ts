@@ -112,7 +112,7 @@ export class ProgressionServiceClass {
    */
   public isFeatureUnlocked(userLevel: number, feature: 'COLLECTIONS'): boolean {
     if (feature === 'COLLECTIONS') {
-      return userLevel >= 10;
+      return userLevel >= 5;
     }
     return true;
   }
