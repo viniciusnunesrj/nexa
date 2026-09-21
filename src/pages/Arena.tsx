@@ -371,10 +371,10 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
         .duel-canvas::after { content:'GIRE O CELULAR PARA JOGAR'; position:absolute; inset:0; z-index:100; display:grid; place-items:center; padding:2rem; background:#030711f7; color:#67e8f9; font-size:clamp(18px,5vw,28px); font-weight:900; letter-spacing:.08em; text-align:center; }
       }
       @media (orientation: landscape) and (max-width: 1100px) {
-        .duel-canvas { position:fixed!important; left:0!important; top:0!important; right:auto!important; bottom:auto!important; z-index:9999!important; width:100vw!important; height:100dvh!important; max-width:none!important; max-height:100dvh!important; aspect-ratio:auto!important; margin:0!important; border:0!important; border-radius:0!important; overflow:hidden!important; padding-top:env(safe-area-inset-top)!important; padding-right:env(safe-area-inset-right)!important; padding-bottom:env(safe-area-inset-bottom)!important; padding-left:env(safe-area-inset-left)!important; }
-        .duel-layout { position:absolute!important; top:env(safe-area-inset-top)!important; right:env(safe-area-inset-right)!important; bottom:env(safe-area-inset-bottom)!important; left:env(safe-area-inset-left)!important; grid-template-rows: 9% 38% 6% 38% 9%; }
-        .duel-row { height:100%!important; }
-        .duel-slot { height:min(94%,34dvh)!important; }
+        .duel-canvas:not([data-mobile-game="true"]) { position:fixed!important; left:0!important; top:0!important; right:auto!important; bottom:auto!important; z-index:9999!important; width:100vw!important; height:100dvh!important; max-width:none!important; max-height:100dvh!important; aspect-ratio:auto!important; margin:0!important; border:0!important; border-radius:0!important; overflow:hidden!important; }
+        .duel-canvas:not([data-mobile-game="true"]) .duel-layout { position:absolute!important; top:env(safe-area-inset-top)!important; right:env(safe-area-inset-right)!important; bottom:env(safe-area-inset-bottom)!important; left:env(safe-area-inset-left)!important; grid-template-rows:9% 38% 6% 38% 9%; }
+        .duel-canvas:not([data-mobile-game="true"]) .duel-row { height:100%!important; }
+        .duel-canvas:not([data-mobile-game="true"]) .duel-slot { height:min(94%,34dvh)!important; }
       }
       .duel-hud { display: flex; align-items: center; justify-content: space-between; gap: 1cqw; padding: 0 2cqw; min-width: 0; overflow: hidden; font-size: 1.1cqw; }
       .duel-hud > div:first-child { flex-wrap: nowrap; gap: 1cqw; font-size: 1.2cqw; white-space: nowrap; }
