@@ -154,3 +154,64 @@
    padding-bottom:6px!important;
  }
 }
+
+/* FINAL phone-landscape sizing: card width is driven by viewport HEIGHT, not screen width.
+   Four 3:4 cards must fit together with their name/stats and controls in one phone viewport. */
+@media (orientation:landscape) and (max-width:1100px) and (max-height:600px){
+ .pvp-battle-board[data-game-mode="true"]{
+   display:flex!important;
+   flex-direction:column!important;
+   gap:3px!important;
+   overflow-y:auto!important;
+ }
+ .pvp-battle-board[data-game-mode="true"] .pvp-selection-grid{
+   display:grid!important;
+   grid-template-columns:repeat(4,minmax(0,1fr))!important;
+   width:min(72vw,calc(100dvh * 1.42))!important;
+   max-width:560px!important;
+   margin:0 auto!important;
+   gap:4px!important;
+   flex:none!important;
+ }
+ .pvp-battle-board[data-game-mode="true"] .pvp-selection-grid>button{
+   width:100%!important;
+   max-width:none!important;
+   min-width:0!important;
+   padding:3px!important;
+ }
+ .pvp-battle-board[data-game-mode="true"] .pvp-selection-grid img{
+   width:100%!important;
+   height:auto!important;
+   max-height:none!important;
+   aspect-ratio:3/4!important;
+   object-fit:contain!important;
+ }
+ .pvp-battle-board[data-game-mode="true"] .pvp-selection-grid p{
+   margin:2px 0 0!important;
+   font-size:7px!important;
+   line-height:1.05!important;
+ }
+ .pvp-battle-board[data-game-mode="true"] .pvp-selection-grid span{
+   margin-top:2px!important;
+   font-size:7px!important;
+   line-height:1!important;
+ }
+ .pvp-battle-board[data-game-mode="true"]>div.space-y-3.rounded-xl{
+   padding:4px!important;
+ }
+ .pvp-battle-board[data-game-mode="true"]>div.space-y-3.rounded-xl .mx-auto{
+   max-width:170px!important;
+ }
+ .pvp-battle-board[data-game-mode="true"]>h2{font-size:11px!important;line-height:1!important;margin:1px 0!important}
+ .pvp-battle-board[data-game-mode="true"]>p.flex{font-size:9px!important;margin:0!important}
+ .pvp-battle-board[data-game-mode="true"] .sticky{
+   position:static!important;
+   padding:4px!important;
+   margin:0!important;
+   gap:3px!important;
+ }
+ .pvp-battle-board[data-game-mode="true"] .sticky label{font-size:8px!important}
+ .pvp-battle-board[data-game-mode="true"] .sticky strong{font-size:14px!important}
+ .pvp-battle-board[data-game-mode="true"] .sticky button{height:30px!important;min-height:30px!important;padding:3px 8px!important}
+ .pvp-battle-board[data-game-mode="true"] .sticky input{height:22px!important}
+}
