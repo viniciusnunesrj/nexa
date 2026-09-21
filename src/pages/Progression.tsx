@@ -389,7 +389,34 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {currentUser && <div className="space-y-5"><BattleStats key={'battle-'+currentUser.id} ownerId={currentUser.id} /><div className="grid gap-5 xl:grid-cols-2"><DueloPveStats key={'pve-'+currentUser.id} ownerId={currentUser.id} /><DueloPvpStats key={'pvp-'+currentUser.id} ownerId={currentUser.id} /></div></div>}
+      {currentUser && (
+        <div className="space-y-5">
+          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-cyan-500/[0.07] via-[#0b0b12] to-purple-500/[0.07] border border-white/10">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.2em]">Central de atividade</p>
+                <h2 className="font-heading text-2xl font-black text-white mt-1">Seus jogos na Rede Nexus</h2>
+                <p className="text-xs font-mono text-slate-400 mt-1 max-w-2xl">
+                  RIFT BATTLE e NEXUS DUEL compartilham a progressão do Piloto, mas mantêm estatísticas e históricos separados.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => onNavigate('play')} className="px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 hover:bg-emerald-500/20 font-heading font-black text-xs uppercase tracking-wider transition-all">
+                  Jogar Rift Battle
+                </button>
+                <button onClick={() => onNavigate('arena')} className="px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-400/30 text-purple-300 hover:bg-purple-500/20 font-heading font-black text-xs uppercase tracking-wider transition-all">
+                  Jogar Nexus Duel
+                </button>
+              </div>
+            </div>
+          </div>
+          <BattleStats key={'battle-'+currentUser.id} ownerId={currentUser.id} />
+          <div className="grid gap-5 xl:grid-cols-2">
+            <DueloPveStats key={'pve-'+currentUser.id} ownerId={currentUser.id} />
+            <DueloPvpStats key={'pvp-'+currentUser.id} ownerId={currentUser.id} />
+          </div>
+        </div>
+      )}
 
       {/* Tabs Navigation */}
       <div className="flex items-center gap-2 overflow-x-auto border-b border-white/10 pb-3 scrollbar-none">
