@@ -142,6 +142,39 @@ const DueloPveStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
   );
 };
 
+
+interface DueloPvpReward {
+  room_id: string; outcome: 'VICTORY' | 'DEFEAT' | 'DRAW' | 'FORFEIT';
+  nex_gained: number; xp_gained: number; rewarded: boolean; created_at: string;
+}
+
+const DueloPvpStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
+  const [records, setRecords] = useState<DueloPvpReward[]>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void supabase.from('duelo_nexal_pvp_rewards')
+      .select('room_id,outcome,nex_gained,xp_gained,rewarded,created_at')
+      .eq('player_id', ownerId).order('created_at', { ascending: false })
+      .limit(500).abortSignal(controller.signal)
+      .then(({ data }) => { if (!controller.signal.aborted && data) setRecords(data as DueloPvpReward[]); });
+    return () => controller.abort();
+  }, [ownerId]);
+  const completed = records.filter(r => r.outcome !== 'FORFEIT');
+  const wins = completed.filter(r => r.outcome === 'VICTORY').length;
+  const losses = completed.filter(r => r.outcome === 'DEFEAT').length;
+  const draws = completed.filter(r => r.outcome === 'DRAW').length;
+  const nex = records.reduce((n,r) => n + Number(r.nex_gained || 0), 0);
+  const xp = records.reduce((n,r) => n + Number(r.xp_gained || 0), 0);
+  return <section className="p-5 sm:p-6 rounded-3xl bg-[#0b0b12] border border-purple-400/20 space-y-5">
+    <div><p className="text-xs font-mono text-purple-300 uppercase tracking-wider">ESTATÍSTICAS PVP</p><h2 className="font-heading text-2xl font-black text-white mt-1">Duelo Nexal Online</h2></div>
+    <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {[['Partidas',completed.length],['Vitórias',wins],['Derrotas',losses],['Empates',draws],['Taxa de vitória',completed.length ? Math.round(wins/completed.length*100)+'%' : '0%'],['NEX conquistado',nex],['XP conquistado',xp],['Partidas recompensadas',records.filter(r=>r.rewarded).length]].map(([label,value]) =>
+        <div key={String(label)} className="p-4 rounded-2xl bg-white/[0.03] border border-white/10"><dt className="text-[10px] font-mono text-slate-400 uppercase">{label}</dt><dd className="font-heading text-xl font-black text-purple-300">{value}</dd></div>)}
+    </dl>
+    <p className="text-[11px] font-mono text-slate-500">PvP e PvE usam o mesmo nível de Piloto. O limite anti-farm continua valendo apenas para recompensas repetidas contra o mesmo adversário.</p>
+  </section>;
+};
+
 export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
   const { user, currentUser } = useAuth();
   const { unlockedSlots, activeSynthesizingCardsCount } = useGameState();
@@ -244,7 +277,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
                     Avançar patente do piloto
                   </h4>
                   <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-                    Ganhe XP em combates da Arena para continuar sua progressão permanente.
+                    Ganhe XP no PvE ou PvP. Os dois modos avançam a mesma progressão permanente.
                   </p>
                 </div>
               </div>
@@ -252,7 +285,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
               <p className="text-xs font-mono text-emerald-400">Nível máximo atingido!</p>
             )}
             <div className="pt-2.5 border-t border-white/10 text-[11px] font-mono text-slate-500">
-              A progressão online não concede caixas, NEX, NXA ou personagens automaticamente ao subir de nível.
+              A progressão não aumenta Poder ou Dano. PvE e PvP permanecem equilibrados; os níveis liberam recursos de conta e marcos de prestígio.
             </div>
           </div>
         </div>
@@ -301,7 +334,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {currentUser && <DueloPveStats key={currentUser.id} ownerId={currentUser.id} />}
+      {currentUser && <div className="grid gap-5 xl:grid-cols-2"><DueloPveStats key={'pve-'+currentUser.id} ownerId={currentUser.id} /><DueloPvpStats key={'pvp-'+currentUser.id} ownerId={currentUser.id} /></div>}
 
       {/* Tabs Navigation */}
       <div className="flex items-center gap-2 overflow-x-auto border-b border-white/10 pb-3 scrollbar-none">
@@ -355,9 +388,8 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
                   Progressão permanente do piloto
                 </h3>
                 <p className="text-xs font-mono text-slate-400 mt-1 max-w-3xl leading-relaxed">
-                  A Arena concede XP de forma autoritativa no servidor. Ao atingir a experiência necessária,
-                  seu nível é atualizado automaticamente. A trilha online atual representa patente e progresso
-                  da conta; recompensas antigas de caixas, moedas e personagens por nível não fazem parte da economia online V1.
+                  PvE e PvP concedem XP de forma autoritativa no servidor. Ao atingir a experiência necessária,
+                  seu nível é atualizado automaticamente. A trilha representa a patente e o progresso da conta. Os marcos liberam recursos de conta e prestígio, sem aumentar Poder, Dano ou dar vantagem competitiva nas batalhas.
                 </p>
               </div>
             </div>
