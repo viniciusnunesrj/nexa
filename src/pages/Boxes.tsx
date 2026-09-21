@@ -22,7 +22,7 @@ interface BoxesPageProps {
   onNavigate: (page: string) => void;
 }
 
-type CategoryFilter = 'ALL' | 'GENERAL' | 'COLLECTIONS';
+type CategoryFilter = 'GENERAL' | 'COLLECTIONS';
 
 export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
   const { user } = useAuth();
@@ -49,7 +49,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
     useState<'BOXES' | 'HISTORY'>('BOXES');
 
   const [categoryFilter, setCategoryFilter] =
-    useState<CategoryFilter>('ALL');
+    useState<CategoryFilter>('GENERAL');
 
   const [testModalOpen, setTestModalOpen] = useState<boolean>(false);
 
@@ -122,11 +122,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
       return !isCollection;
     }
 
-    if (categoryFilter === 'COLLECTIONS') {
-      return isCollection;
-    }
-
-    return true;
+    return isCollection;
   });
 
   return (
@@ -269,7 +265,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Todas ({allBoxTypes.length})
+              Arsenal
             </button>
 
             <button
@@ -282,7 +278,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Gerais (5)
+              Essenciais (5)
             </button>
 
             <button
@@ -295,7 +291,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Coleções (8)
+              Temáticas (8)
             </button>
           </div>
         )}
@@ -303,7 +299,21 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
 
       {/* CAIXAS */}
       {selectedTab === 'BOXES' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <div>
+              <p className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-cyan-300">
+                {categoryFilter === 'GENERAL' ? 'Progressão de suprimentos' : 'Caixas de coleção'}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                {categoryFilter === 'GENERAL'
+                  ? 'Comece pelas caixas essenciais e avance conforme seu saldo e objetivo de raridade.'
+                  : 'Escolha uma temática quando quiser concentrar suas chances em uma coleção específica.'}
+              </p>
+            </div>
+            <span className="text-[10px] font-mono text-slate-500 uppercase">{filteredBoxTypes.length} opções</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {filteredBoxTypes.map((type) => {
             const def = BOX_DEFINITIONS[type];
 
@@ -324,7 +334,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                 className="rounded-2xl bg-[#090a0f] border border-white/[0.08] hover:border-cyan-500/30 transition-all flex flex-col justify-between overflow-hidden group"
               >
                 {/* IMAGEM */}
-                <div className="relative aspect-[16/10] overflow-hidden bg-slate-950">
+                <div className="relative aspect-[16/8] overflow-hidden bg-slate-950">
                   <img
                     src={def.image}
                     alt={def.name}
@@ -367,7 +377,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* CONTEÚDO */}
-                <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
+                <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                   <div>
                     <div
                       className="mb-3 h-px w-full opacity-60"
@@ -389,19 +399,9 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                     </p>
                   </div>
 
-                  {/* GARANTIAS DEFINIDAS PELA CAIXA */}
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/[0.06] space-y-1">
-                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 uppercase font-bold">
-                      <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-
-                      <span>
-                        Regras da Caixa
-                      </span>
-                    </div>
-
-                    <p className="text-xs font-mono text-slate-200">
-                      {def.guarantees}
-                    </p>
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400">
+                    <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span className="line-clamp-2">{def.guarantees}</span>
                   </div>
 
                   {/* PREÇO */}
@@ -513,6 +513,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
               </div>
             );
           })}
+          </div>
         </div>
       )}
 
