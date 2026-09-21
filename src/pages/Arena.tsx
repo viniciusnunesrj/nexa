@@ -239,6 +239,22 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     return () => { subscribed = false; };
   }, [duel.requestId, duel.result, duel.matchSummary, currentUser?.id, syncUser]);
   const boardRef = useRef<HTMLDivElement>(null);
+  const [gameFullscreen, setGameFullscreen] = useState(false);
+  const enterGameMode = async () => {
+    const el = boardRef.current;
+    if (!el) return;
+    try { if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen(); } catch {}
+    try {
+      const orientation = screen.orientation as ScreenOrientation & { lock?: (orientation: 'landscape') => Promise<void> };
+      if (orientation.lock) await orientation.lock('landscape');
+    } catch {}
+    setGameFullscreen(true);
+  };
+  useEffect(() => {
+    const syncFullscreen = () => setGameFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
   const cpuTarget = useRef<HTMLDivElement>(null);
   const playerTarget = useRef<HTMLDivElement>(null);
   const slots = useRef<Record<string, HTMLDivElement | null>>({});
@@ -330,10 +346,13 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
   const roundOutcome = duel.playerAttack === duel.cpuAttack ? 'EMPATE' : duel.playerAttack! > duel.cpuAttack! ? 'VITÓRIA NA RODADA' : 'DERROTA NA RODADA';
   const stageText: Record<DuelPhase, string> = { SELECT: 'Escolha uma carta e seus Nexos', LOCK: 'Jogada confirmada', CPU: 'CPU prepara sua carta', ENTER: 'Cartas em confronto', REVEAL: 'Revelando a CPU', CALC: 'Calculando ataque', VS: 'Ataques finais', IMPACT: 'Impacto!', DAMAGE: duel.roundMessage || 'Dano aplicado', RESULT: roundOutcome, NEXT: 'Preparando próxima rodada' };
   const phonePortrait = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px) and (orientation: portrait)').matches;
-  return <>{phonePortrait && <div className="fixed inset-0 z-[10000] grid place-items-center bg-[#030711] p-8 text-center text-white"><div><div className="mx-auto mb-6 text-6xl">↻</div><h2 className="text-2xl font-black text-cyan-300">GIRE O CELULAR</h2><p className="mt-3 text-sm text-slate-300">O Duelo Nexal foi preparado para jogar com o celular deitado.</p></div></div>}<div ref={boardRef} className="duel-canvas" data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase} data-winner={playerWonRound ? 'player' : cpuWonRound ? 'cpu' : 'draw'}>
+  return <>{phonePortrait && <div className="fixed inset-0 z-[10000] grid place-items-center bg-[#030711] p-8 text-center text-white"><div><div className="mx-auto mb-6 text-6xl">↻</div><h2 className="text-2xl font-black text-cyan-300">GIRE O CELULAR</h2><p className="mt-3 text-sm text-slate-300">O Duelo Nexal foi preparado para jogar com o celular deitado.</p><button type="button" onClick={enterGameMode} className="mt-6 rounded-xl bg-cyan-300 px-6 py-3 font-black text-slate-950">TELA CHEIA E JOGAR</button></div></div>}<div ref={boardRef} className="duel-canvas" data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase} data-winner={playerWonRound ? 'player' : cpuWonRound ? 'cpu' : 'draw'}>
     <style>{`
       .duel-canvas { position: relative; width: min(100%, max(0px, calc((100dvh - var(--nexa-board-top, 160px) - 24px) * 16 / 9))); aspect-ratio: 16 / 9; margin-inline: auto; min-height: 0; box-sizing: border-box; overflow: hidden; isolation: isolate; container-type: inline-size; color: #eef6ff; border: 1px solid #22445a; border-radius: 1.4cqw; background: linear-gradient(145deg, #091726, #111529 60%, #0b1020); }
       .duel-layout { position: absolute; inset: 0; display: grid; grid-template-rows: 9% 38% 6% 38% 9%; min-height: 0; }
+      .duel-fullscreen-button { position:absolute; z-index:90; right:1.2%; bottom:1.2%; padding:.55cqw .9cqw; border:1px solid #67e8f966; border-radius:.55cqw; background:#071827e8; color:#67e8f9; font-size:.85cqw; font-weight:900; }
+      .duel-canvas:fullscreen { width:100vw!important; height:100vh!important; max-width:none!important; aspect-ratio:auto!important; border:0!important; border-radius:0!important; }
+
       .duel-rotate-hint { display:none; }
       @media (max-width: 639px) and (orientation: portrait) {
         .duel-canvas::after { content:'GIRE O CELULAR PARA JOGAR'; position:absolute; inset:0; z-index:100; display:grid; place-items:center; padding:2rem; background:#030711f7; color:#67e8f9; font-size:clamp(18px,5vw,28px); font-weight:900; letter-spacing:.08em; text-align:center; }
@@ -502,6 +521,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       @keyframes nexa-strike-down { 0% { transform: translateY(0) scale(1); } 32% { transform: translateY(5.5cqw) scale(1.08) rotate(1deg); filter: brightness(1.55); } 46% { transform: translateY(6.2cqw) scale(1.11); } 72% { transform: translateY(1.2cqw) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
       @keyframes nexa-hud-hit { 0% { filter: none; transform: translateX(0); } 16% { filter: brightness(1.9); transform: translateX(-.45cqw); } 30% { transform: translateX(.35cqw); } 45% { transform: translateX(-.2cqw); } 70% { filter: brightness(1.15); transform: translateX(.08cqw); } 100% { filter: none; transform: translateX(0); } }
     `}</style>
+    {!gameFullscreen && <button type="button" onClick={enterGameMode} className="duel-fullscreen-button">⛶ TELA CHEIA</button>}
     <div className="duel-layout">
       <header className="duel-hud">
         <DuelStats label="CPU" hp={duel.cpuHp} nexos={duel.cpuNexos} />
