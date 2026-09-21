@@ -356,8 +356,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       @keyframes nexa-attack-count { from { width:0; opacity:.35; } to { width:min(calc(var(--attack) * 5%),100%); opacity:1; } }
       @keyframes nexa-announcement-hit { 0% { transform:translate(-50%,-50%) scale(1); } 35% { transform:translate(-50%,-50%) scale(1.08); filter:brightness(1.45); } 100% { transform:translate(-50%,-50%) scale(.96); opacity:.25; } }
       .duel-damage { position: absolute; z-index: 40; top: 28%; transform: translateX(-50%); color: #fda4af; text-shadow: 0 2px 5px #000; font-size: 3cqw; font-weight: 900; pointer-events: none; animation: duel-damage-in 800ms ease-out; }
-      .duel-damage-cpu { left: 32%; }
-      .duel-damage-player { left: 68%; }
+      .duel-damage-cpu { left: 32%; animation-name: duel-damage-to-cpu; }
+      .duel-damage-player { left: 68%; animation-name: duel-damage-to-player; }
       .duel-ability-flash { position:absolute; z-index:43; left:50%; transform:translateX(-50%); padding:.35cqw .8cqw; border-radius:999px; font-size:.78cqw; letter-spacing:.08em; pointer-events:none; animation:nexa-ability-pop 850ms ease-out both; }
       .duel-ability-cpu { top:35%; }
       .duel-ability-player { bottom:35%; }
@@ -367,6 +367,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-ability-blindagem { color:#bfdbfe; border:1px solid #60a5fa55; background:#1e3a8a55; box-shadow:0 0 1.5cqw #60a5fa44; }
       @keyframes nexa-ability-pop { 0%{opacity:0;transform:translateX(-50%) scale(.65)} 25%{opacity:1;transform:translateX(-50%) scale(1.08)} 72%{opacity:1} 100%{opacity:0;transform:translateX(-50%) translateY(-.35cqw) scale(.96)} }
       @keyframes duel-damage-in { from { opacity: 0; margin-top: 1cqw; } 25% { opacity: 1; } to { margin-top: -1cqw; } }
+      @keyframes duel-damage-to-cpu { 0% { opacity:0; transform:translate(-50%,1.2cqw) scale(.65); } 25% { opacity:1; transform:translate(-50%,0) scale(1.22); } 68% { opacity:1; transform:translate(-50%,-2.8cqw) scale(1); } 100% { opacity:0; transform:translate(-50%,-5cqw) scale(.78); } }
+      @keyframes duel-damage-to-player { 0% { opacity:0; transform:translate(-50%,-1.2cqw) scale(.65); } 25% { opacity:1; transform:translate(-50%,0) scale(1.22); } 68% { opacity:1; transform:translate(-50%,2.8cqw) scale(1); } 100% { opacity:0; transform:translate(-50%,5cqw) scale(.78); } }
       .duel-turn[data-used="true"] .duel-portrait { opacity: 1; filter: none; }
       .duel-round span { font-size: 1cqw; color: #67e8f9; }
       .duel-finish { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2cqw; background: #07101ef5; text-align: center; }
@@ -377,6 +379,10 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-finish button { padding: 1.2cqw 2cqw; border: 1px solid #67e8f955; border-radius: .7cqw; font-size: 1.2cqw; font-weight: 800; background: #193a4e; }
       .duel-finish button:first-child { background: #67e8f9; color: #07101e; }
       .nexa-impact { animation: nexa-impact 520ms ease-out; }
+      .nexa-defeated { box-shadow:0 0 2.2cqw #fb718555; }
+      .duel-canvas[data-phase="DAMAGE"][data-winner="player"] .duel-row[aria-label="Suas cartas"] .duel-slot[data-active="true"] .duel-motion-content,
+      .duel-canvas[data-phase="DAMAGE"][data-winner="cpu"] .duel-row[aria-label="Cartas da CPU"] .duel-slot[data-active="true"] .duel-motion-content { animation:nexa-winner-hold 900ms ease-out; z-index:6; }
+      @keyframes nexa-winner-hold { 0% { transform:scale(1.08); filter:brightness(1.55); } 35% { transform:scale(1.13); filter:brightness(1.3) drop-shadow(0 0 1.4cqw #fde04766); } 100% { transform:scale(1.04); filter:brightness(1.08); } }
       @keyframes nexa-impact { 0% { transform: translateX(0); } 18% { transform: translateX(-.35cqw); filter: brightness(2); } 32% { transform: translateX(.45cqw); } 48% { transform: translateX(-.25cqw); } 70% { transform: translateX(.12cqw); } 100% { transform: translateX(0); filter: brightness(.85); } }
       .nexa-clash { animation: nexa-clash 620ms cubic-bezier(.2,.8,.2,1); }
       @keyframes nexa-clash { 0% { transform: scale(1); } 35% { transform: scale(1.1); filter: brightness(1.7); } 48% { transform: scale(.97); } 70% { transform: scale(1.035); } 100% { transform: scale(1); filter: brightness(1); } }
@@ -403,7 +409,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
           const used = duel.usedCpu.includes(card.id);
           return <div key={card.id} ref={(node) => { slots.current['cpu:' + card.id] = node; }} className="duel-slot" data-active={active}>
             <div className="duel-mover" style={movingStyle('cpu:' + card.id, active && advancing)}>
-              <div className={`duel-motion-content ${active && duel.phase === 'DAMAGE' && duel.cpuAttack! < duel.playerAttack! ? 'nexa-impact' : active && duel.phase === 'IMPACT' ? 'nexa-clash' : ''}`}>
+              <div className={`duel-motion-content ${active && duel.phase === 'DAMAGE' && duel.cpuAttack! < duel.playerAttack! ? 'nexa-impact nexa-defeated' : active && duel.phase === 'IMPACT' ? 'nexa-clash' : ''}`}>
                 <FlipCard card={card} active={active} revealed={active ? cpuFaceUp : used} used={used && !active} details={active && calculationStep > 0 ? <AttackBreakdown card={card} nexos={duel.cpuInvestment} attack={duel.cpuAttack!} step={calculationStep} /> : undefined} />
               </div>
             </div>
@@ -421,7 +427,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
           const used = duel.usedPlayer.includes(card.id);
           return <div key={card.id} ref={(node) => { slots.current['player:' + card.id] = node; }} className="duel-slot" data-active={active}>
             <button type="button" aria-label={`${card.name}${used ? ', usada' : ''}`} aria-pressed={duel.selectedId === card.id} disabled={used || playing} onClick={() => chooseCard(card.id)} className="duel-mover" style={movingStyle('player:' + card.id, active && advancing)}>
-              <div className={`duel-motion-content ${active && duel.phase === 'DAMAGE' && duel.playerAttack! < duel.cpuAttack! ? 'nexa-impact' : active && duel.phase === 'IMPACT' ? 'nexa-clash' : ''}`}>
+              <div className={`duel-motion-content ${active && duel.phase === 'DAMAGE' && duel.playerAttack! < duel.cpuAttack! ? 'nexa-impact nexa-defeated' : active && duel.phase === 'IMPACT' ? 'nexa-clash' : ''}`}>
                 <DuelPortrait card={card} selected={duel.selectedId === card.id} used={used && !active} details={active && calculationStep > 0 ? <AttackBreakdown card={card} nexos={duel.investment} attack={duel.playerAttack!} step={calculationStep} /> : undefined} />
               </div>
             </button>
