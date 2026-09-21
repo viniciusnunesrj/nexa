@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, CheckCircle2, Clock, Swords } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Swords, Shield, Zap, Users } from 'lucide-react';
 
 interface GamesProps {
   onNavigate: (page: string) => void;
@@ -38,8 +38,13 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
               </span>
             </div>
             <p className="text-sm leading-relaxed text-slate-400">
-              Monte seu esquadrão de cartas e enfrente combates para avançar pelas rupturas da Rede Nexus.
+              Monte seu esquadrão de cartas e enfrente combates PvE para avançar pelas rupturas da Rede Nexus.
             </p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Swords className="mb-2 h-4 w-4 text-cyan-300" /><span className="block text-[10px] font-mono font-bold text-white">PvE</span><span className="text-[9px] text-slate-500">Esquadrão</span></div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Zap className="mb-2 h-4 w-4 text-cyan-300" /><span className="block text-[10px] font-mono font-bold text-white">NEX + XP</span><span className="text-[9px] text-slate-500">Recompensas</span></div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Shield className="mb-2 h-4 w-4 text-cyan-300" /><span className="block text-[10px] font-mono font-bold text-white">Coleção</span><span className="text-[9px] text-slate-500">Suas cartas</span></div>
+            </div>
             <button
               type="button"
               onClick={() => onNavigate('play')}
@@ -61,14 +66,19 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
                 </p>
                 <h2 className="mt-1 font-heading text-2xl font-black text-white">NEXUS DUEL</h2>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[10px] font-mono font-bold uppercase">
-                <Clock className="w-3 h-3" />
-                Em desenvolvimento
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px] font-mono font-bold uppercase">
+                <CheckCircle2 className="w-3 h-3" />
+                Disponível
               </span>
             </div>
             <p className="text-sm leading-relaxed text-slate-400">
-              Duelo estratégico 4×4 de cartas, Nexos e blefe, com modos PvE e PvP.
+              Duelo estratégico 4×4 de cartas, Nexos e blefe. Monte seu deck e escolha entre PvE ou PvP.
             </p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Swords className="mb-2 h-4 w-4 text-purple-300" /><span className="block text-[10px] font-mono font-bold text-white">PvE</span><span className="text-[9px] text-slate-500">Contra CPU</span></div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Users className="mb-2 h-4 w-4 text-purple-300" /><span className="block text-[10px] font-mono font-bold text-white">PvP</span><span className="text-[9px] text-slate-500">Duelo online</span></div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Zap className="mb-2 h-4 w-4 text-purple-300" /><span className="block text-[10px] font-mono font-bold text-white">4×4</span><span className="text-[9px] text-slate-500">Deck + Nexos</span></div>
+            </div>
             <button
               type="button"
               onClick={() => onNavigate('arena')}
