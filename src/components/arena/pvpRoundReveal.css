@@ -135,3 +135,22 @@
  .pvp-battle-board[data-game-mode="true"] .pvp-selection-grid p{font-size:8px!important;line-height:1.05!important}
  .pvp-battle-board[data-game-mode="true"] .sticky{padding:4px 6px!important}
 }
+
+/* Phone landscape: show the full 3:4 card, never crop its bottom. */
+@media (orientation:landscape) and (max-width:1100px) and (max-height:600px){
+ .pvp-battle-board[data-game-mode="true"] .pvp-selection-grid img{
+   width:100%!important;
+   height:auto!important;
+   aspect-ratio:3/4!important;
+   object-fit:contain!important;
+   display:block!important;
+ }
+ .pvp-battle-board[data-game-mode="true"] .pvp-selection-grid>button{
+   overflow:visible!important;
+   align-self:start!important;
+ }
+ .pvp-battle-board[data-game-mode="true"] .pvp-selection-grid{
+   align-items:start!important;
+   padding-bottom:6px!important;
+ }
+}
