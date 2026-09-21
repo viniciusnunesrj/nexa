@@ -132,13 +132,22 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
     </header>
     {error && <p role="alert" className="rounded-lg border border-amber-400/30 p-3 text-sm text-amber-200">{error}</p>}
     {!snapshot || !perspective ? <p role="status">Recuperando partida e deck...</p> : <>
+      {finished && <div className={`rounded-2xl border p-5 text-center sm:p-8 ${room.winnerId === userId ? 'border-cyan-300/40 bg-cyan-400/10' : room.winnerId ? 'border-rose-400/40 bg-rose-400/10' : 'border-slate-300/30 bg-slate-400/10'}`}>
+        <p className="text-[10px] font-bold tracking-[.25em] text-slate-300">DUELO NEXAL · RESULTADO FINAL</p>
+        <h2 className={`mt-2 text-3xl font-black sm:text-4xl ${room.winnerId === userId ? 'text-cyan-300' : room.winnerId ? 'text-rose-300' : 'text-slate-200'}`}>{room.status === 'CANCELLED' ? 'SALA CANCELADA' : !room.winnerId ? 'EMPATE' : room.winnerId === userId ? 'VITÓRIA' : 'DERROTA'}</h2>
+        <div className="mx-auto my-5 grid max-w-sm grid-cols-2 gap-3">
+          <div className="rounded-xl bg-black/20 p-3"><span className="block text-xs text-cyan-200">VOCÊ · PV FINAL</span><strong className="text-3xl">{perspective.hp}</strong></div>
+          <div className="rounded-xl bg-black/20 p-3"><span className="block text-xs text-purple-200">ADVERSÁRIO · PV FINAL</span><strong className="text-3xl">{perspective.opponentHp}</strong></div>
+        </div>
+        <button type="button" onClick={onExit} className="w-full rounded-xl bg-cyan-400 px-6 py-3 text-sm font-black text-slate-950 sm:w-auto">SAIR DA SALA · VOLTAR À ARENA</button>
+      </div>}
       <div className="space-y-3 rounded-xl border border-purple-400/20 bg-purple-400/5 p-3">
         <p className="flex flex-wrap justify-between gap-2 text-sm"><strong>Adversário · PV {perspective.opponentHp}</strong><span>{perspective.opponentNexos} Nexos</span></p>
-        <div className="mx-auto grid max-w-sm grid-cols-4 gap-2">{[0, 1, 2, 3].map(index => <div key={index} className={`flex aspect-[3/4] min-w-0 items-center justify-center rounded-lg border border-purple-300/20 bg-[#15172e] text-[10px] font-bold ${index < snapshot.history.length ? 'opacity-40' : ''}`}>{index < snapshot.history.length ? 'USADA' : 'NEXA'}</div>)}</div>
+        <div className="mx-auto grid max-w-[240px] grid-cols-4 gap-2">{[0, 1, 2, 3].map(index => <div key={index} className={`flex aspect-[3/4] min-w-0 items-center justify-center rounded-lg border border-purple-300/20 bg-[#15172e] text-[10px] font-bold ${index < snapshot.history.length ? 'opacity-40' : ''}`}>{index < snapshot.history.length ? 'USADA' : 'NEXA'}</div>)}</div>
       </div>
       <h2 className="text-center text-lg font-bold">{finished ? 'PARTIDA ENCERRADA' : `RODADA ${room.round}`}</h2>
       <p className="flex flex-wrap justify-between gap-2 text-sm text-cyan-200"><strong>Você · PV {perspective.hp}</strong><span>{perspective.nexos} Nexos</span></p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{snapshot.deck.map(id => {
+      <div className="pvp-selection-grid grid grid-cols-2 gap-3 sm:grid-cols-4">{snapshot.deck.map(id => {
         const used = perspective.used.has(id);
         return <button key={id} type="button" disabled={locked || used} aria-pressed={selected === id} onClick={() => setChoice({ round: room.round, card: id, nexos })} className={`min-w-0 rounded-xl border p-2 text-left disabled:cursor-not-allowed ${used ? 'border-white/10 opacity-40' : selected === id ? 'border-cyan-300 bg-cyan-400/15 ring-2 ring-cyan-300/40 shadow-[0_0_24px_#22d3ee30]' : 'border-white/20'}`}><PvpCard id={id} /><span className="mt-2 block text-center text-[10px] text-cyan-200">{used ? 'USADA' : selected === id ? `${nexos} NEXOS INVESTIDOS` : 'DISPONÍVEL'}</span></button>;
       })}</div>
@@ -158,21 +167,25 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
         </div>
       </div>}
       <p role="status" className="text-center text-sm text-cyan-200">{finished ? room.winnerId ? room.winnerId === userId ? 'VITÓRIA' : 'DERROTA' : room.status === 'CANCELLED' ? 'SALA CANCELADA' : 'EMPATE' : syncing ? 'Sincronizando com o servidor...' : snapshot.submitted ? 'Jogada confirmada. Aguardando adversário' : 'Escolha uma carta e confirme sua jogada.'}</p>
-      {finished && <p className="text-center text-sm">PV final · Você {perspective.hp} × {perspective.opponentHp} Adversário</p>}
+
       {/* Results remain visible while the server advances. No animation or timer gates play. */}
       {snapshot.history.length > 0 && <div className="space-y-3 border-t border-white/10 pt-4">
         <h2 className="font-bold">Rodadas resolvidas</h2>
-        {[...snapshot.history].reverse().map((result, index) => {
+        {[...snapshot.history].reverse().map((result) => {
           const host = perspective.side === 'HOST';
-          return <details key={result.round} open={index === 0} className="rounded-xl border border-white/10 p-3">
-            <summary className="cursor-pointer text-sm font-bold">Rodada {result.round} · {result.winner === 'DRAW' ? 'Empate' : result.winner === perspective.side ? 'Você venceu' : 'Adversário venceu'} · {result.damage} de dano</summary>
-            <div className="mx-auto mt-3 grid max-w-md grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
-              <div className="min-w-0"><p className="mb-2 text-xs text-cyan-300">Você</p><PvpCard id={host ? result.hostCard : result.guestCard} /><p className="mt-2 text-sm">Ataque {host ? result.hostAttack : result.guestAttack}</p></div>
-              <strong>VS</strong>
-              <div className="min-w-0"><p className="mb-2 text-xs text-purple-300">Adversário</p><PvpCard id={host ? result.guestCard : result.hostCard} /><p className="mt-2 text-sm">Ataque {host ? result.guestAttack : result.hostAttack}</p></div>
+          return <article key={result.round} className="rounded-xl border border-white/10 bg-black/15 p-3">
+            <div className="flex flex-wrap justify-between gap-1 text-xs font-bold"><h3>RODADA {result.round}</h3><span className={result.winner === 'DRAW' ? 'text-slate-300' : result.winner === perspective.side ? 'text-cyan-300' : 'text-rose-300'}>{result.winner === 'DRAW' ? 'Empate' : result.winner === perspective.side ? 'Você venceu' : 'Adversário venceu'} · {result.damage} de dano</span></div>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {[true, false].map(isMine => {
+                const isHost = isMine === host;
+                const id = isHost ? result.hostCard : result.guestCard;
+                return <div key={isMine ? 'mine' : 'rival'} className="flex min-w-0 items-center gap-2 rounded-lg bg-white/[0.03] p-2">
+                  <CardImage templateId={id} alt="" className="h-12 w-9 shrink-0 rounded object-cover" />
+                  <div className="min-w-0 text-xs"><p className="text-[10px] text-slate-400">{isMine ? 'VOCÊ' : 'ADVERSÁRIO'}</p><p className="break-words font-bold">{ARENA_CARDS.find(card => card.id === id)?.name || id}</p><p className="mt-1 text-cyan-200">{isHost ? result.hostNexosSpent : result.guestNexosSpent} Nexos · Ataque {isHost ? result.hostAttack : result.guestAttack}</p></div>
+                </div>;
+              })}
             </div>
-            <p className="mt-3 text-center text-xs text-slate-300">PV após a rodada · Você {host ? result.hostHp : result.guestHp} × {host ? result.guestHp : result.hostHp} Adversário</p>
-          </details>;
+          </article>;
         })}
       </div>}
     </>}

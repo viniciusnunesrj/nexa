@@ -10,8 +10,8 @@
 .pvp-show-energy,.pvp-show-attack,.pvp-show-winner,.pvp-show-damage{visibility:hidden}
 .pvp-round-reveal:not(.pvp-reveal-step-0):not(.pvp-reveal-step-1) .pvp-show-energy{visibility:visible}
 .pvp-round-reveal:is(.pvp-reveal-step-3,.pvp-reveal-step-4,.pvp-reveal-step-5,.pvp-reveal-step-6,.pvp-reveal-step-7) .pvp-show-attack{visibility:visible}
-.pvp-round-reveal:is(.pvp-reveal-step-4,.pvp-reveal-step-5,.pvp-reveal-step-6,.pvp-reveal-step-7) .pvp-show-winner{visibility:visible}
-.pvp-round-reveal:is(.pvp-reveal-step-4,.pvp-reveal-step-5,.pvp-reveal-step-6,.pvp-reveal-step-7) .pvp-reveal-winner .pvp-reveal-art{box-shadow:0 0 24px #22d3ee66;border-color:#67e8f9}
+.pvp-round-reveal:is(.pvp-reveal-step-5,.pvp-reveal-step-6,.pvp-reveal-step-7) .pvp-show-winner{visibility:visible}
+.pvp-round-reveal:is(.pvp-reveal-step-5,.pvp-reveal-step-6,.pvp-reveal-step-7) .pvp-reveal-winner .pvp-reveal-art{box-shadow:0 0 24px #22d3ee66;border-color:#67e8f9}
 .pvp-reveal-step-5 .pvp-reveal-mine.pvp-reveal-winner .pvp-reveal-art{transform:translateX(12%) scale(1.03)}
 .pvp-reveal-step-5 .pvp-reveal-rival.pvp-reveal-winner .pvp-reveal-art{transform:translateX(-12%) scale(1.03)}
 .pvp-reveal-step-6 .pvp-reveal-loser .pvp-reveal-art{animation:nexa-pvp-impact .3s ease-out}
@@ -19,3 +19,13 @@
 @keyframes nexa-pvp-impact{0%,100%{transform:translateX(0);filter:brightness(1)}30%{transform:translateX(4px);filter:brightness(1.5)}65%{transform:translateX(-4px)}}
 @media(max-width:400px){.pvp-reveal-art{height:auto;width:100%;aspect-ratio:3/4}.pvp-reveal-cards{gap:.5rem}.pvp-reveal-values{padding:.35rem}}
 @media(prefers-reduced-motion:reduce){.pvp-reveal-art{transition:none!important;animation:none!important;transform:none!important}}
+.pvp-show-ability{visibility:hidden}
+.pvp-round-reveal:is(.pvp-reveal-step-4,.pvp-reveal-step-5,.pvp-reveal-step-6,.pvp-reveal-step-7) .pvp-show-ability{visibility:visible}
+.pvp-reveal-step-6 .pvp-show-damage{visibility:visible}
+.pvp-show-hp{visibility:hidden}
+.pvp-reveal-step-7 .pvp-show-hp{visibility:visible}
+.pvp-selection-grid button{touch-action:manipulation}
+.pvp-selection-grid img{max-height:220px;object-fit:contain;background:#030711}
+.pvp-round-reveal button{min-height:44px;flex-shrink:0}
+@media(max-width:639px){.pvp-selection-grid{gap:.6rem}.pvp-selection-grid img{max-height:150px}.pvp-selection-grid button{padding:.5rem}.pvp-reveal-panel{padding-bottom:env(safe-area-inset-bottom)}.pvp-reveal-cards{margin-top:1rem}.pvp-reveal-art{max-width:180px}.pvp-reveal-values{font-size:.65rem}}
+@media(max-height:600px) and (min-width:640px){.pvp-reveal-art{max-width:140px}.pvp-reveal-cards{margin-top:.5rem}}

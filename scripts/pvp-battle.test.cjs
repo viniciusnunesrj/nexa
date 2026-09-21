@@ -83,7 +83,7 @@ function server() {
 
 function mount(api, user) {
   const slots = [], effects = [], cleanups = [], timers = new Map();
-  let cursor = 0, timerId = 0, unmounted = false, lateWrites = 0;
+  let cursor = 0, timerId = 0, unmounted = false, lateWrites = 0, exits = 0;
   const react = {
     createElement: (type, props, ...children) => ({ type, props: { ...props, children } }),
     useState(initial) {
@@ -106,13 +106,15 @@ function mount(api, user) {
     clearTimeout: id => timers.delete(id),
     window: { confirm: () => true },
   });
-  const render = () => { cursor = 0; return PvpBattleBoard({ roomId: 'room', userId: user, onExit() {} }); };
+  const render = () => { cursor = 0; return PvpBattleBoard({ roomId: 'room', userId: user, onExit() { exits++; } }); };
   const nodes = tree => !tree || typeof tree !== 'object' ? [] : [tree, ...tree.props.children.flat(Infinity).flatMap(nodes)];
   const text = tree => typeof tree === 'string' || typeof tree === 'number' ? String(tree) : tree?.props?.children.flat(Infinity).map(text).join(' ') || '';
   const find = predicate => nodes(render()).find(predicate);
   render(); effects.forEach(effect => cleanups.push(effect()));
   return {
     text: () => text(render()),
+    exit: () => find(node => node.type === 'button' && text(node).includes('SAIR DA SALA · VOLTAR À ARENA')).props.onClick(),
+    get exits() { return exits; },
     choose(id) { const button = find(node => node.type === 'button' && node.props.children.some(child => child?.props?.id === id)); assert(button && !button.props.disabled); button.props.onClick(); },
     confirm: () => find(node => node.type === 'button' && /CONFIRMAR|ENVIANDO/.test(text(node))),
     async tick() { const pending = [...timers.values()]; timers.clear(); await Promise.all(pending.map(callback => callback())); await flush(); },
@@ -194,6 +196,18 @@ test('server knockout ends before round four, with both final perspectives', asy
   assert.match(host.text(), /DERROTA/); assert.match(guest.text(), /VITÓRIA/);
   assert.equal(host.confirm(), undefined); assert.equal(guest.confirm(), undefined);
   host.unmount(); guest.unmount();
+});
+
+test('draw finish offers exit and compact history retains cards, investment, attack and damage', async () => {
+  const api = server();
+  Object.assign(api.room, { status: 'FINISHED', round: 1, winnerId: null, hostHp: 7, guestHp: 7 });
+  api.history.push({ round: 1, winner: 'DRAW', damage: 0, hostCard: hostDeck[0], guestCard: guestDeck[0], hostAttack: 21, guestAttack: 21, hostNexosSpent: 4, guestNexosSpent: 5, hostHp: 7, guestHp: 7 });
+  const host = mount(api, 'host'); await flush();
+  const text = host.text();
+  assert.match(text, /EMPATE/); assert.match(text, /VOCÊ · PV FINAL/); assert.match(text, /ADVERSÁRIO · PV FINAL/);
+  assert(text.includes(ARENA_CARDS[0].name)); assert(text.includes(ARENA_CARDS[4].name));
+  assert.match(text, /4\s+Nexos/); assert.match(text, /5\s+Nexos/); assert.match(text, /Ataque\s+21/); assert.match(text, /0\s+de dano/);
+  host.exit(); assert.equal(host.exits, 1); host.unmount();
 });
 
 test('visual reveal uses seven stages, ignores repeated polls, skips restored history and cleans timers', () => {

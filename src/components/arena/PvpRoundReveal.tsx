@@ -74,7 +74,7 @@ export const PvpRoundReveal: React.FC<{ snapshot: PvpSnapshot | null; userId: st
                 <span className="pvp-show-energy">NEXOS <b>{spent}</b></span>
                 <span className="pvp-show-attack">ATAQUE FINAL <b>{attack}</b></span>
               </div>
-              <p className="pvp-show-attack mt-2 min-h-8 text-center text-[10px] font-bold text-amber-200">{effect}</p>
+              <p className="pvp-show-ability mt-2 min-h-8 text-center text-[10px] font-bold text-amber-200">{effect}</p>
               <p className="pvp-show-winner text-center text-xs font-black text-cyan-200">{won ? 'VENCEDOR' : round.winner === 'DRAW' ? 'EMPATE' : ' '}</p>
             </div>
           </React.Fragment>;
@@ -82,7 +82,7 @@ export const PvpRoundReveal: React.FC<{ snapshot: PvpSnapshot | null; userId: st
       </div>
       <div className="pvp-show-damage mt-4 rounded-xl border border-cyan-300/20 bg-cyan-400/5 p-3 text-center" aria-live="polite">
         <p className="text-xl font-black text-white">{round.winner === 'DRAW' ? 'EMPATE' : `${round.damage} DE DANO`}</p>
-        <p className="mt-1 text-sm text-cyan-200">PV · Você {host ? round.hostHp : round.guestHp} × {host ? round.guestHp : round.hostHp} Adversário</p>
+        <p className="pvp-show-hp mt-1 text-sm text-cyan-200">PV · Você {host ? round.hostHp : round.guestHp} × {host ? round.guestHp : round.hostHp} Adversário</p>
       </div>
     </div>
   </div>;
