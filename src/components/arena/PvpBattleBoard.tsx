@@ -9,9 +9,9 @@ import { PvpRoundReveal } from './PvpRoundReveal';
 function PvpCard({ id }: { id: string }) {
   const card = ARENA_CARDS.find(item => item.id === id);
   return <div className="min-w-0 space-y-1">
-    <CardImage templateId={id} alt={card?.name || 'Carta da partida'} className="aspect-[3/4] w-full rounded-lg object-cover" />
-    <p className="break-words text-xs font-bold text-white">{card?.name || id}</p>
-    {card && <p className="text-[10px] text-slate-300">PODER {card.power} · DANO {card.damage}<br />{card.ability}</p>}
+    <CardImage templateId={id} alt={card?.name || 'Carta da partida'} className="aspect-[3/4] w-full rounded-xl object-cover" />
+    <p className="break-words text-base font-bold text-white sm:text-xs">{card?.name || id}</p>
+    {card && <p className="text-sm text-slate-300 sm:text-[10px]">PODER {card.power} · DANO {card.damage}<br />{card.ability}</p>}
   </div>;
 }
 
@@ -149,9 +149,9 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
       <p className="flex flex-wrap justify-between gap-2 text-sm text-cyan-200"><strong>Você · PV {perspective.hp}</strong><span>{perspective.nexos} Nexos</span></p>
       <div className="pvp-selection-grid -mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0">{snapshot.deck.map(id => {
         const used = perspective.used.has(id);
-        return <button key={id} type="button" disabled={locked || used} aria-pressed={selected === id} onClick={() => setChoice({ round: room.round, card: id, nexos })} className={`w-[72vw] max-w-[270px] shrink-0 snap-center rounded-xl border p-2 text-left disabled:cursor-not-allowed sm:w-auto sm:max-w-none sm:min-w-0 ${used ? 'border-white/10 opacity-40' : selected === id ? 'border-cyan-300 bg-cyan-400/15 ring-2 ring-cyan-300/40 shadow-[0_0_24px_#22d3ee30]' : 'border-white/20'}`}><PvpCard id={id} /><span className="mt-2 block text-center text-[10px] text-cyan-200">{used ? 'USADA' : selected === id ? `${nexos} NEXOS INVESTIDOS` : 'DISPONÍVEL'}</span></button>;
+        return <button key={id} type="button" disabled={locked || used} aria-pressed={selected === id} onClick={() => setChoice({ round: room.round, card: id, nexos })} className={`w-[86vw] max-w-[340px] shrink-0 snap-center rounded-xl border p-3 text-left disabled:cursor-not-allowed sm:w-auto sm:max-w-none sm:min-w-0 sm:p-2 ${used ? 'border-white/10 opacity-40' : selected === id ? 'border-cyan-300 bg-cyan-400/15 ring-2 ring-cyan-300/40 shadow-[0_0_24px_#22d3ee30]' : 'border-white/20'}`}><PvpCard id={id} /><span className="mt-2 block text-center text-sm font-bold text-cyan-200 sm:text-[10px]">{used ? 'USADA' : selected === id ? `${nexos} NEXOS INVESTIDOS` : 'DISPONÍVEL'}</span></button>;
       })}</div>
-      {!finished && <div className="sticky bottom-2 z-10 space-y-3 rounded-xl border border-cyan-400/30 bg-[#081a2a]/95 bg-gradient-to-r from-cyan-400/10 to-blue-500/5 p-3 shadow-2xl backdrop-blur sm:static sm:p-4">
+      {!finished && <div className="sticky bottom-0 z-20 -mx-3 space-y-3 rounded-t-2xl border border-cyan-400/30 bg-[#081a2a]/95 bg-gradient-to-r from-cyan-400/10 to-blue-500/5 p-3 shadow-2xl backdrop-blur sm:static sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <label htmlFor="pvp-investment" className="text-xs font-bold text-cyan-200">{selected ? ARENA_CARDS.find(card => card.id === selected)?.name : 'SELECIONE UMA CARTA'}<span className="mt-1 block text-[10px] font-normal text-slate-400">INVESTIR ENERGIA · {perspective.nexos} Nexos disponíveis</span></label>
           <strong className="text-2xl font-black text-cyan-300">{nexos}<span className="ml-1 text-[10px]">NEXOS</span></strong>
