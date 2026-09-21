@@ -24,7 +24,16 @@ export interface PlayerBox {
   description: string;
   acquiredAt: string;
   ownerId: string;
-  source: 'STARTER_KIT' | 'GAMEPLAY_DROP' | 'SHOP_PURCHASE' | 'SEASON_REWARD' | 'EVENT';
+  source:
+    | 'STARTER_KIT'
+    | 'NEW_ACCOUNT_RECRUIT'
+    | 'GAMEPLAY_DROP'
+    | 'SHOP_PURCHASE'
+    | 'SEASON_REWARD'
+    | 'EVENT'
+    | `RIFT_VICTORY_DROP:${string}`
+    | `NEXUS_DUEL_PVE_VICTORY_DROP:${string}`
+    | `NEXUS_DUEL_PVP_VICTORY_DROP:${string}`;
 }
 
 export interface CharacterFragment {
