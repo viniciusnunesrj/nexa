@@ -44,6 +44,9 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
   // Measure reserved slots, never the transformed cards, including after a resize.
   useLayoutEffect(() => {
     const measure = () => {
+      // Reserve the actual layout above the canvas plus a small bottom margin.
+      const board = boardRef.current;
+      if (board) board.style.setProperty('--nexa-board-top', `${Math.max(0, board.getBoundingClientRect().top + window.scrollY)}px`);
       const next: Record<string, { x: number; y: number }> = {};
       for (const [key, slot] of Object.entries<HTMLDivElement | null>(slots.current)) {
         const target = key.startsWith('cpu:') ? cpuTarget.current : playerTarget.current;
@@ -77,7 +80,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
   return <div ref={boardRef} className="nexa-duel relative mx-auto rounded-2xl border border-cyan-400/20 bg-[#050914] text-white">
     <style>{`
       /* Every dimension follows the board, not the viewport or card contents. */
-      .nexa-duel { width: 100%; max-width: 1120px; aspect-ratio: 16 / 9; min-height: 0; overflow: hidden; container-type: inline-size; isolation: isolate; background-image: linear-gradient(135deg, #071725, #17132e 55%, #080e1c); }
+      .nexa-duel { width: min(100%, max(0px, calc((100dvh - var(--nexa-board-top, 160px) - 24px) * 16 / 9))); aspect-ratio: 16 / 9; margin-inline: auto; box-sizing: border-box; min-height: 0; overflow: hidden; container-type: inline-size; isolation: isolate; background-image: linear-gradient(135deg, #071725, #17132e 55%, #080e1c); }
       .nexa-hand { position: absolute; left: 0; width: 100%; height: 36%; display: flex; align-items: stretch; justify-content: center; gap: 1cqw; }
       .nexa-hand-cpu { top: 11%; }
       .nexa-hand-player { bottom: 11%; }
@@ -111,7 +114,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .nexa-hud > div:first-child > div { width: 12cqw; height: .7cqw; }
       .nexa-round, .nexa-status { font-size: 1.05cqw; line-height: 1.3; letter-spacing: .05em; }
       .nexa-select { position: absolute; right: 1%; top: 25%; width: 16%; height: 50%; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
-      .nexa-select > p { font-size: 1.15cqw; line-height: 1.4; }
+      .nexa-select-empty { inset: 47% 0 auto; width: 100%; height: 6%; pointer-events: none; background: none; border: 0; box-shadow: none; }
+      .nexa-select > p { margin: 0; font-size: 1.15cqw; line-height: 1.4; }
       .nexa-select > p > span { font-size: .95cqw; margin-top: 1cqw; }
       .nexa-select > div { width: 100%; padding: .7cqw; border-radius: 1cqw; box-shadow: none; }
       .nexa-select > div > p { font-size: 1cqw; line-height: 1.2; margin-top: .5cqw; letter-spacing: 0; }
@@ -148,10 +152,10 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     </div>
     <main className="nexa-center">
       <div ref={cpuTarget} className="nexa-target nexa-target-cpu" />
-      <span className="nexa-vs font-heading font-black text-purple-200">VS</span>
+      {(playing || selectedCard) && <span className="nexa-vs font-heading font-black text-purple-200">VS</span>}
       <div ref={playerTarget} className="nexa-target nexa-target-player" />
-      {!playing && <div className="nexa-select">
-        {selectedCard ? <InvestPanel card={selectedCard} duel={duel} setDuel={setDuel} confirm={confirm} /> : <p className="text-center text-xs font-bold uppercase tracking-widest text-cyan-200">Escolha seu campeão<br /><span className="mt-2 block text-[10px] text-slate-500">Selecione uma carta abaixo</span></p>}
+      {!playing && <div className={`nexa-select ${selectedCard ? '' : 'nexa-select-empty'}`}>
+        {selectedCard ? <InvestPanel card={selectedCard} duel={duel} setDuel={setDuel} confirm={confirm} /> : <p className="text-center text-xs font-bold uppercase tracking-widest text-cyan-200">ESCOLHA SEU CAMPEÃO</p>}
       </div>}
       {playing && <div aria-live="polite" className={`nexa-values pointer-events-none font-black ${duel.phase === 'REVEAL' ? 'nexa-reveal-values' : ''}`}>
         <span className="rounded-md bg-[#050914]/95 p-1 text-amber-200">{`CPU · ${duel.cpuInvestment} ◆ · ${duel.cpuAttack} ATK`}</span>
