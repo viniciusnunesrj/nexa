@@ -18,3 +18,4 @@ View your app in AI Studio: https://ai.studio/apps/5898ea48-1746-40c2-87ef-c1975
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+<!-- deployment refresh: dashboard-games-2026-09-21 -->
