@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
 import { ProgressionService } from '../services/progressionService';
-import { MAX_GAME_LEVEL, getXpRequiredForLevel, SLOTS_CONFIG } from '../config/levelConfig';
+import { LEVEL_REWARDS, MAX_GAME_LEVEL, getXpRequiredForLevel, SLOTS_CONFIG } from '../config/levelConfig';
 import {
   TrendingUp,
   Award,
@@ -238,6 +238,9 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'timeline' | 'slots' | 'history'>('timeline');
 
   const history = ProgressionService.getLevelUpHistory(user.id);
+  const progressionMilestones = Object.values(LEVEL_REWARDS).sort((a, b) => a.level - b.level);
+  const nextMilestone = progressionMilestones.find((reward) => reward.level > user.level);
+  const currentMilestone = [...progressionMilestones].reverse().find((reward) => reward.level <= user.level);
 
   const progressPercent = Math.min(
     100,
@@ -330,10 +333,10 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
                     Nível {user.level + 1}
                   </span>
                   <h4 className="font-heading font-bold text-white text-sm mt-1">
-                    Avançar patente do piloto
+                    {nextMilestone ? `${nextMilestone.name} · Nível ${nextMilestone.level}` : 'Avançar patente do piloto'}
                   </h4>
                   <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-                    Ganhe XP no RIFT BATTLE ou no NEXUS DUEL (PvE/PvP). Os jogos avançam a mesma progressão permanente.
+                    {nextMilestone ? nextMilestone.description : 'Ganhe XP no RIFT BATTLE ou no NEXUS DUEL (PvE/PvP).'}
                   </p>
                 </div>
               </div>
@@ -371,10 +374,10 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
           <div>
             <span className="text-[10px] font-mono text-slate-500 uppercase block">Patente Atual</span>
             <span className="font-heading text-xl font-bold text-purple-300">
-              Nível {user.level}
+              {currentMilestone?.name || `Nível ${user.level}`}
             </span>
             <span className="text-[10px] font-mono text-slate-400 block">
-              Máximo: Nível {MAX_GAME_LEVEL}
+              Nível {user.level} · Máximo {MAX_GAME_LEVEL}
             </span>
           </div>
 
