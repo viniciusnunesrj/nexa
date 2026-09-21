@@ -354,8 +354,11 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-layout { position: absolute; inset: 0; display: grid; grid-template-rows: 9% 38% 6% 38% 9%; min-height: 0; }
       .duel-fullscreen-button { position:absolute; z-index:90; right:1.2%; bottom:1.2%; padding:.55cqw .9cqw; border:1px solid #67e8f966; border-radius:.55cqw; background:#071827e8; color:#67e8f9; font-size:.85cqw; font-weight:900; }
       .duel-canvas:fullscreen { width:100vw!important; height:100vh!important; max-width:none!important; aspect-ratio:auto!important; border:0!important; border-radius:0!important; }
-      .duel-canvas[data-mobile-game="true"] { position:fixed!important; inset:0!important; z-index:2147483647!important; width:100vw!important; height:100dvh!important; max-width:none!important; max-height:100dvh!important; margin:0!important; aspect-ratio:auto!important; border:0!important; border-radius:0!important; background:#07101e!important; }
-      .duel-canvas[data-mobile-game="true"] .duel-layout { inset:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)!important; }
+      .duel-canvas[data-mobile-game="true"] { position:fixed!important; z-index:2147483647!important; margin:0!important; border:0!important; border-radius:0!important; background:#07101e!important; }
+      @media (orientation: landscape) and (max-width:1100px) {
+        .duel-canvas[data-mobile-game="true"] { width:min(100vw,calc(100dvh * 16 / 9))!important; height:min(100dvh,calc(100vw * 9 / 16))!important; max-width:100vw!important; max-height:100dvh!important; aspect-ratio:16/9!important; left:50%!important; top:50%!important; right:auto!important; bottom:auto!important; transform:translate(-50%,-50%)!important; padding:0!important; }
+        .duel-canvas[data-mobile-game="true"] .duel-layout { inset:0!important; }
+      }
 
 
       .duel-rotate-hint { display:none; }
