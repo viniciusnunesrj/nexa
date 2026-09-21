@@ -29,9 +29,9 @@ export const PvpRoundReveal: React.FC<{ snapshot: PvpSnapshot | null; userId: st
   useEffect(() => {
     if (!presentation) return;
     setStep(1);
-    const timers = [500, 1000, 1550, 2050, 2450, 2750].map((delay, index) =>
+    const timers = [150, 350, 700, 1850, 2500, 3150].map((delay, index) =>
       setTimeout(() => setStep(index + 2), delay));
-    timers.push(setTimeout(() => { setPresentation(null); setStep(0); }, 3800));
+    timers.push(setTimeout(() => { setPresentation(null); setStep(0); }, 4400));
     return () => timers.forEach(clearTimeout);
   }, [presentation]);
 
@@ -42,7 +42,7 @@ export const PvpRoundReveal: React.FC<{ snapshot: PvpSnapshot | null; userId: st
   return <div className={`pvp-round-reveal pvp-reveal-step-${step}`} role="dialog" aria-modal="true" aria-label={`Confronto da rodada ${round.round}`}>
     <div className="pvp-reveal-panel">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-bold tracking-widest text-cyan-300">CONFRONTO · RODADA {round.round}</p>
+        <p className="text-xs font-bold tracking-widest text-cyan-300">DUELO NEXAL · RODADA {round.round}/4</p>
         <button autoFocus type="button" onClick={() => { setPresentation(null); setStep(0); }} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-slate-300">Pular apresentação</button>
       </div>
       <div className="pvp-reveal-cards">
@@ -66,8 +66,8 @@ export const PvpRoundReveal: React.FC<{ snapshot: PvpSnapshot | null; userId: st
           return <React.Fragment key={side}>
             {index === 1 && <strong className="pvp-reveal-vs">VS</strong>}
             <div className={`pvp-reveal-fighter ${index === 0 ? 'pvp-reveal-mine' : 'pvp-reveal-rival'} ${won ? 'pvp-reveal-winner' : lost ? 'pvp-reveal-loser' : ''}`}>
-              <p className="mb-2 text-center text-[10px] font-bold tracking-wider text-cyan-200">{index === 0 ? 'MINHA CARTA' : 'CARTA ADVERSÁRIA'}</p>
-              <div className="pvp-reveal-art"><CardImage templateId={id} alt={card?.name || id} className="h-full w-full rounded-xl object-cover" /></div>
+              <p className="mb-2 text-center text-[10px] font-bold tracking-wider text-cyan-200">{index === 0 ? 'VOCÊ' : 'ADVERSÁRIO'}</p>
+              <div className="pvp-reveal-art"><CardImage templateId={id} alt={card?.name || id} className="h-full w-full rounded-xl object-contain" /></div>
               <p className="mt-2 min-h-8 text-center text-xs font-bold text-white">{card?.name || id}</p>
               <div className="pvp-reveal-values">
                 <span>PODER <b>{card?.power ?? '—'}</b></span>
@@ -75,7 +75,7 @@ export const PvpRoundReveal: React.FC<{ snapshot: PvpSnapshot | null; userId: st
                 <span className="pvp-show-attack">ATAQUE FINAL <b>{attack}</b></span>
               </div>
               <p className="pvp-show-ability mt-2 min-h-8 text-center text-[10px] font-bold text-amber-200">{effect}</p>
-              <p className="pvp-show-winner text-center text-xs font-black text-cyan-200">{won ? 'VENCEDOR' : round.winner === 'DRAW' ? 'EMPATE' : ' '}</p>
+              <p className="pvp-show-winner text-center text-xs font-black text-cyan-200">{won ? 'VITÓRIA NA RODADA' : round.winner === 'DRAW' ? 'EMPATE' : lost ? 'DERROTA NA RODADA' : ' '}</p>
             </div>
           </React.Fragment>;
         })}
