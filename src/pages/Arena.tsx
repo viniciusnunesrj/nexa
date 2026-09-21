@@ -290,12 +290,14 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-canvas[data-phase="CALC"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-charge 560ms ease-in-out infinite alternate; }
       .duel-canvas[data-phase="VS"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-ready 520ms ease-out; }
       .duel-spent-nexos { position: absolute; z-index: 42; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: .25cqw; pointer-events: none; font-size: .72cqw; font-weight: 900; letter-spacing: .08em; color: #fde047; text-shadow: 0 0 .8cqw #facc15aa; }
-      .duel-spent-cpu { top: 38%; }
-      .duel-spent-player { bottom: 38%; color: #67e8f9; text-shadow: 0 0 .8cqw #22d3eeaa; }
+      .duel-spent-cpu { top: 38%; --nexo-flight: -3.4cqw; }
+      .duel-spent-player { bottom: 38%; --nexo-flight: 3.4cqw; color: #67e8f9; text-shadow: 0 0 .8cqw #22d3eeaa; }
       .duel-spent-gems { display: flex; justify-content: center; gap: .22cqw; }
       .duel-spent-gems span { opacity: 0; animation: nexa-spent-gem 620ms ease-out forwards; animation-delay: calc(var(--nexo-i) * 90ms); }
-      .duel-canvas[data-phase="CALC"] .duel-spent-gems span { animation-name: nexa-spent-gem-charge; }
-      .duel-canvas[data-phase="VS"] .duel-spent-gems span, .duel-canvas[data-phase="IMPACT"] .duel-spent-gems span { opacity: 1; animation: nexa-spent-gem-hold 620ms ease-in-out infinite alternate; animation-delay: calc(var(--nexo-i) * 55ms); }
+      .duel-canvas[data-phase="CALC"] .duel-spent-gems span { animation: nexa-spent-gem-charge 760ms cubic-bezier(.2,.75,.2,1) forwards; animation-delay: calc(var(--nexo-i) * 95ms); }
+      .duel-canvas[data-phase="CALC"] .duel-spent-nexos strong { animation: nexa-nexo-label 900ms ease-out both; }
+      .duel-canvas[data-phase="VS"] .duel-spent-gems span { opacity: .2; transform: translateY(var(--nexo-flight)) scale(.25); }
+      .duel-canvas[data-phase="IMPACT"] .duel-spent-nexos { opacity: 0; }
       .duel-canvas[data-phase="IMPACT"] .duel-confrontation::before { content: ''; position: absolute; z-index: 3; left: 50%; top: 50%; width: 8cqw; height: 8cqw; transform: translate(-50%,-50%); border-radius: 999px; background: radial-gradient(circle,#fff 0 3%,#67e8f9bb 8%,#a78bfa66 25%,transparent 67%); animation: nexa-burst 520ms ease-out forwards; }
       .duel-canvas[data-phase="IMPACT"][data-winner="player"] .duel-row[aria-label="Suas cartas"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-strike-up 620ms cubic-bezier(.2,.85,.25,1); }
       .duel-canvas[data-phase="IMPACT"][data-winner="cpu"] .duel-row[aria-label="Cartas da CPU"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-strike-down 620ms cubic-bezier(.2,.85,.25,1); }
@@ -369,8 +371,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       @keyframes nexa-ready { 0% { transform: scale(1); } 45% { transform: scale(1.045); } 100% { transform: scale(1); } }
       @keyframes nexa-announcement-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.75); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
       @keyframes nexa-spent-gem { 0% { opacity: 0; transform: translateY(1.4cqw) scale(.45); } 65% { opacity: 1; transform: translateY(-.15cqw) scale(1.25); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-      @keyframes nexa-spent-gem-charge { 0% { opacity: 0; transform: translateY(1.6cqw) scale(.35); } 55% { opacity: 1; transform: translateY(-.45cqw) scale(1.3); filter: brightness(1.8); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-      @keyframes nexa-spent-gem-hold { from { transform: translateY(0) scale(.95); filter: brightness(1); } to { transform: translateY(-.18cqw) scale(1.12); filter: brightness(1.55); } }
+      @keyframes nexa-spent-gem-charge { 0% { opacity: 0; transform: translateY(0) scale(.35); } 22% { opacity: 1; transform: translateY(0) scale(1.25); filter: brightness(1.9); } 72% { opacity: 1; transform: translateY(var(--nexo-flight)) scale(.72); filter: brightness(2.2); } 100% { opacity: 0; transform: translateY(var(--nexo-flight)) scale(.15); filter: brightness(2.8); } }
+      @keyframes nexa-nexo-label { 0%,18% { opacity: 0; transform: scale(.85); } 38%,75% { opacity: 1; transform: scale(1); } 100% { opacity: .25; transform: scale(.94); } }
       @keyframes nexa-burst { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.2); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(2.8); } }
       @keyframes nexa-strike-up { 0% { transform: translateY(0) scale(1); } 32% { transform: translateY(-5.5cqw) scale(1.08) rotate(-1deg); filter: brightness(1.55); } 46% { transform: translateY(-6.2cqw) scale(1.11); } 72% { transform: translateY(-1.2cqw) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
       @keyframes nexa-strike-down { 0% { transform: translateY(0) scale(1); } 32% { transform: translateY(5.5cqw) scale(1.08) rotate(1deg); filter: brightness(1.55); } 46% { transform: translateY(6.2cqw) scale(1.11); } 72% { transform: translateY(1.2cqw) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
