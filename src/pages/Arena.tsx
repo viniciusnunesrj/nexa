@@ -78,20 +78,21 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     <style>{`
       /* Every dimension follows the board, not the viewport or card contents. */
       .nexa-duel { width: 100%; max-width: 1120px; aspect-ratio: 16 / 9; min-height: 0; overflow: hidden; container-type: inline-size; isolation: isolate; background-image: linear-gradient(135deg, #071725, #17132e 55%, #080e1c); }
-      .nexa-hand { position: absolute; left: 19%; width: 62%; display: flex; justify-content: space-between; }
-      .nexa-hand-cpu { top: 12%; }
-      .nexa-hand-player { bottom: 12%; }
-      .nexa-slot { position: relative; width: 23.3871%; aspect-ratio: 3 / 4; min-width: 0; flex: 0 0 23.3871%; border-radius: 1cqw; background: #060b18; box-shadow: inset 0 0 0 1px #ffffff18; }
+      .nexa-hand { position: absolute; left: 0; width: 100%; height: 36%; display: flex; align-items: stretch; justify-content: center; gap: 1cqw; }
+      .nexa-hand-cpu { top: 11%; }
+      .nexa-hand-player { bottom: 11%; }
+      .nexa-slot { position: relative; width: auto; height: 100%; aspect-ratio: .72; min-height: 0; min-width: 0; flex: 0 0 auto; border-radius: 1cqw; background: #060b18; box-shadow: inset 0 0 0 1px #ffffff18; }
       .nexa-moving { position: absolute; inset: 0; width: 100%; height: 100%; perspective: 900px; transform-origin: center; }
       .nexa-slot[data-active="true"] { z-index: 20; }
-      .nexa-card-face, .nexa-card-face > div { width: 100%; height: 100%; min-height: 0; min-width: 0; }
-      .nexa-card-face > div { overflow: hidden; padding: .6cqw; border-radius: .8cqw; }
-      .nexa-card-face > div > div:nth-of-type(2) { font-size: .75cqw; line-height: 1.2; letter-spacing: 0; white-space: nowrap; overflow: hidden; }
-      .nexa-card-face > div > p { margin-top: .3cqw; font-size: 1.1cqw; line-height: 1.2; }
+      .nexa-duel .nexa-card-face, .nexa-duel .nexa-card-face > div { width: 100% !important; height: 100% !important; aspect-ratio: .72; min-height: 0 !important; min-width: 0; overflow: hidden; box-sizing: border-box; }
+      .nexa-moving > div { width: 100%; height: 100%; min-height: 0; }
+      .nexa-card-face > div { display: flex; flex-direction: column; padding: .6cqw; border-radius: .8cqw; }
+      .nexa-card-face > div > div:nth-of-type(2) { flex-shrink: 0; font-size: .75cqw; line-height: 1.2; letter-spacing: 0; white-space: nowrap; overflow: hidden; }
+      .nexa-card-face > div > p { flex-shrink: 0; min-width: 0; margin: .3cqw 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.15cqw; line-height: 1.25; }
       .nexa-card-face > div > p:last-of-type:not(:first-of-type) { font-size: .85cqw; }
-      .nexa-card-face > div > div:nth-of-type(3) { height: 48%; margin: .4cqw 0; font-size: 4cqw; }
+      .nexa-card-face > div > div:nth-of-type(3) { height: auto; min-height: 0; flex: 1 1 0; margin: .4cqw 0; overflow: hidden; font-size: 4.5cqw; }
       .nexa-card-face > div > div:nth-of-type(3) > span:last-child { font-size: .7cqw; }
-      .nexa-card-face > div > div:nth-of-type(4) { gap: .2cqw; font-size: .9cqw; line-height: 1.2; white-space: nowrap; }
+      .nexa-card-face > div > div:nth-of-type(4) { flex-shrink: 0; gap: .2cqw; font-size: .9cqw; line-height: 1.2; white-space: nowrap; }
       .nexa-card-face > div > svg { width: 1cqw; height: 1cqw; top: .5cqw; right: .5cqw; }
       .nexa-card-face > div > span { font-size: 1.4cqw; line-height: 1.2; }
       .nexa-card-face > div > span:nth-of-type(2) { font-size: 4cqw; margin: .5cqw 0; }
