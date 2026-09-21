@@ -115,6 +115,16 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
   const [pvpResumeSyncing, setPvpResumeSyncing] = useState(false);
   const [pvpHistory, setPvpHistory] = useState<any[]>([]);
   const [pvpRoundTransition, setPvpRoundTransition] = useState(false);
+  useEffect(() => {
+    if (!currentUser || pvpRoomId) return;
+    let active = true;
+    supabase.rpc('get_duelo_nexal_pvp_active_room').then(({ data }) => {
+      if (!active || !data?.id) return;
+      setPvpRoomId(data.id); setPvpRoomState(data); setPvpCode(data.code || ''); setPvpOpen(true);
+      setPvpStatus(data.status === 'WAITING' ? 'Sala anterior recuperada. Aguardando adversário.' : 'Partida PvP em andamento recuperada.');
+    });
+    return () => { active = false; };
+  }, [currentUser?.id, pvpRoomId]);
   const pvpRevealTimers = useRef<number[]>([]);
   const playPvpReveal = (result: any, resolvedRound: number, resetChoice = true) => {
     pvpRevealTimers.current.forEach((timer) => window.clearTimeout(timer));
