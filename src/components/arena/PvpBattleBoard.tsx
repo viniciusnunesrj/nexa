@@ -26,6 +26,23 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
   const [syncing, setSyncing] = useState(true);
   const [reward, setReward] = useState<{ outcome: string; nex_gained: number; xp_gained: number; rewarded: boolean; pair_match_number: number } | null>(null);
   const settlingReward = useRef(false);
+  const boardRef = useRef<HTMLElement>(null);
+  const [gameMode, setGameMode] = useState(false);
+  const enterGameMode = async () => {
+    setGameMode(true);
+    const el = boardRef.current;
+    if (!el) return;
+    try { if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen(); } catch {}
+    try {
+      const orientation = screen.orientation as ScreenOrientation & { lock?: (orientation: 'landscape') => Promise<void> };
+      if (orientation.lock) await orientation.lock('landscape');
+    } catch {}
+  };
+  useEffect(() => {
+    const onFullscreen = () => { if (!document.fullscreenElement && window.innerWidth > window.innerHeight) setGameMode(false); };
+    document.addEventListener('fullscreenchange', onFullscreen);
+    return () => document.removeEventListener('fullscreenchange', onFullscreen);
+  }, []);
   const controller = useRef<AbortController | null>(null);
   const reading = useRef<Promise<PvpSnapshot> | null>(null);
   const sending = useRef(false);
@@ -150,10 +167,10 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
     }
   };
 
-  return <section className="pvp-battle-board mx-auto w-full min-w-0 max-w-4xl space-y-3 rounded-2xl border border-cyan-400/20 bg-[#07101f] p-3 text-white sm:space-y-4 sm:p-6" aria-label="Tabuleiro PvP">
+  return <><div className="pvp-portrait-gate"><div><strong>GIRE O CELULAR</strong><p>O Duelo Nexal foi preparado para jogar com o celular deitado.</p><button type="button" onClick={enterGameMode}>TELA CHEIA E JOGAR</button></div></div><section ref={boardRef} data-game-mode={gameMode ? 'true' : 'false'} className="pvp-battle-board mx-auto w-full min-w-0 max-w-4xl space-y-3 rounded-2xl border border-cyan-400/20 bg-[#07101f] p-3 text-white sm:space-y-4 sm:p-6" aria-label="Tabuleiro PvP">
     <PvpRoundReveal snapshot={snapshot} userId={userId} />
     <header className="flex flex-wrap items-center justify-between gap-3">
-      <div><p className="text-xs font-bold text-cyan-300">DUELO NEXAL · PVP</p><h1 className="text-lg font-bold">Sala {room?.code || '· sincronizando'}</h1></div>
+      <div><p className="text-xs font-bold text-cyan-300">DUELO NEXAL · PVP</p><h1 className="text-lg font-bold">Sala {room?.code || '· sincronizando'}</h1></div><button type="button" onClick={enterGameMode} className="pvp-fullscreen-button">⛶ TELA CHEIA</button>
       {finished ? <button onClick={onExit} className="rounded-lg border border-white/20 px-4 py-2 text-sm">Sair da sala</button> : <button onClick={forfeit} disabled={busy || !snapshot} className="rounded-lg border border-rose-400/30 px-4 py-2 text-sm text-rose-300 disabled:opacity-40">Desistir</button>}
     </header>
     {error && <p role="alert" className="rounded-lg border border-amber-400/30 p-3 text-sm text-amber-200">{error}</p>}
@@ -219,5 +236,5 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
         })}
       </div>}
     </>}
-  </section>;
+  </section></>;
 }
