@@ -190,14 +190,14 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
     if (serverSubmitted !== pvpWaitingMove) setPvpWaitingMove(serverSubmitted);
     if (data.status === 'READY' || data.status === 'PLAYING') {
       const serverRound = Number(data.round || 1);
-      if (serverRound > pvpLastResolvedRound + 1) {
+      if (serverRound > pvpLastResolvedRound) {
         const resolvedRound = serverRound - 1;
         const { data: result } = await supabase.rpc('get_duelo_nexal_pvp_round_result', { p_room_id: pvpRoomId, p_round: resolvedRound });
         if (result?.resolved) { setPvpOpponentUsedCount((count) => Math.max(count, resolvedRound)); playPvpReveal(result, resolvedRound); }
       }
       setPvpWaitingMove(serverSubmitted);
       setPvpStatus(serverSubmitted ? 'Jogada confirmada. Aguardando adversário...' : 'Sua vez. Escolha uma carta e confirme.');
-    } if (data.status === 'FINISHED') { if (pvpWaitingMove) { const finalRound = Number(data.round); const { data: result } = await supabase.rpc('get_duelo_nexal_pvp_round_result', { p_room_id: pvpRoomId, p_round: finalRound }); if (result?.resolved && finalRound > pvpLastResolvedRound) { playPvpReveal(result, finalRound, false); } } setPvpWaitingMove(false); setPvpStatus('Partida finalizada.'); } };
+    } if (data.status === 'FINISHED') { const finalRound = Number(data.round); if (finalRound > pvpLastResolvedRound) { const { data: result } = await supabase.rpc('get_duelo_nexal_pvp_round_result', { p_room_id: pvpRoomId, p_round: finalRound }); if (result?.resolved) { playPvpReveal(result, finalRound, false); } } setPvpWaitingMove(false); setPvpStatus('Partida finalizada.'); } };
     refresh(); const timer = window.setInterval(refresh, 1500); return () => { active = false; window.clearInterval(timer); };
   }, [pvpRoomId, pvpWaitingMove, pvpLastResolvedRound]);
   const pvpMyHp = pvpIsHost ? pvpRoomState?.hostHp : pvpRoomState?.guestHp;
