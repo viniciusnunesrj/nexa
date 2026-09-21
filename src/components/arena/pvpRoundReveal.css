@@ -287,3 +287,42 @@
  width:auto!important;height:min(24dvh,104px)!important;max-height:104px!important;
  aspect-ratio:3/4!important;object-fit:contain!important;margin:0 auto!important;
 }
+
+/* Shared Duelo Nexal confrontation language: PvP resolves inside the board instead of looking like a separate game/modal. */
+.pvp-round-reveal{position:absolute!important;inset:0!important;z-index:80!important;display:grid!important;place-items:center!important;background:radial-gradient(circle at 50% 50%,#17255455 0 14%,#030915dc 48%,#020611f4 100%)!important;backdrop-filter:none!important}
+.pvp-reveal-panel{position:relative!important;width:min(88%,760px)!important;max-height:92%!important;overflow:hidden!important;border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
+.pvp-reveal-panel>div:first-child{position:absolute;left:0;right:0;top:0;z-index:5;justify-content:center!important;pointer-events:none}
+.pvp-reveal-panel>div:first-child button{position:absolute;right:0;pointer-events:auto;opacity:.65}
+.pvp-reveal-cards{display:grid!important;grid-template-columns:minmax(0,1fr) clamp(30px,5vw,58px) minmax(0,1fr)!important;align-items:center!important;gap:clamp(6px,2vw,22px)!important;margin-top:28px!important}
+.pvp-reveal-fighter{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;padding:8px!important;border:0!important;background:transparent!important}
+.pvp-reveal-art{grid-column:auto!important;grid-row:auto!important;width:min(100%,190px)!important;aspect-ratio:.70/1!important;max-width:190px!important;border:1px solid #627393!important;border-radius:12px!important;background:#0d1b2c!important;box-shadow:0 0 24px #22d3ee22!important;overflow:hidden!important}
+.pvp-reveal-art img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:top!important}
+.pvp-reveal-fighter>p:nth-of-type(2){grid-column:auto!important;grid-row:auto!important;text-align:center!important;margin:6px 0 0!important;min-height:0!important}
+.pvp-reveal-values{grid-column:auto!important;grid-row:auto!important;width:min(100%,210px)!important;margin-top:5px!important;padding:6px!important;border:1px solid #67e8f933!important;border-radius:8px!important;background:#071827dd!important}
+.pvp-show-ability{grid-column:auto!important;grid-row:auto!important;text-align:center!important;min-height:12px!important;margin:3px 0 0!important}
+.pvp-show-winner{position:static!important;margin-top:3px!important;min-height:16px!important}
+.pvp-reveal-vs{font-size:clamp(18px,3vw,34px)!important;color:#eef6ff!important;text-shadow:0 0 18px #67e8f988!important}
+.pvp-show-damage{width:min(70%,480px)!important;margin:10px auto 0!important;padding:7px!important;background:#07101ed9!important;border-color:#67e8f955!important}
+.pvp-reveal-step-1 .pvp-reveal-fighter{opacity:.45;transform:scale(.94)}
+.pvp-reveal-step-2 .pvp-reveal-fighter{opacity:1;transform:scale(1);transition:transform .35s ease,opacity .35s ease}
+.pvp-reveal-step-3 .pvp-reveal-art{animation:nexa-pvp-reveal-pulse .7s ease-out}
+.pvp-reveal-step-4 .pvp-reveal-values{box-shadow:0 0 20px #22d3ee22}
+.pvp-reveal-step-5 .pvp-reveal-vs{animation:nexa-pvp-vs .55s ease-out}
+.pvp-reveal-step-6 .pvp-show-damage{animation:nexa-pvp-impact .55s ease-out}
+@keyframes nexa-pvp-reveal-pulse{0%{transform:scale(.94);opacity:.6}55%{transform:scale(1.055);filter:brightness(1.45)}100%{transform:scale(1);opacity:1}}
+@keyframes nexa-pvp-vs{0%{transform:scale(.65);opacity:.2}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1)}}
+@keyframes nexa-pvp-impact{0%{transform:scale(.85);opacity:.2}45%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@media(max-width:1100px){
+ .pvp-reveal-panel{width:96%!important;max-height:98%!important}
+ .pvp-reveal-cards{margin-top:22px!important}
+ .pvp-reveal-art{width:min(100%,120px)!important;max-width:120px!important}
+ .pvp-reveal-values{font-size:8px!important;padding:3px!important}
+ .pvp-show-damage{width:min(82%,420px)!important;margin-top:5px!important;padding:4px!important}
+}
+@media(orientation:landscape) and (max-height:600px){
+ .pvp-reveal-panel{width:min(88vw,680px)!important}
+ .pvp-reveal-art{width:auto!important;height:min(42dvh,150px)!important;max-width:none!important}
+ .pvp-reveal-fighter>p:nth-of-type(2){font-size:9px!important;margin-top:2px!important}
+ .pvp-show-ability,.pvp-show-winner{font-size:8px!important;margin-top:1px!important}
+ .pvp-show-damage p:first-child{font-size:13px!important}
+}
