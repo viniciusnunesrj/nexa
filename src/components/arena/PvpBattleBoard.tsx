@@ -22,6 +22,8 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [syncing, setSyncing] = useState(true);
+  const [reward, setReward] = useState<{ outcome: string; nex_gained: number; xp_gained: number; rewarded: boolean; pair_match_number: number } | null>(null);
+  const settlingReward = useRef(false);
   const controller = useRef<AbortController | null>(null);
   const reading = useRef<Promise<PvpSnapshot> | null>(null);
   const sending = useRef(false);
@@ -70,6 +72,18 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
   const selected = choice.round === room?.round ? choice.card : null;
   const nexos = choice.round === room?.round ? Math.min(choice.nexos, perspective?.nexos ?? 0) : 0;
   const locked = busy || syncing || !active || snapshot?.submitted === true;
+
+  useEffect(() => {
+    if (room?.status !== 'FINISHED' || settlingReward.current || reward) return;
+    settlingReward.current = true;
+    void supabase.rpc('settle_duelo_nexal_pvp_reward', { p_room_id: roomId }).then(({ data, error: rewardError }) => {
+      if (rewardError) {
+        setError('Partida encerrada, mas a recompensa ainda não pôde ser sincronizada.');
+        return;
+      }
+      if (data) setReward(data as typeof reward);
+    }).finally(() => { settlingReward.current = false; });
+  }, [room?.status, roomId, reward]);
 
   const submit = async () => {
     if (sending.current || locked || !selected || !snapshot || !perspective || perspective.used.has(selected)) return;
@@ -140,6 +154,10 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
           <div className="rounded-xl bg-black/20 p-3"><span className="block text-xs text-cyan-200">VOCÊ · PV FINAL</span><strong className="text-3xl">{perspective.hp}</strong></div>
           <div className="rounded-xl bg-black/20 p-3"><span className="block text-xs text-purple-200">ADVERSÁRIO · PV FINAL</span><strong className="text-3xl">{perspective.opponentHp}</strong></div>
         </div>
+        {reward && <div className="mx-auto mb-5 max-w-sm rounded-xl border border-amber-300/20 bg-black/20 p-3 text-sm">
+          {reward.rewarded ? <p><strong className="text-amber-200">RECOMPENSA:</strong> +{reward.nex_gained} NEX · +{reward.xp_gained} XP</p> : <p className="text-slate-300">{reward.outcome === 'FORFEIT' ? 'Partida encerrada por desistência · sem recompensa.' : 'Limite contra farm atingido para este adversário nas últimas 24h · sem recompensa.'}</p>}
+          {reward.rewarded && reward.pair_match_number > 0 && <p className="mt-1 text-xs text-slate-400">Partida recompensada {reward.pair_match_number}/3 contra este adversário nas últimas 24h.</p>}
+        </div>}
         <button type="button" onClick={onExit} className="w-full rounded-xl bg-cyan-400 px-6 py-3 text-sm font-black text-slate-950 sm:w-auto">SAIR DA SALA · VOLTAR À ARENA</button>
       </div>}
       <div className="space-y-3 rounded-xl border border-purple-400/20 bg-purple-400/5 p-3">
