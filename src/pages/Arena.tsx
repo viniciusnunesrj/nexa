@@ -333,6 +333,14 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     <style>{`
       .duel-canvas { position: relative; width: min(100%, max(0px, calc((100dvh - var(--nexa-board-top, 160px) - 24px) * 16 / 9))); aspect-ratio: 16 / 9; margin-inline: auto; min-height: 0; box-sizing: border-box; overflow: hidden; isolation: isolate; container-type: inline-size; color: #eef6ff; border: 1px solid #22445a; border-radius: 1.4cqw; background: linear-gradient(145deg, #091726, #111529 60%, #0b1020); }
       .duel-layout { position: absolute; inset: 0; display: grid; grid-template-rows: 9% 38% 6% 38% 9%; min-height: 0; }
+      .duel-rotate-hint { display:none; }
+      @media (max-width: 639px) and (orientation: portrait) {
+        .duel-canvas::after { content:'GIRE O CELULAR PARA JOGAR'; position:absolute; inset:0; z-index:100; display:grid; place-items:center; padding:2rem; background:#030711f7; color:#67e8f9; font-size:clamp(18px,5vw,28px); font-weight:900; letter-spacing:.08em; text-align:center; }
+      }
+      @media (max-height: 639px) and (orientation: landscape) {
+        .duel-canvas { position:fixed!important; inset:0!important; z-index:9999!important; width:100vw!important; height:100dvh!important; max-width:none!important; aspect-ratio:auto!important; margin:0!important; border:0!important; border-radius:0!important; }
+        .duel-layout { grid-template-rows: 9% 38% 6% 38% 9%; }
+      }
       .duel-hud { display: flex; align-items: center; justify-content: space-between; gap: 1cqw; padding: 0 2cqw; min-width: 0; overflow: hidden; font-size: 1.1cqw; }
       .duel-hud > div:first-child { flex-wrap: nowrap; gap: 1cqw; font-size: 1.2cqw; white-space: nowrap; }
       .duel-hud > div:first-child > div { width: 10cqw; height: .6cqw; }
