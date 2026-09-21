@@ -220,8 +220,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     if (duel.phase === 'SELECT' || duel.result) return;
     const phase = duel.phase;
     const delays: Record<Exclude<DuelPhase, 'SELECT'>, number> = {
-      LOCK: 150, CPU: 200, ENTER: 350, REVEAL: 1150, CALC: 400,
-      VS: 700, IMPACT: 350, DAMAGE: 800, RESULT: 1200, NEXT: 350,
+      LOCK: 150, CPU: 200, ENTER: 350, REVEAL: 1150, CALC: 1450,
+      VS: 850, IMPACT: 500, DAMAGE: 900, RESULT: 1200, NEXT: 350,
     };
     const timer = window.setTimeout(() => setDuel((current) => {
       if (!current || current.result || current.phase !== phase) return current;
@@ -294,8 +294,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-spent-player { bottom: 38%; --nexo-flight: 3.4cqw; color: #67e8f9; text-shadow: 0 0 .8cqw #22d3eeaa; }
       .duel-spent-gems { display: flex; justify-content: center; gap: .22cqw; }
       .duel-spent-gems span { opacity: 0; animation: nexa-spent-gem 620ms ease-out forwards; animation-delay: calc(var(--nexo-i) * 90ms); }
-      .duel-canvas[data-phase="CALC"] .duel-spent-gems span { animation: nexa-spent-gem-charge 760ms cubic-bezier(.2,.75,.2,1) forwards; animation-delay: calc(var(--nexo-i) * 95ms); }
-      .duel-canvas[data-phase="CALC"] .duel-spent-nexos strong { animation: nexa-nexo-label 900ms ease-out both; }
+      .duel-canvas[data-phase="CALC"] .duel-spent-gems span { animation: nexa-spent-gem-charge 1150ms cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(var(--nexo-i) * 120ms); }
+      .duel-canvas[data-phase="CALC"] .duel-spent-nexos strong { animation: nexa-nexo-label 1350ms ease-out both; }
       .duel-canvas[data-phase="VS"] .duel-spent-gems span { opacity: .2; transform: translateY(var(--nexo-flight)) scale(.25); }
       .duel-canvas[data-phase="IMPACT"] .duel-spent-nexos { opacity: 0; }
       .duel-canvas[data-phase="IMPACT"] .duel-confrontation::before { content: ''; position: absolute; z-index: 3; left: 50%; top: 50%; width: 8cqw; height: 8cqw; transform: translate(-50%,-50%); border-radius: 999px; background: radial-gradient(circle,#fff 0 3%,#67e8f9bb 8%,#a78bfa66 25%,transparent 67%); animation: nexa-burst 520ms ease-out forwards; }
@@ -371,7 +371,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       @keyframes nexa-ready { 0% { transform: scale(1); } 45% { transform: scale(1.045); } 100% { transform: scale(1); } }
       @keyframes nexa-announcement-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.75); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
       @keyframes nexa-spent-gem { 0% { opacity: 0; transform: translateY(1.4cqw) scale(.45); } 65% { opacity: 1; transform: translateY(-.15cqw) scale(1.25); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-      @keyframes nexa-spent-gem-charge { 0% { opacity: 0; transform: translateY(0) scale(.35); } 22% { opacity: 1; transform: translateY(0) scale(1.25); filter: brightness(1.9); } 72% { opacity: 1; transform: translateY(var(--nexo-flight)) scale(.72); filter: brightness(2.2); } 100% { opacity: 0; transform: translateY(var(--nexo-flight)) scale(.15); filter: brightness(2.8); } }
+      @keyframes nexa-spent-gem-charge { 0% { opacity: 0; transform: translateY(0) scale(.35); } 16% { opacity: 1; transform: translateY(0) scale(1.28); filter: brightness(1.9); } 46% { opacity: 1; transform: translateY(0) scale(1.08); filter: brightness(1.55); } 82% { opacity: 1; transform: translateY(var(--nexo-flight)) scale(.78); filter: brightness(2.25); } 100% { opacity: 0; transform: translateY(var(--nexo-flight)) scale(.15); filter: brightness(2.8); } }
       @keyframes nexa-nexo-label { 0%,18% { opacity: 0; transform: scale(.85); } 38%,75% { opacity: 1; transform: scale(1); } 100% { opacity: .25; transform: scale(.94); } }
       @keyframes nexa-burst { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.2); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(2.8); } }
       @keyframes nexa-strike-up { 0% { transform: translateY(0) scale(1); } 32% { transform: translateY(-5.5cqw) scale(1.08) rotate(-1deg); filter: brightness(1.55); } 46% { transform: translateY(-6.2cqw) scale(1.11); } 72% { transform: translateY(-1.2cqw) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
