@@ -30,9 +30,7 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
                 <p className="text-[10px] font-mono font-bold tracking-[0.16em] text-cyan-400">
                   NEXA
                 </p>
-                <h2 className="mt-1 font-heading text-2xl font-black text-white">
-                  BATTLE
-                </h2>
+                <h2 className="mt-1 font-heading text-2xl font-black text-white">RIFT BATTLE</h2>
               </div>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px] font-mono font-bold uppercase">
                 <CheckCircle2 className="w-3 h-3" />
@@ -61,9 +59,7 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
                 <p className="text-[10px] font-mono font-bold tracking-[0.16em] text-purple-400">
                   NEXA
                 </p>
-                <h2 className="mt-1 font-heading text-2xl font-black text-white">
-                  ARENA
-                </h2>
+                <h2 className="mt-1 font-heading text-2xl font-black text-white">NEXUS DUEL</h2>
               </div>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[10px] font-mono font-bold uppercase">
                 <Clock className="w-3 h-3" />
@@ -78,7 +74,7 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
               onClick={() => onNavigate('arena')}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/[0.04] hover:bg-purple-500/10 border border-purple-500/30 hover:border-purple-400/50 text-purple-200 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all"
             >
-              Entrar na Arena
+              Entrar no Nexus Duel
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
