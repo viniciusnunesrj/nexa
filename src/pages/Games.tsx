@@ -17,8 +17,13 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
           Jogos
         </h1>
         <p className="text-slate-400 text-sm max-w-2xl">
-          Escolha seu próximo desafio na Rede Nexus.
+          Dois jogos, uma coleção e uma progressão compartilhada. Escolha seu próximo desafio na Rede Nexus.
         </p>
+        <div className="flex flex-wrap gap-2 pt-1 text-[10px] font-mono font-bold uppercase tracking-wider">
+          <span className="rounded-full border border-cyan-400/20 bg-cyan-400/[0.06] px-3 py-1.5 text-cyan-200">Mesma coleção</span>
+          <span className="rounded-full border border-purple-400/20 bg-purple-400/[0.06] px-3 py-1.5 text-purple-200">Mesmo nível e XP</span>
+          <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-slate-300">Históricos separados</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -90,6 +95,23 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
           </div>
         </section>
       </div>
+
+      <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5 sm:p-6">
+        <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
+          <div>
+            <p className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-cyan-300">Rift Battle</p>
+            <p className="mt-1 text-xs text-slate-400">Combate PvE por esquadrão, com recompensas e progressão da conta.</p>
+          </div>
+          <div className="hidden md:flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/20 text-[10px] font-black text-slate-300">NEXA</div>
+          <div className="md:text-right">
+            <p className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-purple-300">Nexus Duel</p>
+            <p className="mt-1 text-xs text-slate-400">Duelo 4×4 estratégico em PvE ou PvP usando cartas da sua coleção.</p>
+          </div>
+        </div>
+        <div className="mt-4 border-t border-white/10 pt-4 text-center text-[11px] font-mono text-slate-500">
+          Jogar qualquer um dos modos contribui para a progressão permanente do seu Piloto.
+        </div>
+      </section>
     </div>
   );
 };
