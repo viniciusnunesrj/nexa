@@ -251,11 +251,12 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
   };
   const playing = duel.phase !== 'SELECT' || !!duel.result;
   const advancing = !duel.result && !['SELECT', 'LOCK', 'CPU', 'NEXT'].includes(duel.phase);
+  const showdown = ['REVEAL', 'CALC', 'VS', 'IMPACT', 'DAMAGE', 'RESULT'].includes(duel.phase);
   const cpuFaceUp = !['SELECT', 'LOCK', 'CPU', 'ENTER'].includes(duel.phase);
   const calculationStep = duel.phase === 'CALC' ? duel.calcStep : ['VS', 'IMPACT', 'DAMAGE', 'RESULT'].includes(duel.phase) ? 4 : 0;
   const roundOutcome = duel.playerAttack === duel.cpuAttack ? 'EMPATE' : duel.playerAttack! > duel.cpuAttack! ? 'VITÓRIA NA RODADA' : 'DERROTA NA RODADA';
   const stageText: Record<DuelPhase, string> = { SELECT: 'Escolha uma carta e seus Nexos', LOCK: 'Jogada confirmada', CPU: 'CPU prepara sua carta', ENTER: 'Cartas em confronto', REVEAL: 'Revelando a CPU', CALC: 'Calculando ataque', VS: 'Ataques finais', IMPACT: 'Impacto!', DAMAGE: duel.roundMessage || 'Dano aplicado', RESULT: roundOutcome, NEXT: 'Preparando próxima rodada' };
-  return <div ref={boardRef} className="duel-canvas" data-confrontation={advancing}>
+  return <div ref={boardRef} className="duel-canvas" data-confrontation={advancing} data-showdown={showdown} data-phase={duel.phase}>
     <style>{`
       .duel-canvas { position: relative; width: min(100%, max(0px, calc((100dvh - var(--nexa-board-top, 160px) - 24px) * 16 / 9))); aspect-ratio: 16 / 9; margin-inline: auto; min-height: 0; box-sizing: border-box; overflow: hidden; isolation: isolate; container-type: inline-size; color: #eef6ff; border: 1px solid #22445a; border-radius: 1.4cqw; background: linear-gradient(145deg, #091726, #111529 60%, #0b1020); }
       .duel-layout { position: absolute; inset: 0; display: grid; grid-template-rows: 9% 38% 6% 38% 9%; min-height: 0; }
@@ -271,7 +272,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-mover, .duel-hud, .duel-gap { z-index: 1; }
       .duel-slot[data-active="true"] > .duel-mover { z-index: 30; }
       /* Lift the original moving elements above the scrim; never clone/remount cards. */
-      .duel-confrontation { position: absolute; inset: 0; z-index: 20; background: #030915b8; pointer-events: none; }
+      .duel-confrontation { position: absolute; inset: 0; z-index: 20; background: radial-gradient(circle at 50% 50%, #17255444 0 15%, #030915d9 48%, #020611f2 100%); pointer-events: none; }
+      .duel-confrontation::after { content: ''; position: absolute; left: 18%; right: 18%; top: 50%; height: 1px; background: linear-gradient(90deg, transparent, #67e8f966, #c4b5fd88, #67e8f966, transparent); box-shadow: 0 0 2.2cqw #67e8f944; opacity: .8; }
       .duel-canvas[data-confrontation="true"] .duel-slot:not([data-active="true"]) .duel-mover { opacity: .22; }
       .duel-canvas[data-confrontation="true"] .duel-hud { opacity: .55; }
       .duel-canvas[data-confrontation="true"] .duel-gap { visibility: hidden; }
@@ -280,6 +282,10 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       button.duel-mover:disabled { cursor: default; }
       button.duel-mover:focus-visible { outline: 2px solid #67e8f9; outline-offset: 3px; }
       .duel-motion-content { position: absolute; inset: 0; width: 100%; height: 100%; }
+      .duel-canvas[data-showdown="true"] .duel-slot[data-active="true"] .duel-motion-content { filter: drop-shadow(0 0 1.2cqw #22d3ee55); }
+      .duel-canvas[data-phase="REVEAL"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-reveal-pulse 700ms ease-out; }
+      .duel-canvas[data-phase="CALC"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-charge 560ms ease-in-out infinite alternate; }
+      .duel-canvas[data-phase="VS"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-ready 520ms ease-out; }
       .duel-portrait { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; min-width: 0; aspect-ratio: .70 / 1; box-sizing: border-box; overflow: hidden; border: 1px solid #627393; border-radius: .8cqw; background: #0d1b2c; }
       .duel-portrait[data-selected="true"] { border-color: #67e8f9; box-shadow: 0 0 1.2cqw #22d3ee55; }
       .duel-portrait[data-used="true"], .duel-turn[data-used="true"] { opacity: .35; filter: grayscale(1); }
@@ -320,7 +326,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-calculation > strong { color: #fde68a; border-top: 1px solid #fde68a55; padding-top: .4cqw; }
       .duel-calculation b { color: #67e8f9; }
       @keyframes duel-value-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-      .duel-announcement { position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 17%; box-sizing: border-box; padding: .7cqw .5cqw; overflow-wrap: anywhere; background: #07101eef; border: 1px solid #67e8f955; border-radius: .7cqw; pointer-events: none; text-align: center; }
+      .duel-announcement { position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 18%; box-sizing: border-box; padding: .65cqw .5cqw; overflow-wrap: anywhere; background: #07101ed9; border: 1px solid #67e8f955; border-radius: 999px; pointer-events: none; text-align: center; box-shadow: 0 0 2.4cqw #22d3ee22; animation: nexa-announcement-in 260ms ease-out; }
       .duel-announcement small { font-size: .85cqw; color: #cbd5e1; }
       .duel-announcement strong { font-size: 2cqw; color: #fde68a; }
       .duel-versus { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .7cqw; width: 100%; }
@@ -339,10 +345,14 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-finish > div { display: flex; gap: 1cqw; margin-top: 1cqw; }
       .duel-finish button { padding: 1.2cqw 2cqw; border: 1px solid #67e8f955; border-radius: .7cqw; font-size: 1.2cqw; font-weight: 800; background: #193a4e; }
       .duel-finish button:first-child { background: #67e8f9; color: #07101e; }
-      .nexa-impact { animation: nexa-impact 350ms ease-out; }
-      @keyframes nexa-impact { 30% { transform: translateY(-7px); filter: brightness(1.8); } 65% { transform: translateY(4px); } }
-      .nexa-clash { animation: nexa-clash 500ms ease-out; }
-      @keyframes nexa-clash { 50% { transform: scale(1.06); filter: brightness(1.4); } }
+      .nexa-impact { animation: nexa-impact 520ms ease-out; }
+      @keyframes nexa-impact { 0% { transform: translateX(0); } 18% { transform: translateX(-.35cqw); filter: brightness(2); } 32% { transform: translateX(.45cqw); } 48% { transform: translateX(-.25cqw); } 70% { transform: translateX(.12cqw); } 100% { transform: translateX(0); filter: brightness(.85); } }
+      .nexa-clash { animation: nexa-clash 620ms cubic-bezier(.2,.8,.2,1); }
+      @keyframes nexa-clash { 0% { transform: scale(1); } 35% { transform: scale(1.1); filter: brightness(1.7); } 48% { transform: scale(.97); } 70% { transform: scale(1.035); } 100% { transform: scale(1); filter: brightness(1); } }
+      @keyframes nexa-reveal-pulse { 0% { transform: scale(.94); opacity: .55; } 55% { transform: scale(1.055); filter: brightness(1.55); } 100% { transform: scale(1); opacity: 1; } }
+      @keyframes nexa-charge { from { filter: drop-shadow(0 0 .5cqw #22d3ee55) brightness(1); } to { filter: drop-shadow(0 0 1.8cqw #a78bfa88) brightness(1.16); } }
+      @keyframes nexa-ready { 0% { transform: scale(1); } 45% { transform: scale(1.045); } 100% { transform: scale(1); } }
+      @keyframes nexa-announcement-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.75); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
     `}</style>
     <div className="duel-layout">
       <header className="duel-hud">
