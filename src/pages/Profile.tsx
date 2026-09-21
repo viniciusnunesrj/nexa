@@ -251,7 +251,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate }) => {
 
         <div className="p-4 border-b sm:border-b-0 sm:border-r border-white/[0.06]">
           <div className="flex items-center justify-between text-slate-400 text-xs font-mono">
-            <span>Vitórias Arena</span>
+            <span>Vitórias Rift Battle</span>
             <Swords className="w-4 h-4 text-emerald-400" />
           </div>
           <span className="font-heading text-2xl font-black text-emerald-400 block mt-2">
