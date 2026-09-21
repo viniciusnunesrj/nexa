@@ -6,6 +6,7 @@ import { pvpPerspective, readPvpSnapshot } from './pvpBattleState';
 import type { PvpSnapshot } from './pvpBattleState';
 import { PvpRoundReveal } from './PvpRoundReveal';
 import './pvpRoundReveal.css';
+import { useAuth } from '../../contexts/AuthContext';
 
 function PvpCard({ id }: { id: string }) {
   const card = ARENA_CARDS.find(item => item.id === id);
@@ -17,6 +18,7 @@ function PvpCard({ id }: { id: string }) {
 }
 
 export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: () => void }> = ({ roomId, userId, onExit }) => {
+  const { updateUserBalance, addXP } = useAuth();
   const [snapshot, setSnapshot] = useState<PvpSnapshot | null>(null);
   const [choice, setChoice] = useState<{ round: number; card: string | null; nexos: number }>({ round: 0, card: null, nexos: 0 });
   const [busy, setBusy] = useState(false);
@@ -81,9 +83,18 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
         setError('Partida encerrada, mas a recompensa ainda não pôde ser sincronizada.');
         return;
       }
-      if (data) setReward(data as typeof reward);
+      if (data) {
+        const settled = data as typeof reward;
+        setReward(settled);
+        const cacheKey = `nexa:pvp-reward-ui:${roomId}:${userId}`;
+        if (settled?.rewarded && !sessionStorage.getItem(cacheKey)) {
+          updateUserBalance(settled.nex_gained, 0);
+          addXP(settled.xp_gained);
+          sessionStorage.setItem(cacheKey, '1');
+        }
+      }
     }).finally(() => { settlingReward.current = false; });
-  }, [room?.status, roomId, reward]);
+  }, [room?.status, roomId, userId, reward, updateUserBalance, addXP]);
 
   const submit = async () => {
     if (sending.current || locked || !selected || !snapshot || !perspective || perspective.used.has(selected)) return;
