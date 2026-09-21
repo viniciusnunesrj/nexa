@@ -1,4 +1,5 @@
 import React from 'react';
+// Vercel production sync: Nexus portal
 import { ArrowRight, CheckCircle2, Swords, Shield, Zap, Users } from 'lucide-react';
 
 interface GamesProps {
