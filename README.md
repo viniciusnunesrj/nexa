@@ -19,3 +19,4 @@ View your app in AI Studio: https://ai.studio/apps/5898ea48-1746-40c2-87ef-c1975
 3. Run the app:
    `npm run dev`
 <!-- deployment refresh: dashboard-games-2026-09-21 -->
+<!-- deployment refresh: preset-save-fix-2026-09-21-1128 -->
