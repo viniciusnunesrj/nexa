@@ -6,27 +6,54 @@ import type { ArenaCard } from '../config/arenaCards';
 interface ArenaProps { onNavigate: (page: string) => void; }
 type MatchResult = 'VICTORY' | 'DEFEAT' | 'DRAW' | null;
 type DuelPhase = 'SELECT' | 'LOCK' | 'CPU' | 'ENTER' | 'REVEAL' | 'CALC' | 'VS' | 'IMPACT' | 'DAMAGE' | 'RESULT' | 'NEXT';
+export interface ArenaMatchSummary {
+  winner: 'PLAYER' | 'CPU' | 'DRAW';
+  playerFinalHp: number; cpuFinalHp: number;
+  playerRoundsWon: number; cpuRoundsWon: number; roundsPlayed: number;
+  playerNexosRemaining: number; cpuNexosRemaining: number;
+}
 interface DuelState {
   playerCards: ArenaCard[]; cpuCards: ArenaCard[]; usedPlayer: string[]; usedCpu: string[];
   playerHp: number; cpuHp: number; playerNexos: number; cpuNexos: number; round: number;
   selectedId: string | null; investment: number; cpuInvestment: number; revealedCpu: ArenaCard | null;
   phase: DuelPhase; playerAttack: number | null; cpuAttack: number | null; roundMessage: string | null;
-  roundDamage: number; result: MatchResult; calcStep: number; playerWins: number; cpuWins: number;
+  roundDamage: number; result: MatchResult; matchSummary: ArenaMatchSummary | null; calcStep: number; playerWins: number; cpuWins: number;
 }
 
 const MAX_DECK_SIZE = 4;
 const MAX_ROUNDS = 4;
-const ROUND_TIME_SECONDS = 30; // Visual only: reaching zero never changes the rules.
+const ROUND_TIME_SECONDS = 30; // Timeout plays an available card with zero Nexos.
 const ELEMENT_ICONS: Record<string, string> = { Fogo: '🔥', Água: '💧', Ar: '🌪', Terra: '🌿', Luz: '✦', Sombra: '☾', Éter: '◇', Metal: '⚙', NEXA: '✧', Gelo: '❄' };
 const rarityStyle: Record<string, string> = { Comum: 'border-slate-300/40', Incomum: 'border-cyan-300/50', Raro: 'border-blue-400/70 shadow-blue-500/10', Épico: 'border-fuchsia-400/70 shadow-fuchsia-500/20', Lendário: 'border-amber-300 shadow-amber-400/25' };
 const freshDuel = (deck: ArenaCard[]): DuelState => {
   const playerCards = deck.slice(0, MAX_ROUNDS);
   const playerIds = new Set(playerCards.map((card) => card.id));
   const different = ARENA_CARDS.filter((card) => !playerIds.has(card.id));
-  return { playerCards, cpuCards: [...different, ...ARENA_CARDS.filter((card) => playerIds.has(card.id))].slice(0, MAX_ROUNDS), usedPlayer: [], usedCpu: [], playerHp: 12, cpuHp: 12, playerNexos: 12, cpuNexos: 12, round: 1, selectedId: null, investment: 0, cpuInvestment: 0, revealedCpu: null, phase: 'SELECT', playerAttack: null, cpuAttack: null, roundMessage: null, roundDamage: 0, result: null, calcStep: 1, playerWins: 0, cpuWins: 0 };
+  return { playerCards, cpuCards: [...different, ...ARENA_CARDS.filter((card) => playerIds.has(card.id))].slice(0, MAX_ROUNDS), usedPlayer: [], usedCpu: [], playerHp: 12, cpuHp: 12, playerNexos: 12, cpuNexos: 12, round: 1, selectedId: null, investment: 0, cpuInvestment: 0, revealedCpu: null, phase: 'SELECT', playerAttack: null, cpuAttack: null, roundMessage: null, roundDamage: 0, result: null, matchSummary: null, calcStep: 1, playerWins: 0, cpuWins: 0 };
 };
 const attackValue = (card: ArenaCard, nexos: number) => card.power + nexos * 2 + (card.abilityKind === 'IMPULSO' && nexos >= 3 ? 2 : 0);
 
+// Local snapshot only; no currency, XP or persistence side effects.
+const completedMatch = (duel: DuelState): ArenaMatchSummary | null => {
+  if (duel.playerHp > 0 && duel.cpuHp > 0 && duel.round < MAX_ROUNDS) return null;
+  return {
+    winner: duel.playerHp <= 0 ? 'CPU' : duel.cpuHp <= 0 ? 'PLAYER' : duel.playerHp > duel.cpuHp ? 'PLAYER' : duel.playerHp < duel.cpuHp ? 'CPU' : 'DRAW',
+    playerFinalHp: Math.max(0, duel.playerHp), cpuFinalHp: Math.max(0, duel.cpuHp),
+    playerRoundsWon: duel.playerWins, cpuRoundsWon: duel.cpuWins, roundsPlayed: duel.round,
+    playerNexosRemaining: duel.playerNexos, cpuNexosRemaining: duel.cpuNexos,
+  };
+};
+const lockRound = (current: DuelState | null, automatic: boolean, cardRoll: number, investmentRoll: number): DuelState | null => {
+  if (!current || current.result || current.matchSummary || current.phase !== 'SELECT' || current.round > MAX_ROUNDS) return current;
+  const available = current.playerCards.filter((card) => !current.usedPlayer.includes(card.id));
+  const playerCard = automatic ? available[0] : available.find((card) => card.id === current.selectedId);
+  const cpuAvailable = current.cpuCards.filter((card) => !current.usedCpu.includes(card.id));
+  if (!playerCard || !cpuAvailable.length) return current;
+  const investment = automatic ? 0 : Math.max(0, Math.min(current.playerNexos, current.investment));
+  const cpuCard = cpuAvailable[Math.floor(cardRoll * cpuAvailable.length)];
+  const cpuInvestment = Math.min(current.cpuNexos, Math.floor(investmentRoll * Math.min(4, current.cpuNexos + 1)));
+  return { ...current, selectedId: playerCard.id, investment, revealedCpu: cpuCard, playerAttack: attackValue(playerCard, investment), cpuAttack: attackValue(cpuCard, cpuInvestment), cpuInvestment, usedPlayer: [...current.usedPlayer, playerCard.id], usedCpu: [...current.usedCpu, cpuCard.id], calcStep: 1, phase: 'LOCK' };
+};
 export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
   const [deck, setDeck] = useState<ArenaCard[]>([]);
   const [duel, setDuel] = useState<DuelState | null>(null);
@@ -47,9 +74,18 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     if (duel.phase !== 'SELECT' || duel.result) return;
     const deadline = Date.now() + ROUND_TIME_SECONDS * 1000;
     setSecondsLeft(ROUND_TIME_SECONDS);
-    const timer = window.setInterval(() => setSecondsLeft(Math.max(0, Math.ceil((deadline - Date.now()) / 1000))), 250);
+    const timer = window.setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining === 0) {
+        window.clearInterval(timer);
+        const cardRoll = Math.random();
+        const investmentRoll = Math.random();
+        setDuel((current) => current?.round === duel.round ? lockRound(current, true, cardRoll, investmentRoll) : current);
+      }
+    }, 250);
     return () => window.clearInterval(timer);
-  }, [duel.round, duel.phase, duel.result]);
+  }, [duel.round, duel.phase, duel.result, setDuel]);
   // Measure reserved slots, never the transformed cards, including after a resize.
   useLayoutEffect(() => {
     const measure = () => {
@@ -81,16 +117,21 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     const phase = duel.phase;
     const delays: Record<Exclude<DuelPhase, 'SELECT'>, number> = {
       LOCK: 150, CPU: 200, ENTER: 350, REVEAL: 1150, CALC: 400,
-      VS: 700, IMPACT: 350, DAMAGE: 800, RESULT: 900, NEXT: 350,
+      VS: 700, IMPACT: 350, DAMAGE: 800, RESULT: 1200, NEXT: 350,
     };
     const timer = window.setTimeout(() => setDuel((current) => {
       if (!current || current.result || current.phase !== phase) return current;
       if (phase === 'IMPACT') {
-        if (!current || !current.revealedCpu || current.playerAttack === null || current.cpuAttack === null) return current; const playerCard = current.playerCards.find((card) => card.id === current.selectedId); if (!playerCard) return current; const playerWins = current.playerAttack > current.cpuAttack; const cpuWins = current.cpuAttack > current.playerAttack; const damage = playerWins ? Math.max(1, playerCard.damage - (current.revealedCpu.abilityKind === 'BLINDAGEM' ? 2 : 0)) : cpuWins ? Math.max(1, current.revealedCpu.damage - (playerCard.abilityKind === 'BLINDAGEM' ? 2 : 0)) : 0; let playerHp = current.playerHp; let cpuHp = current.cpuHp; let playerNexos = Math.max(0, current.playerNexos - current.investment); let cpuNexos = Math.max(0, current.cpuNexos - current.cpuInvestment); if (playerWins) { cpuHp -= damage; if (playerCard.abilityKind === 'DRENO') playerHp = Math.min(12, playerHp + 1); if (playerCard.abilityKind === 'ECO') playerNexos = Math.min(12, playerNexos + 1); } if (cpuWins) { playerHp -= damage; if (current.revealedCpu.abilityKind === 'DRENO') cpuHp = Math.min(12, cpuHp + 1); if (current.revealedCpu.abilityKind === 'ECO') cpuNexos = Math.min(12, cpuNexos + 1); } return { ...current, playerHp, cpuHp, playerNexos, cpuNexos, roundDamage: damage, roundMessage: playerWins ? `CPU sofreu -${damage} PV` : cpuWins ? `VOCÊ sofreu -${damage} PV` : 'EMPATE NO CONFRONTO', playerWins: current.playerWins + (playerWins ? 1 : 0), cpuWins: current.cpuWins + (cpuWins ? 1 : 0), phase: 'DAMAGE' };
+        if (!current || !current.revealedCpu || current.playerAttack === null || current.cpuAttack === null) return current; const playerCard = current.playerCards.find((card) => card.id === current.selectedId); if (!playerCard) return current; const playerWins = current.playerAttack > current.cpuAttack; const cpuWins = current.cpuAttack > current.playerAttack; const damage = playerWins ? Math.max(1, playerCard.damage - (current.revealedCpu.abilityKind === 'BLINDAGEM' ? 2 : 0)) : cpuWins ? Math.max(1, current.revealedCpu.damage - (playerCard.abilityKind === 'BLINDAGEM' ? 2 : 0)) : 0; let playerHp = current.playerHp; let cpuHp = current.cpuHp; let playerNexos = Math.max(0, current.playerNexos - current.investment); let cpuNexos = Math.max(0, current.cpuNexos - current.cpuInvestment); if (playerWins) { cpuHp -= damage; if (playerCard.abilityKind === 'DRENO') playerHp = Math.min(12, playerHp + 1); if (playerCard.abilityKind === 'ECO') playerNexos = Math.min(12, playerNexos + 1); } if (cpuWins) { playerHp -= damage; if (current.revealedCpu.abilityKind === 'DRENO') cpuHp = Math.min(12, cpuHp + 1); if (current.revealedCpu.abilityKind === 'ECO') cpuNexos = Math.min(12, cpuNexos + 1); } const resolved: DuelState = { ...current, playerHp, cpuHp, playerNexos, cpuNexos, roundDamage: damage, roundMessage: playerWins ? `CPU sofreu -${damage} PV` : cpuWins ? `VOCÊ sofreu -${damage} PV` : 'EMPATE NO CONFRONTO', playerWins: current.playerWins + (playerWins ? 1 : 0), cpuWins: current.cpuWins + (cpuWins ? 1 : 0), phase: 'DAMAGE' }; return { ...resolved, matchSummary: completedMatch(resolved) };
+      }
+      // A terminal match is locked as soon as damage lands. Finish its presentation
+      // before the final overlay, without returning through NEXT to the normal board.
+      if (phase === 'RESULT' && current.matchSummary) {
+        const result: MatchResult = current.matchSummary.winner === 'PLAYER' ? 'VICTORY' : current.matchSummary.winner === 'CPU' ? 'DEFEAT' : 'DRAW';
+        return { ...current, result };
       }
       if (phase === 'NEXT') {
-        const result: MatchResult = current.playerHp <= 0 ? 'DEFEAT' : current.cpuHp <= 0 ? 'VICTORY' : current.round >= MAX_ROUNDS ? current.playerHp > current.cpuHp ? 'VICTORY' : current.playerHp < current.cpuHp ? 'DEFEAT' : 'DRAW' : null;
-        return result ? { ...current, result } : { ...current, round: current.round + 1, selectedId: null, investment: 0, cpuInvestment: 0, revealedCpu: null, playerAttack: null, cpuAttack: null, roundMessage: null, roundDamage: 0, calcStep: 1, phase: 'SELECT' };
+        return { ...current, round: current.round + 1, selectedId: null, investment: 0, cpuInvestment: 0, revealedCpu: null, playerAttack: null, cpuAttack: null, roundMessage: null, roundDamage: 0, calcStep: 1, phase: 'SELECT' };
       }
       if (phase === 'CALC') return current.calcStep < 4 ? { ...current, calcStep: current.calcStep + 1 } : { ...current, phase: 'VS' };
       const next: Partial<Record<DuelPhase, DuelPhase>> = { LOCK: 'CPU', CPU: 'ENTER', ENTER: 'REVEAL', REVEAL: 'CALC', VS: 'IMPACT', DAMAGE: 'RESULT', RESULT: 'NEXT' };
@@ -98,13 +139,17 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     }), delays[phase]);
     return () => window.clearTimeout(timer);
   }, [duel.phase, duel.calcStep, duel.result, setDuel]);
-  const chooseCard = (id: string) => { if (duel.phase === 'SELECT') setDuel((current) => current ? { ...current, selectedId: id, investment: 0 } : current); };
-  const confirm = () => setDuel((current) => { if (!current || !current.selectedId || current.phase !== 'SELECT') return current; const playerCard = current.playerCards.find((card) => card.id === current.selectedId); const cpuAvailable = current.cpuCards.filter((card) => !current.usedCpu.includes(card.id)); if (!playerCard || !cpuAvailable.length) return current; const cpuCard = cpuAvailable[Math.floor(Math.random() * cpuAvailable.length)]; const cpuInvestment = Math.min(current.cpuNexos, Math.floor(Math.random() * Math.min(4, current.cpuNexos + 1))); return { ...current, revealedCpu: cpuCard, playerAttack: attackValue(playerCard, current.investment), cpuAttack: attackValue(cpuCard, cpuInvestment), cpuInvestment, usedPlayer: [...current.usedPlayer, playerCard.id], usedCpu: [...current.usedCpu, cpuCard.id], calcStep: 1, phase: 'LOCK' }; });
+  const chooseCard = (id: string) => setDuel((current) => current && current.phase === 'SELECT' && !current.result && !current.matchSummary && !current.usedPlayer.includes(id) && current.playerCards.some((card) => card.id === id) ? { ...current, selectedId: id, investment: 0 } : current);
+  const confirm = () => {
+    const cardRoll = Math.random();
+    const investmentRoll = Math.random();
+    setDuel((current) => lockRound(current, false, cardRoll, investmentRoll));
+  };
   const playing = duel.phase !== 'SELECT' || !!duel.result;
   const advancing = !duel.result && !['SELECT', 'LOCK', 'CPU', 'NEXT'].includes(duel.phase);
   const cpuFaceUp = !['SELECT', 'LOCK', 'CPU', 'ENTER'].includes(duel.phase);
   const calculationStep = duel.phase === 'CALC' ? duel.calcStep : ['VS', 'IMPACT', 'DAMAGE', 'RESULT'].includes(duel.phase) ? 4 : 0;
-  const roundOutcome = duel.playerAttack === duel.cpuAttack ? 'EMPATE' : duel.playerAttack! > duel.cpuAttack! ? 'VITÓRIA' : 'DERROTA';
+  const roundOutcome = duel.playerAttack === duel.cpuAttack ? 'EMPATE' : duel.playerAttack! > duel.cpuAttack! ? 'VITÓRIA NA RODADA' : 'DERROTA NA RODADA';
   const stageText: Record<DuelPhase, string> = { SELECT: 'Escolha uma carta e seus Nexos', LOCK: 'Jogada confirmada', CPU: 'CPU prepara sua carta', ENTER: 'Cartas em confronto', REVEAL: 'Revelando a CPU', CALC: 'Calculando ataque', VS: 'Ataques finais', IMPACT: 'Impacto!', DAMAGE: duel.roundMessage || 'Dano aplicado', RESULT: roundOutcome, NEXT: 'Preparando próxima rodada' };
   return <div ref={boardRef} className="duel-canvas" data-confrontation={advancing}>
     <style>{`
@@ -197,7 +242,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     <div className="duel-layout">
       <header className="duel-hud">
         <DuelStats label="CPU" hp={duel.cpuHp} nexos={duel.cpuNexos} />
-        <div className="duel-round">DUELO NEXAL · RODADA {duel.round}/{MAX_ROUNDS}<br /><span title="Cronômetro visual, sem penalidade" role="timer">◷ {String(Math.floor(secondsLeft / 60)).padStart(2, '0')}:{String(secondsLeft % 60).padStart(2, '0')} · {duel.phase === 'SELECT' ? 'TEMPO VISUAL' : 'PAUSADO'}</span></div>
+        <div className="duel-round">DUELO NEXAL · RODADA {duel.round}/{MAX_ROUNDS}<br /><span title="Ao zerar: carta disponível com 0 Nexos" role="timer">◷ {String(Math.floor(secondsLeft / 60)).padStart(2, '0')}:{String(secondsLeft % 60).padStart(2, '0')} · {duel.phase === 'SELECT' ? 'TEMPO DA RODADA' : 'PAUSADO'}</span></div>
       </header>
       <div className="duel-row" aria-label="Cartas da CPU">
         {duel.cpuCards.map((card) => {
@@ -240,7 +285,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     {['VS', 'IMPACT'].includes(duel.phase) && <div className="duel-announcement" role="status"><small>ATAQUE · CPU × VOCÊ</small><strong className="duel-versus"><b>{duel.cpuAttack}</b><span>VS</span><b>{duel.playerAttack}</b></strong></div>}
     {duel.phase === 'DAMAGE' && <div className={`duel-damage ${duel.playerAttack! > duel.cpuAttack! ? 'duel-damage-cpu' : 'duel-damage-player'}`} role="status">{duel.roundDamage ? `−${duel.roundDamage} PV` : 'SEM DANO'}</div>}
     {duel.phase === 'RESULT' && <div className="duel-announcement" role="status"><small>RESULTADO DA RODADA</small><strong>{roundOutcome}</strong><small>{duel.roundMessage}</small></div>}
-    {duel.result && <DuelResult duel={duel} onAgain={() => setDuel(freshDuel(duel.playerCards))} onBack={onBack} />}
+    {duel.result && duel.matchSummary && <DuelResult summary={duel.matchSummary} onAgain={() => { setSecondsLeft(ROUND_TIME_SECONDS); setDuel(freshDuel(duel.playerCards)); }} onGames={onGames} />}
   </div>;
 };
 
@@ -282,13 +327,14 @@ const InvestPanel: React.FC<{ card: ArenaCard; duel: DuelState; setDuel: React.D
 const LifeBar: React.FC<{ hp: number; player?: boolean }> = ({ hp, player = false }) => <div className="h-2 w-20 overflow-hidden rounded-full bg-black/50 sm:w-32"><div className={`h-full transition-[width] duration-700 ease-out ${player ? 'bg-gradient-to-r from-cyan-400 to-emerald-300' : 'bg-gradient-to-r from-rose-500 to-orange-400'}`} style={{ width: `${Math.max(0, hp) / 12 * 100}%` }} /></div>;
 const NexoBar: React.FC<{ count: number; highlighted?: boolean; player?: boolean }> = ({ count, highlighted = false, player = false }) => <div className={`mt-1 flex max-w-[145px] flex-wrap gap-0.5 text-[11px] ${highlighted || player ? 'text-cyan-300' : 'text-amber-400'}`}>{Array.from({ length: 12 }, (_, index) => <span key={index} className={index < count ? 'opacity-100 drop-shadow-[0_0_4px_currentColor]' : 'opacity-20'}>◆</span>)}</div>;
 const HiddenCard: React.FC<{ compact?: boolean }> = ({ compact = false }) => <div className={`relative flex ${compact ? 'min-h-[110px]' : 'h-[220px] w-[165px]'} w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-purple-300/50 bg-[radial-gradient(circle_at_50%_35%,rgba(97,58,178,.55),transparent_35%),linear-gradient(145deg,#11162e,#090b19)] text-center shadow-[inset_0_0_25px_rgba(168,85,247,.22),0_0_16px_rgba(168,85,247,.18)]`}><div className="absolute inset-2 rounded-lg border border-cyan-300/20" /><span className="relative font-heading text-sm font-black tracking-[.25em] text-purple-200">NEXA</span><span className="relative my-1 text-3xl text-cyan-300 drop-shadow-[0_0_10px_currentColor]">◇</span><span className="relative text-[7px] font-bold uppercase tracking-[.2em] text-purple-300">DUEL<br />CARTA OCULTA</span></div>;
-const DuelResult: React.FC<{ duel: DuelState; onAgain: () => void; onBack: () => void }> = ({ duel, onAgain, onBack }) => <div className="duel-finish" role="dialog" aria-modal="true" aria-labelledby="duel-final-title">
+const DuelResult: React.FC<{ summary: ArenaMatchSummary; onAgain: () => void; onGames: () => void }> = ({ summary, onAgain, onGames }) => <div className="duel-finish" role="dialog" aria-modal="true" aria-labelledby="duel-final-title">
   <span>NEXA · FIM DA PARTIDA</span>
-  <h2 id="duel-final-title">{duel.result === 'VICTORY' ? 'VITÓRIA' : duel.result === 'DEFEAT' ? 'DERROTA' : 'EMPATE'}</h2>
-  <p>PV FINAL · VOCÊ {duel.playerHp} × CPU {duel.cpuHp}</p>
-  <p>RODADAS VENCIDAS · VOCÊ {duel.playerWins} × CPU {duel.cpuWins}</p>
-  <p>{duel.round}/{MAX_ROUNDS} RODADAS · {duel.playerNexos} NEXOS RESTANTES</p>
-  <div><button type="button" autoFocus onClick={onAgain}>JOGAR NOVAMENTE</button><button type="button" onClick={onBack}>VOLTAR</button></div>
+  <h2 id="duel-final-title">{summary.winner === 'PLAYER' ? 'VITÓRIA' : summary.winner === 'CPU' ? 'DERROTA' : 'EMPATE'}</h2>
+  <p>PV FINAL · VOCÊ {summary.playerFinalHp} × CPU {summary.cpuFinalHp}</p>
+  <p>RODADAS VENCIDAS · VOCÊ {summary.playerRoundsWon} × CPU {summary.cpuRoundsWon}</p>
+  <p>NEXOS RESTANTES · VOCÊ {summary.playerNexosRemaining} × CPU {summary.cpuNexosRemaining}</p>
+  <p>{summary.roundsPlayed}/{MAX_ROUNDS} RODADAS DISPUTADAS</p>
+  <div><button type="button" autoFocus onClick={onAgain}>JOGAR NOVAMENTE</button><button type="button" onClick={onGames}>VOLTAR AOS JOGOS</button></div>
 </div>;
 const FlipCard: React.FC<{ card: ArenaCard; active: boolean; revealed: boolean; used: boolean; details?: React.ReactNode }> = ({ card, active, revealed, used, details }) => <div className="duel-turn" data-used={used} style={{ transform: revealed ? 'rotateY(180deg)' : 'rotateY(0deg)', transition: active ? 'transform 450ms ease-out' : 'none' }}><div className="duel-turn-face"><DuelPortrait card={card} hidden /></div><div className="duel-turn-face" style={{ transform: 'rotateY(180deg)' }}><DuelPortrait card={card} selected={active} used={used} details={details} /></div></div>;
 const BattleCard: React.FC<{ card: ArenaCard; compact?: boolean; battle?: boolean; selected?: boolean; hidden?: boolean; used?: boolean }> = ({ card, compact = false, battle = false, selected = false, hidden = false, used = false }) => hidden ? <HiddenCard compact={compact} /> : <div className={`relative overflow-hidden rounded-xl border ${selected ? 'border-cyan-300 shadow-[0_0_32px_rgba(34,211,238,.48)]' : rarityStyle[card.rarity] || 'border-white/20'} bg-[#0b1222] ${battle ? 'h-[230px] w-[165px] p-2.5 sm:h-[270px] sm:w-[195px] sm:p-3' : compact ? 'min-h-[128px] p-2 sm:min-h-[150px] sm:p-2.5' : 'min-h-[145px] p-3'}`}><div className={`absolute inset-0 opacity-75 ${card.element === 'Fogo' ? 'bg-[radial-gradient(circle_at_50%_42%,rgba(249,115,22,.42),transparent_48%)]' : card.element === 'Água' ? 'bg-[radial-gradient(circle_at_50%_42%,rgba(34,211,238,.42),transparent_48%)]' : card.element === 'Ar' ? 'bg-[radial-gradient(circle_at_50%_42%,rgba(96,165,250,.42),transparent_48%)]' : card.element === 'Terra' ? 'bg-[radial-gradient(circle_at_50%_42%,rgba(132,204,22,.38),transparent_48%)]' : 'bg-[radial-gradient(circle_at_50%_42%,rgba(168,85,247,.45),transparent_48%)]'}`} /><div className="relative z-10 flex items-center justify-between text-[7px] font-black uppercase tracking-wider text-cyan-200"><span>{card.element} · {card.rarity}</span><span>{used ? 'USADA' : 'NEXA'}</span></div><p className={`relative z-10 mt-1 truncate text-center font-heading font-black text-white ${battle ? 'text-sm' : 'text-[10px]'}`}>{card.name}</p><div className={`relative z-10 my-1 flex items-center justify-center border-y border-white/10 bg-black/20 ${battle ? 'h-28 text-6xl' : 'h-12 text-3xl'}`}><span className="drop-shadow-[0_0_16px_currentColor]">{ELEMENT_ICONS[card.element] || '✦'}</span><span className="absolute bottom-1 right-1 text-[7px] font-bold uppercase text-slate-300">{card.element}</span></div><div className="relative z-10 flex justify-between text-[9px] font-mono text-slate-100"><span><b className="text-cyan-300">PODER</b> {card.power}</span><span><b className="text-rose-300">DANO</b> {card.damage}</span></div>{card.ability && <p className={`relative z-10 mt-1 truncate text-center text-[8px] ${battle ? 'text-amber-200' : 'text-slate-400'}`}>{card.ability}</p>}{selected && <Check className="absolute right-2 top-2 z-20 h-3 w-3 text-cyan-300" />}</div>;
