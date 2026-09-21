@@ -289,7 +289,13 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-canvas[data-phase="REVEAL"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-reveal-pulse 700ms ease-out; }
       .duel-canvas[data-phase="CALC"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-charge 560ms ease-in-out infinite alternate; }
       .duel-canvas[data-phase="VS"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-ready 520ms ease-out; }
-      .duel-canvas[data-nexos="true"] .duel-slot[data-active="true"]::after { content: '◆ ◆ ◆'; position: absolute; z-index: 7; left: 50%; bottom: -1.15cqw; transform: translateX(-50%); color: #fde047; font-size: .72cqw; letter-spacing: .24cqw; text-shadow: 0 0 .8cqw #facc15aa; animation: nexa-nexos-feed 720ms ease-in-out infinite alternate; }
+      .duel-spent-nexos { position: absolute; z-index: 42; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: .25cqw; pointer-events: none; font-size: .72cqw; font-weight: 900; letter-spacing: .08em; color: #fde047; text-shadow: 0 0 .8cqw #facc15aa; }
+      .duel-spent-cpu { top: 38%; }
+      .duel-spent-player { bottom: 38%; color: #67e8f9; text-shadow: 0 0 .8cqw #22d3eeaa; }
+      .duel-spent-gems { display: flex; justify-content: center; gap: .22cqw; }
+      .duel-spent-gems span { opacity: 0; animation: nexa-spent-gem 620ms ease-out forwards; animation-delay: calc(var(--nexo-i) * 90ms); }
+      .duel-canvas[data-phase="CALC"] .duel-spent-gems span { animation-name: nexa-spent-gem-charge; }
+      .duel-canvas[data-phase="VS"] .duel-spent-gems span, .duel-canvas[data-phase="IMPACT"] .duel-spent-gems span { opacity: 1; animation: nexa-spent-gem-hold 620ms ease-in-out infinite alternate; animation-delay: calc(var(--nexo-i) * 55ms); }
       .duel-canvas[data-phase="IMPACT"] .duel-confrontation::before { content: ''; position: absolute; z-index: 3; left: 50%; top: 50%; width: 8cqw; height: 8cqw; transform: translate(-50%,-50%); border-radius: 999px; background: radial-gradient(circle,#fff 0 3%,#67e8f9bb 8%,#a78bfa66 25%,transparent 67%); animation: nexa-burst 520ms ease-out forwards; }
       .duel-canvas[data-phase="IMPACT"][data-winner="player"] .duel-row[aria-label="Suas cartas"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-strike-up 620ms cubic-bezier(.2,.85,.25,1); }
       .duel-canvas[data-phase="IMPACT"][data-winner="cpu"] .duel-row[aria-label="Cartas da CPU"] .duel-slot[data-active="true"] .duel-motion-content { animation: nexa-strike-down 620ms cubic-bezier(.2,.85,.25,1); }
@@ -362,7 +368,9 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       @keyframes nexa-charge { from { filter: drop-shadow(0 0 .5cqw #22d3ee55) brightness(1); } to { filter: drop-shadow(0 0 1.8cqw #a78bfa88) brightness(1.16); } }
       @keyframes nexa-ready { 0% { transform: scale(1); } 45% { transform: scale(1.045); } 100% { transform: scale(1); } }
       @keyframes nexa-announcement-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.75); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-      @keyframes nexa-nexos-feed { from { opacity: .35; transform: translateX(-50%) translateY(.25cqw) scale(.9); } to { opacity: 1; transform: translateX(-50%) translateY(-.2cqw) scale(1.08); } }
+      @keyframes nexa-spent-gem { 0% { opacity: 0; transform: translateY(1.4cqw) scale(.45); } 65% { opacity: 1; transform: translateY(-.15cqw) scale(1.25); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+      @keyframes nexa-spent-gem-charge { 0% { opacity: 0; transform: translateY(1.6cqw) scale(.35); } 55% { opacity: 1; transform: translateY(-.45cqw) scale(1.3); filter: brightness(1.8); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+      @keyframes nexa-spent-gem-hold { from { transform: translateY(0) scale(.95); filter: brightness(1); } to { transform: translateY(-.18cqw) scale(1.12); filter: brightness(1.55); } }
       @keyframes nexa-burst { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.2); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(2.8); } }
       @keyframes nexa-strike-up { 0% { transform: translateY(0) scale(1); } 32% { transform: translateY(-5.5cqw) scale(1.08) rotate(-1deg); filter: brightness(1.55); } 46% { transform: translateY(-6.2cqw) scale(1.11); } 72% { transform: translateY(-1.2cqw) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
       @keyframes nexa-strike-down { 0% { transform: translateY(0) scale(1); } 32% { transform: translateY(5.5cqw) scale(1.08) rotate(1deg); filter: brightness(1.55); } 46% { transform: translateY(6.2cqw) scale(1.11); } 72% { transform: translateY(1.2cqw) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
@@ -386,6 +394,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
           </div>;
         })}
       </div>
+      <SpentNexos count={duel.cpuInvestment} side="cpu" visible={nexosActive} />
+      <SpentNexos count={duel.investment} side="player" visible={nexosActive} />
       <div className="duel-gap">
         {!playing && !selectedCard ? <p>ESCOLHA SEU CAMPEÃO</p> : <strong>VS</strong>}
       </div>
@@ -439,7 +449,7 @@ const AttackBreakdown: React.FC<{ card: ArenaCard; nexos: number; attack: number
     {step >= 4 && <strong>= ATAQUE FINAL <b>{attack}</b></strong>}
   </div>;
 };
-const DuelStats: React.FC<{ label: string; hp: number; nexos: number; player?: boolean }> = ({ label, hp, nexos, player = false }) => <div className="flex items-center gap-x-2 text-[10px] font-bold whitespace-nowrap"><span className={player ? 'text-cyan-300' : 'text-rose-300'}>{label}</span><span>{hp}/12 PV</span><LifeBar hp={hp} player={player} /><div className="flex items-center gap-1.5"><NexoBar count={nexos} player={player} /><strong className="text-amber-300">{nexos}/12</strong></div></div>;
+const DuelStats: React.FC<{ label: string; hp: number; nexos: number; player?: boolean }> = ({ label, hp, nexos, player = false }) => <div className="flex items-center gap-x-2 text-[10px] font-bold whitespace-nowrap"><span className={player ? 'text-cyan-300' : 'text-rose-300'}>{label}</span><span>{hp}/12 PV</span><LifeBar hp={hp} player={player} /><span className={player ? 'text-cyan-300' : 'text-amber-300'}>◆ {nexos}</span></div>;
 const InvestPanel: React.FC<{ card: ArenaCard; duel: DuelState; setDuel: React.Dispatch<React.SetStateAction<DuelState | null>>; confirm: () => void }> = ({ card, duel, setDuel, confirm }) => <div className="duel-invest-panel">
   <strong>{card.name}</strong>
   <p>PODER {card.power} · DANO {card.damage}</p>
@@ -455,6 +465,7 @@ const InvestPanel: React.FC<{ card: ArenaCard; duel: DuelState; setDuel: React.D
 </div>;
 const LifeBar: React.FC<{ hp: number; player?: boolean }> = ({ hp, player = false }) => <div className="h-2 w-20 overflow-hidden rounded-full bg-black/50 sm:w-32"><div className={`h-full transition-[width] duration-700 ease-out ${player ? 'bg-gradient-to-r from-cyan-400 to-emerald-300' : 'bg-gradient-to-r from-rose-500 to-orange-400'}`} style={{ width: `${Math.max(0, hp) / 12 * 100}%` }} /></div>;
 const NexoBar: React.FC<{ count: number; highlighted?: boolean; player?: boolean }> = ({ count, highlighted = false, player = false }) => <div className={`grid grid-cols-6 gap-[2px] text-[7px] leading-none ${highlighted || player ? 'text-cyan-300' : 'text-amber-300'}`} aria-label={`${count} de 12 Nexos`}>{Array.from({ length: 12 }, (_, index) => <span key={index} className={index < count ? 'opacity-100 drop-shadow-[0_0_4px_currentColor]' : 'opacity-15'}>◆</span>)}</div>;
+const SpentNexos: React.FC<{ count: number; side: 'cpu' | 'player'; visible: boolean }> = ({ count, side, visible }) => visible && count > 0 ? <div className={`duel-spent-nexos duel-spent-${side}`} aria-label={`${count} Nexos investidos`}><div className="duel-spent-gems">{Array.from({ length: count }, (_, index) => <span key={index} style={{ '--nexo-i': index } as React.CSSProperties}>◆</span>)}</div><strong>+{count} NEXOS</strong></div> : null;
 const HiddenCard: React.FC<{ compact?: boolean }> = ({ compact = false }) => <div className={`relative flex ${compact ? 'min-h-[110px]' : 'h-[205px] w-[150px] sm:h-[220px] sm:w-[168px]'} w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-purple-300/50 bg-[radial-gradient(circle_at_50%_35%,rgba(97,58,178,.55),transparent_35%),linear-gradient(145deg,#11162e,#090b19)] text-center shadow-[inset_0_0_25px_rgba(168,85,247,.22),0_0_16px_rgba(168,85,247,.18)]`}><div className="absolute inset-2 rounded-lg border border-cyan-300/20" /><span className="relative font-heading text-sm font-black tracking-[.25em] text-purple-200">NEXA</span><span className="relative my-1 text-3xl text-cyan-300 drop-shadow-[0_0_10px_currentColor]">◇</span><span className="relative text-[7px] font-bold uppercase tracking-[.2em] text-purple-300">DUEL<br />CARTA OCULTA</span></div>;
 const DuelResult: React.FC<{ summary: ArenaMatchSummary; rewardStatus: RewardStatus; onAgain: () => void; onGames: () => void }> = ({ summary, rewardStatus, onAgain, onGames }) => <div className="duel-finish" role="dialog" aria-modal="true" aria-labelledby="duel-final-title">
   <span>NEXA · FIM DA PARTIDA</span>
