@@ -149,17 +149,37 @@ interface BattleRun {
 }
 const BattleStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
   const [records, setRecords] = useState<BattleRun[]>([]);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
-    void supabase.from('battle_runs').select('id,outcome,rewards,completed_at,created_at').eq('owner_id', ownerId).eq('status','COMPLETED').order('completed_at',{ascending:false}).limit(500).abortSignal(controller.signal).then(({data}) => { if (!controller.signal.aborted && data) setRecords(data as BattleRun[]); });
-    return () => controller.abort();
-  }, [ownerId]);
+    const load = async () => {
+      setStatus('loading');
+      try {
+        const rows: BattleRun[] = [];
+        while (!controller.signal.aborted) {
+          const { data, error } = await supabase.from('battle_runs')
+            .select('id,outcome,rewards,completed_at,created_at')
+            .eq('owner_id', ownerId).eq('status','COMPLETED')
+            .order('completed_at',{ascending:false}).order('id',{ascending:false})
+            .range(rows.length, rows.length + 499).abortSignal(controller.signal);
+          if (error) throw error;
+          if (!data?.length) break;
+          rows.push(...(data as BattleRun[]));
+        }
+        if (!controller.signal.aborted) { setRecords(rows); setStatus('ready'); }
+      } catch { if (!controller.signal.aborted) setStatus('error'); }
+    };
+    void load(); return () => controller.abort();
+  }, [ownerId, attempt]);
   const wins=records.filter(r=>r.outcome==='VICTORY').length, losses=records.filter(r=>r.outcome==='DEFEAT').length, draws=records.filter(r=>r.outcome==='DRAW').length;
   const nex=records.reduce((n,r)=>n+Number(r.rewards?.nex_gained||0),0), xp=records.reduce((n,r)=>n+Number(r.rewards?.xp_gained||0),0);
+  const stats=[['Partidas',records.length],['Vitórias',wins],['Derrotas',losses],['Empates',draws],['Taxa de vitória',records.length?Math.round(wins/records.length*100)+'%':'0%'],['NEX conquistado',nex],['XP conquistado',xp]];
   return <section className="p-5 sm:p-6 rounded-3xl bg-[#0b0b12] border border-emerald-400/20 space-y-5">
-    <div><p className="text-xs font-mono text-emerald-300 uppercase tracking-wider">JOGO 1 · PVE</p><h2 className="font-heading text-2xl font-black text-white mt-1">NEXA: RIFT BATTLE</h2></div>
-    <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">{[['Partidas',records.length],['Vitórias',wins],['Derrotas',losses],['Empates',draws],['Taxa de vitória',records.length?Math.round(wins/records.length*100)+'%':'0%'],['NEX conquistado',nex],['XP conquistado',xp]].map(([label,value])=><div key={String(label)} className="p-4 rounded-2xl bg-white/[0.03] border border-white/10"><dt className="text-[10px] font-mono text-slate-400 uppercase">{label}</dt><dd className="font-heading text-xl font-black text-emerald-300">{value}</dd></div>)}</dl>
-    <div className="pt-4 border-t border-white/10 space-y-3"><h3 className="text-xs font-mono text-slate-300 font-bold tracking-wider">PARTIDAS RECENTES</h3>{records.length===0?<p className="text-xs font-mono text-slate-400">Nenhuma partida do RIFT BATTLE registrada.</p>:<ul className="space-y-2">{records.slice(0,5).map(r=><li key={r.id} className="p-3 rounded-xl bg-black/25 border border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-mono"><span className={`font-bold ${dueloOutcomes[r.outcome].color}`}>{dueloOutcomes[r.outcome].label}</span><span className="text-emerald-300">+{Number(r.rewards?.nex_gained||0)} NEX / +{Number(r.rewards?.xp_gained||0)} XP</span><time className="text-slate-400 text-[11px]">{new Date(r.completed_at||r.created_at).toLocaleString('pt-BR')}</time></li>)}</ul>}</div>
+    <div><p className="text-xs font-mono text-emerald-300 uppercase tracking-wider">RIFT BATTLE · PVE</p><h2 className="font-heading text-2xl font-black text-white mt-1">NEXA: RIFT BATTLE</h2></div>
+    {status==='loading'?<p role="status" className="text-xs font-mono text-slate-400">Carregando histórico do RIFT BATTLE...</p>:status==='error'?<div role="alert" className="space-y-3 text-xs font-mono text-slate-400"><p>Não foi possível carregar o histórico do RIFT BATTLE.</p><button onClick={()=>setAttempt(v=>v+1)} className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">Tentar novamente</button></div>:<>
+    <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">{stats.map(([label,value])=><div key={String(label)} className="p-4 rounded-2xl bg-white/[0.03] border border-white/10"><dt className="text-[10px] font-mono text-slate-400 uppercase">{label}</dt><dd className="font-heading text-xl font-black text-emerald-300">{typeof value==='number'?formatDueloNumber(value):value}</dd></div>)}</dl>
+    <div className="pt-4 border-t border-white/10 space-y-3"><h3 className="text-xs font-mono text-slate-300 font-bold tracking-wider">PARTIDAS RECENTES</h3>{records.length===0?<p className="text-xs font-mono text-slate-400">Nenhuma partida do RIFT BATTLE registrada.</p>:<ul className="space-y-2">{records.slice(0,5).map(r=><li key={r.id} className="p-3 rounded-xl bg-black/25 border border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-mono"><span className={`font-bold ${dueloOutcomes[r.outcome].color}`}>{dueloOutcomes[r.outcome].label}</span><span className="text-emerald-300">+{formatDueloNumber(Number(r.rewards?.nex_gained||0))} NEX / +{formatDueloNumber(Number(r.rewards?.xp_gained||0))} XP</span><time className="text-slate-400 text-[11px]">{new Date(r.completed_at||r.created_at).toLocaleString('pt-BR')}</time></li>)}</ul>}</div></>}
   </section>;
 };
 
@@ -170,15 +190,28 @@ interface DueloPvpReward {
 
 const DueloPvpStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
   const [records, setRecords] = useState<DueloPvpReward[]>([]);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
-    void supabase.from('duelo_nexal_pvp_rewards')
-      .select('room_id,outcome,nex_gained,xp_gained,rewarded,created_at')
-      .eq('player_id', ownerId).order('created_at', { ascending: false })
-      .limit(500).abortSignal(controller.signal)
-      .then(({ data }) => { if (!controller.signal.aborted && data) setRecords(data as DueloPvpReward[]); });
-    return () => controller.abort();
-  }, [ownerId]);
+    const load = async () => {
+      setStatus('loading');
+      try {
+        const rows: DueloPvpReward[] = [];
+        while (!controller.signal.aborted) {
+          const { data, error } = await supabase.from('duelo_nexal_pvp_rewards')
+            .select('room_id,outcome,nex_gained,xp_gained,rewarded,created_at')
+            .eq('player_id', ownerId).order('created_at', { ascending: false }).order('room_id', { ascending: false })
+            .range(rows.length, rows.length + 499).abortSignal(controller.signal);
+          if (error) throw error;
+          if (!data?.length) break;
+          rows.push(...(data as DueloPvpReward[]));
+        }
+        if (!controller.signal.aborted) { setRecords(rows); setStatus('ready'); }
+      } catch { if (!controller.signal.aborted) setStatus('error'); }
+    };
+    void load(); return () => controller.abort();
+  }, [ownerId, attempt]);
   const completed = records.filter(r => r.outcome !== 'FORFEIT');
   const wins = completed.filter(r => r.outcome === 'VICTORY').length;
   const losses = completed.filter(r => r.outcome === 'DEFEAT').length;
@@ -187,11 +220,13 @@ const DueloPvpStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
   const xp = records.reduce((n,r) => n + Number(r.xp_gained || 0), 0);
   return <section className="p-5 sm:p-6 rounded-3xl bg-[#0b0b12] border border-purple-400/20 space-y-5">
     <div><p className="text-xs font-mono text-purple-300 uppercase tracking-wider">NEXA: NEXUS DUEL · PVP</p><h2 className="font-heading text-2xl font-black text-white mt-1">NEXUS DUEL · PVP</h2></div>
+    {status==='loading'?<p role="status" className="text-xs font-mono text-slate-400">Carregando histórico PvP...</p>:status==='error'?<div role="alert" className="space-y-3 text-xs font-mono text-slate-400"><p>Não foi possível carregar o histórico PvP.</p><button onClick={()=>setAttempt(v=>v+1)} className="px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300">Tentar novamente</button></div>:<>
     <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {[['Partidas',completed.length],['Vitórias',wins],['Derrotas',losses],['Empates',draws],['Taxa de vitória',completed.length ? Math.round(wins/completed.length*100)+'%' : '0%'],['NEX conquistado',nex],['XP conquistado',xp],['Partidas recompensadas',records.filter(r=>r.rewarded).length]].map(([label,value]) =>
         <div key={String(label)} className="p-4 rounded-2xl bg-white/[0.03] border border-white/10"><dt className="text-[10px] font-mono text-slate-400 uppercase">{label}</dt><dd className="font-heading text-xl font-black text-purple-300">{value}</dd></div>)}
     </dl>
     <div className="pt-4 border-t border-white/10 space-y-3"><h3 className="text-xs font-mono text-slate-300 font-bold tracking-wider">PARTIDAS RECENTES</h3>{records.length===0?<p className="text-xs font-mono text-slate-400">Nenhuma partida PvP registrada.</p>:<ul className="space-y-2">{records.slice(0,5).map(r=><li key={r.room_id} className="p-3 rounded-xl bg-black/25 border border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-mono"><span className={`font-bold ${r.outcome==='VICTORY'?'text-cyan-300':r.outcome==='DEFEAT'?'text-rose-400':'text-slate-300'}`}>{r.outcome==='VICTORY'?'Vitória':r.outcome==='DEFEAT'?'Derrota':r.outcome==='DRAW'?'Empate':'Desistência'}</span><span className="text-purple-300">+{r.nex_gained} NEX / +{r.xp_gained} XP</span><time className="text-slate-400 text-[11px]">{new Date(r.created_at).toLocaleString('pt-BR')}</time></li>)}</ul>}</div><p className="text-[11px] font-mono text-slate-500">PvP e PvE usam o mesmo nível de Piloto. O limite anti-farm continua valendo apenas para recompensas repetidas contra o mesmo adversário.</p>
+  </>}
   </section>;
 };
 
