@@ -74,12 +74,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: Gamepad2,
         },
         {
-          id: 'play',
-          label: 'Jogar & Batalhar',
-          icon: Swords,
-          highlight: true,
-        },
-        {
           id: 'progression',
           label: 'Progressão / Níveis',
           icon: TrendingUp,
