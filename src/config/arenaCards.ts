@@ -14,6 +14,22 @@ export interface ArenaCard {
   abilityKind?: 'IMPULSO' | 'DRENO' | 'BLINDAGEM' | 'ECO';
 }
 
+export const ARENA_ABILITY_DESCRIPTIONS: Record<NonNullable<ArenaCard['abilityKind']>, string> = {
+  IMPULSO: 'Com 3+ Nexos, recebe +2 de Ataque.',
+  BLINDAGEM: 'Ao perder a rodada, reduz o Dano recebido em 2 (mínimo 1).',
+  DRENO: 'Ao vencer a rodada, recupera 1 PV (máximo 12).',
+  ECO: 'Ao vencer a rodada, recupera 1 Nexo (máximo 12).',
+};
+
+export const ARENA_RARITY_ROLES: Record<string, string> = {
+  Comum: 'Base confiável',
+  Incomum: 'Especialista',
+  Raro: 'Tático',
+  Épico: 'Alta pressão',
+  Lendário: 'Elite',
+  Mítico: 'Prestígio máximo',
+};
+
 export const ARENA_CARDS: ArenaCard[] = [
   { id: 'card-flame-guardian', name: 'Guardião da Chama', element: 'Fogo', rarity: 'Incomum', attack: 5, health: 6, energyCost: 3, power: 5, damage: 3, description: 'Guardião da Chama.', ability: 'IMPULSO', abilityKind: 'IMPULSO' },
   { id: 'card-ice-guardian', name: 'Guardião do Gelo', element: 'Água', rarity: 'Raro', attack: 5, health: 6, energyCost: 3, power: 5, damage: 4, description: 'Guardião do Gelo.', ability: 'BLINDAGEM', abilityKind: 'BLINDAGEM' },
