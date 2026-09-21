@@ -86,8 +86,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-hud > div:first-child > div { width: 10cqw; height: .6cqw; }
       .duel-hud p { margin: 0; max-width: 48%; text-align: right; font-size: 1cqw; line-height: 1.3; }
       .duel-round { text-align: right; color: #a5b4fc; font-weight: 800; font-size: 1.1cqw; letter-spacing: .08em; }
-      .duel-row { display: grid; grid-template-columns: repeat(4, 14.9625cqw); grid-template-rows: minmax(0, 1fr); justify-content: center; gap: 1.2cqw; min-height: 0; }
-      .duel-slot { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; aspect-ratio: .70 / 1; border-radius: .8cqw; background: #050d18; box-shadow: inset 0 0 0 1px #ffffff14; }
+      .duel-row { display: flex; justify-content: center; align-items: center; gap: 1.2cqw; min-height: 0; }
+      .duel-slot { position: relative; height: 94%; width: auto; aspect-ratio: .70 / 1; flex: 0 0 auto; min-width: 0; min-height: 0; border-radius: .8cqw; background: #050d18; box-shadow: inset 0 0 0 1px #ffffff14; }
       .duel-slot[data-active="true"] { z-index: 20; }
       .duel-mover { position: absolute; inset: 0; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; perspective: 900px; transform-origin: center; }
       button.duel-mover { cursor: pointer; }
