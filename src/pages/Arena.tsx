@@ -329,7 +329,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
   const calculationStep = duel.phase === 'CALC' ? duel.calcStep : ['VS', 'IMPACT', 'DAMAGE', 'RESULT'].includes(duel.phase) ? 4 : 0;
   const roundOutcome = duel.playerAttack === duel.cpuAttack ? 'EMPATE' : duel.playerAttack! > duel.cpuAttack! ? 'VITÓRIA NA RODADA' : 'DERROTA NA RODADA';
   const stageText: Record<DuelPhase, string> = { SELECT: 'Escolha uma carta e seus Nexos', LOCK: 'Jogada confirmada', CPU: 'CPU prepara sua carta', ENTER: 'Cartas em confronto', REVEAL: 'Revelando a CPU', CALC: 'Calculando ataque', VS: 'Ataques finais', IMPACT: 'Impacto!', DAMAGE: duel.roundMessage || 'Dano aplicado', RESULT: roundOutcome, NEXT: 'Preparando próxima rodada' };
-  return <div ref={boardRef} className="duel-canvas" data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase} data-winner={playerWonRound ? 'player' : cpuWonRound ? 'cpu' : 'draw'}>
+  const phonePortrait = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px) and (orientation: portrait)').matches;
+  return <>{phonePortrait && <div className="fixed inset-0 z-[10000] grid place-items-center bg-[#030711] p-8 text-center text-white"><div><div className="mx-auto mb-6 text-6xl">↻</div><h2 className="text-2xl font-black text-cyan-300">GIRE O CELULAR</h2><p className="mt-3 text-sm text-slate-300">O Duelo Nexal foi preparado para jogar com o celular deitado.</p></div></div>}<div ref={boardRef} className="duel-canvas" data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase} data-winner={playerWonRound ? 'player' : cpuWonRound ? 'cpu' : 'draw'}>
     <style>{`
       .duel-canvas { position: relative; width: min(100%, max(0px, calc((100dvh - var(--nexa-board-top, 160px) - 24px) * 16 / 9))); aspect-ratio: 16 / 9; margin-inline: auto; min-height: 0; box-sizing: border-box; overflow: hidden; isolation: isolate; container-type: inline-size; color: #eef6ff; border: 1px solid #22445a; border-radius: 1.4cqw; background: linear-gradient(145deg, #091726, #111529 60%, #0b1020); }
       .duel-layout { position: absolute; inset: 0; display: grid; grid-template-rows: 9% 38% 6% 38% 9%; min-height: 0; }
@@ -549,8 +550,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     {duel.phase === 'RESULT' && <div className="duel-announcement duel-round-result" role="status"><small>RESULTADO DA RODADA</small><strong>{roundOutcome}</strong><small>{duel.roundMessage}</small></div>}
     {duel.phase === 'NEXT' && <div className="duel-next-round" aria-hidden="true"><span>RODADA {Math.min(MAX_ROUNDS, duel.round + 1)}</span></div>}
     {duel.result && duel.matchSummary && <DuelResult summary={duel.matchSummary} rewardStatus={rewardStatus.requestId === duel.requestId ? rewardStatus : { requestId: duel.requestId, status: 'pending' }} onAgain={() => { setSecondsLeft(ROUND_TIME_SECONDS); setDuel(freshDuel(duel.playerCards)); }} onGames={onGames} />}
-  </div>;
-};
+  </div></>;};
 
 // Battle-only presentation: deck selection keeps its existing BattleCard markup.
 const DuelPortrait: React.FC<{ card: ArenaCard; selected?: boolean; used?: boolean; hidden?: boolean; details?: React.ReactNode }> = ({ card, selected = false, used = false, hidden = false, details }) => hidden
