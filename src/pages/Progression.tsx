@@ -241,6 +241,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
   const progressionMilestones = Object.values(LEVEL_REWARDS).sort((a, b) => a.level - b.level);
   const nextMilestone = progressionMilestones.find((reward) => reward.level > user.level);
   const currentMilestone = [...progressionMilestones].reverse().find((reward) => reward.level <= user.level);
+  const progressionTimeline = ProgressionService.getProgressionTimeline(user.level, user.levelRewardsClaimed || []);
 
   const progressPercent = Math.min(
     100,
@@ -497,6 +498,25 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
                   {unlockedSlots} {unlockedSlots === 1 ? 'Slot' : 'Slots'}
                 </span>
               </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 mt-5">
+              {progressionTimeline.map((reward) => (
+                <div key={reward.level} className={`rounded-2xl border p-4 ${reward.isReached ? 'border-purple-400/30 bg-purple-400/[0.06]' : 'border-white/10 bg-white/[0.02]'}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Nível {reward.level}</span>
+                      <h4 className="font-heading font-black text-white mt-1">{reward.name}</h4>
+                    </div>
+                    {reward.isReached ? <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0" /> : <Lock className="w-5 h-5 text-slate-600 shrink-0" />}
+                  </div>
+                  <p className="text-[11px] font-mono text-slate-400 mt-2 leading-relaxed">{reward.description}</p>
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase text-purple-300">{reward.badge || 'Marco'}</span>
+                    <span className={`text-[10px] font-mono font-bold uppercase ${reward.isReached ? 'text-emerald-300' : 'text-slate-500'}`}>{reward.isReached ? 'Desbloqueado' : 'Bloqueado'}</span>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <button
