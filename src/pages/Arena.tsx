@@ -36,11 +36,20 @@ const MAX_ROUNDS = 4;
 const ROUND_TIME_SECONDS = 30; // Timeout plays an available card with zero Nexos.
 const ELEMENT_ICONS: Record<string, string> = { Fogo: '🔥', Água: '💧', Ar: '🌪', Terra: '🌿', Luz: '✦', Sombra: '☾', Éter: '◇', Metal: '⚙', NEXA: '✧', Gelo: '❄', Natureza: '🌿', Abismo: '◉', Arcano: '◇', Raio: '⚡', Astral: '🌌', Celestial: '⭐', Vazio: '🕳', Lunar: '🌙', Cósmico: '☄', Solar: '☀' };
 const rarityStyle: Record<string, string> = { Comum: 'border-slate-300/40', Incomum: 'border-cyan-300/50', Raro: 'border-blue-400/70 shadow-blue-500/10', Épico: 'border-fuchsia-400/70 shadow-fuchsia-500/20', Lendário: 'border-amber-300 shadow-amber-400/25', Mítico: 'border-violet-300 shadow-violet-400/30' };
+const shuffleCards = (cards: ArenaCard[]) => {
+  const shuffled = [...cards];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+};
 const freshDuel = (deck: ArenaCard[]): DuelState => {
   const playerCards = deck.slice(0, MAX_ROUNDS);
   const playerIds = new Set(playerCards.map((card) => card.id));
-  const different = ARENA_CARDS.filter((card) => !playerIds.has(card.id));
-  return { requestId: crypto.randomUUID(), playerCards, cpuCards: [...different, ...ARENA_CARDS.filter((card) => playerIds.has(card.id))].slice(0, MAX_ROUNDS), usedPlayer: [], usedCpu: [], playerHp: 12, cpuHp: 12, playerNexos: 12, cpuNexos: 12, round: 1, selectedId: null, investment: 0, cpuInvestment: 0, revealedCpu: null, phase: 'SELECT', playerAttack: null, cpuAttack: null, roundMessage: null, roundDamage: 0, result: null, matchSummary: null, calcStep: 1, playerWins: 0, cpuWins: 0 };
+  const cpuPool = ARENA_CARDS.filter((card) => !playerIds.has(card.id));
+  const cpuCards = shuffleCards(cpuPool).slice(0, MAX_ROUNDS);
+  return { requestId: crypto.randomUUID(), playerCards, cpuCards, usedPlayer: [], usedCpu: [], playerHp: 12, cpuHp: 12, playerNexos: 12, cpuNexos: 12, round: 1, selectedId: null, investment: 0, cpuInvestment: 0, revealedCpu: null, phase: 'SELECT', playerAttack: null, cpuAttack: null, roundMessage: null, roundDamage: 0, result: null, matchSummary: null, calcStep: 1, playerWins: 0, cpuWins: 0 };
 };
 const attackValue = (card: ArenaCard, nexos: number) => card.power + nexos * 2 + (card.abilityKind === 'IMPULSO' && nexos >= 3 ? 2 : 0);
 
