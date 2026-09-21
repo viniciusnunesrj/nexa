@@ -358,6 +358,11 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       @media (orientation: landscape) and (max-width:1100px) {
         .duel-canvas[data-mobile-game="true"] { width:min(100vw,calc(100dvh * 16 / 9))!important; height:min(100dvh,calc(100vw * 9 / 16))!important; max-width:100vw!important; max-height:100dvh!important; aspect-ratio:16/9!important; left:50%!important; top:50%!important; right:auto!important; bottom:auto!important; transform:translate(-50%,-50%)!important; padding:0!important; }
         .duel-canvas[data-mobile-game="true"] .duel-layout { inset:0!important; }
+        .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-layout { grid-template-rows:8% 34% 5% 45% 8%!important; }
+        .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-row[aria-label="Cartas da CPU"] .duel-slot { height:88%!important; }
+        .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-row[aria-label="Suas cartas"] { padding-right:17%!important; box-sizing:border-box!important; }
+        .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-row[aria-label="Suas cartas"] .duel-slot { height:88%!important; }
+        .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-invest { right:1.5%!important; top:45%!important; width:17%!important; transform:translateY(-50%)!important; }
       }
 
 
