@@ -34,6 +34,7 @@ interface DuelState {
 }
 
 const MAX_DECK_SIZE = 4;
+// deploy-check: vercel-auto-2026-09-21
 const MAX_ROUNDS = 4;
 const ELITE_RARITIES = new Set(['Lendário', 'Mítico']);
 const deckCompositionIssue = (deck: ArenaCard[]) => {
