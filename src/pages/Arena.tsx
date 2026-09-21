@@ -34,7 +34,7 @@ interface DuelState {
 const MAX_DECK_SIZE = 4;
 const MAX_ROUNDS = 4;
 const ROUND_TIME_SECONDS = 30; // Timeout plays an available card with zero Nexos.
-const ELEMENT_ICONS: Record<string, string> = { Fogo: '🔥', Água: '💧', Ar: '🌪', Terra: '🌿', Luz: '✦', Sombra: '☾', Éter: '◇', Metal: '⚙', NEXA: '✧', Gelo: '❄', Natureza: '🌿', Abismo: '◉', Arcano: '◇', Raio: '⚡', Astral: '🌌', Celestial: '⭐', Vazio: '🕳', Lunar: '🌙', Cósmico: '☄', Solar: '☀' };
+const ELEMENT_ICONS: Record<string, string> = { Fogo: '🔥', Água: '💧', Natureza: '🌿', Sombra: '☾', Luz: '✦', Arcano: '◇' };
 const rarityStyle: Record<string, string> = { Comum: 'border-slate-300/40', Incomum: 'border-cyan-300/50', Raro: 'border-blue-400/70 shadow-blue-500/10', Épico: 'border-fuchsia-400/70 shadow-fuchsia-500/20', Lendário: 'border-amber-300 shadow-amber-400/25', Mítico: 'border-violet-300 shadow-violet-400/30' };
 const shuffleCards = (cards: ArenaCard[]) => {
   const shuffled = [...cards];
