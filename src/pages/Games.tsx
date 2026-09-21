@@ -40,7 +40,7 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
               </span>
             </div>
             <p className="text-sm leading-relaxed text-slate-400">
-              Monte seu esquadrão de cartas e enfrente batalhas estratégicas para conquistar a Rede Nexus.
+              Monte seu esquadrão de cartas e enfrente combates para avançar pelas rupturas da Rede Nexus.
             </p>
             <button
               type="button"
@@ -71,7 +71,7 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
               </span>
             </div>
             <p className="text-sm leading-relaxed text-slate-400">
-              Um jogo estratégico de cartas para testar suas decisões, combinações e domínio do campo de batalha.
+              Duelo estratégico 4×4 de cartas, Nexos e blefe, com modos PvE e PvP.
             </p>
             <button
               type="button"
