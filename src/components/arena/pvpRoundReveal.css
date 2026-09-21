@@ -251,3 +251,39 @@
 .pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .sticky strong{font-size:12px!important}
 .pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .sticky input{height:18px!important}
 .pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .sticky button{height:25px!important;min-height:25px!important;padding:2px 7px!important;font-size:8px!important}
+
+/* Mobile PvP must remain playable without fullscreen. Fullscreen is optional. */
+.pvp-battle-board[data-phone="true"] .pvp-card-image{
+ width:100%!important;height:auto!important;max-height:none!important;
+ aspect-ratio:3/4!important;object-fit:contain!important;object-position:center!important;
+}
+@media(max-width:1100px){
+ .pvp-portrait-gate{display:none!important}
+ .pvp-battle-board[data-phone="true"]{overflow:visible!important}
+ .pvp-battle-board[data-phone="true"] .pvp-selection-grid{
+   display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+   width:100%!important;max-width:620px!important;margin:0 auto!important;
+   gap:8px!important;overflow:visible!important;padding:0!important;
+ }
+ .pvp-battle-board[data-phone="true"] .pvp-selection-grid>button{
+   width:100%!important;min-width:0!important;max-width:none!important;overflow:visible!important;
+ }
+}
+@media(orientation:landscape) and (max-width:1100px){
+ .pvp-battle-board[data-phone="true"] .pvp-selection-grid{
+   grid-template-columns:repeat(4,minmax(0,1fr))!important;
+   width:min(94vw,760px)!important;
+ }
+ .pvp-battle-board[data-phone="true"] .pvp-selection-grid .pvp-card-image{
+   width:auto!important;height:min(29dvh,128px)!important;max-height:128px!important;
+   aspect-ratio:3/4!important;object-fit:contain!important;margin:0 auto!important;
+ }
+}
+/* In optional fullscreen, prioritize seeing each whole card over filling the screen. */
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .pvp-selection-grid{
+ width:min(92vw,620px)!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+}
+.pvp-battle-board[data-phone-landscape="true"][data-game-mode="true"] .pvp-selection-grid .pvp-card-image{
+ width:auto!important;height:min(24dvh,104px)!important;max-height:104px!important;
+ aspect-ratio:3/4!important;object-fit:contain!important;margin:0 auto!important;
+}
