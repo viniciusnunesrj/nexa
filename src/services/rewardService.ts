@@ -1,6 +1,5 @@
 import { Rarity, GameItem, AssetType, BoxType } from '../types';
 import { DROP_RATES } from '../config/dropRates';
-import { GAMEPLAY_BOX_DROP_RATES } from '../config/boxRates';
 
 const LOOT_TEMPLATES: Record<Rarity, Array<{ name: string; type: AssetType; basePower: number; desc: string; img: string }>> = {
   Comum: [
@@ -175,19 +174,18 @@ export class RewardService {
       };
     }
 
-    // Victory: base reward of +100 NEX, +10 NXA, +150 XP
+    // Official Rift Battle victory reward: +30 NEX, +2 NXA, +100 XP.
     const rolledRarity = this.rollRarity();
     const dropItemChance = 0.85; // 85% chance of item drop on victory
     const hasItem = Math.random() <= dropItemChance;
 
     const droppedItem = hasItem ? this.mintItem(rolledRarity, ownerId, ownerName) : null;
-    const nexGained = 100;
-    const nxaGained = 10;
-    const xpGained = 150;
+    const nexGained = 30;
+    const nxaGained = 2;
+    const xpGained = 100;
 
-    // Sorteio de drop de caixa (25% de chance de Caixa Básica na vitória)
-    const hasDroppedBox = Math.random() <= GAMEPLAY_BOX_DROP_RATES.VICTORY_BASIC_BOX_CHANCE;
-    const droppedBoxType: BoxType | null = hasDroppedBox ? 'BASIC' : null;
+    // Online/offline gameplay box drop rates are not enabled in this fallback.
+    const droppedBoxType: BoxType | null = null;
 
     return {
       victory: true,

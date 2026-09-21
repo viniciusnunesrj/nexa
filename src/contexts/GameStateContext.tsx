@@ -987,7 +987,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Recarrega o perfil oficial. Falha de refresh NÃO transforma uma RPC
       // já concluída em "Erro na Forja".
       try {
-        const refreshedUser = await SupabaseService.getUser(currentUser.id);
+        const refreshedUser = await SupabaseService.fetchRemoteProfile(currentUser.id);
         if (refreshedUser) {
           SupabaseService.acceptConfirmedProfile(refreshedUser);
           EconomyService.hydrateProfileFromSupabase(refreshedUser);

@@ -316,7 +316,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ${
                             isActive
                               ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30 shadow-[inset_2px_0_0_rgba(34,211,238,0.9),0_0_15px_rgba(6,182,212,0.07)]'
-                              : item.highlight
+                              : 'highlight' in item && item.highlight
                               ? 'border-transparent text-cyan-400 hover:bg-cyan-500/[0.07]'
                               : 'border-transparent text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
                           }
@@ -343,7 +343,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           >
                             <Icon
                               className={`w-4 h-4 ${
-                                isActive || item.highlight
+                                isActive || ('highlight' in item && item.highlight)
                                   ? 'text-cyan-400'
                                   : 'text-slate-500 group-hover:text-slate-300'
                               }`}

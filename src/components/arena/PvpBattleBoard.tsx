@@ -104,7 +104,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
   useEffect(() => {
     if (room?.status !== 'FINISHED' || settlingReward.current || reward) return;
     settlingReward.current = true;
-    void supabase.rpc('settle_duelo_nexal_pvp_reward', { p_room_id: roomId }).then(({ data, error: rewardError }) => {
+    void Promise.resolve(supabase.rpc('settle_duelo_nexal_pvp_reward', { p_room_id: roomId })).then(({ data, error: rewardError }) => {
       if (rewardError) {
         setError('Partida encerrada, mas a recompensa ainda não pôde ser sincronizada.');
         return;
