@@ -380,6 +380,22 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-round span { font-size: 1cqw; color: #67e8f9; }
       .duel-finish { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2cqw; background: #07101ef5; text-align: center; }
       .duel-finish > span { color: #67e8f9; font-size: 1cqw; letter-spacing: .2em; }
+      .duel-finish::before { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 50% 42%,#22d3ee20,transparent 34%); animation:nexa-finish-bg 1.1s ease-out both; }
+      .duel-finish[data-result="player"]::before { background:radial-gradient(circle at 50% 42%,#facc1530,transparent 36%); }
+      .duel-finish[data-result="cpu"]::before { background:radial-gradient(circle at 50% 42%,#fb718525,transparent 36%); }
+      .duel-finish > *:not(.duel-finish-burst) { position:relative; z-index:2; animation:nexa-finish-content .7s ease-out both; }
+      .duel-finish h2 { text-shadow:0 0 2cqw #facc1555; animation:nexa-finish-title .9s cubic-bezier(.2,.8,.2,1) both !important; }
+      .duel-finish[data-result="cpu"] h2 { color:#fda4af; text-shadow:0 0 2cqw #fb718555; }
+      .duel-finish[data-result="draw"] h2 { color:#c4b5fd; text-shadow:0 0 2cqw #a78bfa55; }
+      .duel-finish-burst { position:absolute; z-index:1; left:50%; top:42%; width:18cqw; height:18cqw; transform:translate(-50%,-50%); pointer-events:none; }
+      .duel-finish-burst i { position:absolute; inset:50%; border:1px solid #67e8f977; border-radius:50%; animation:nexa-finish-ring 1.15s ease-out both; }
+      .duel-finish-burst i:nth-child(2){animation-delay:.12s}.duel-finish-burst i:nth-child(3){animation-delay:.24s}
+      .duel-rewards { min-width:20cqw; padding:.7cqw 1.2cqw; border:1px solid #67e8f933; border-radius:.8cqw; background:#071827aa; box-shadow:inset 0 0 1.5cqw #22d3ee11; }
+      .duel-rewards strong { color:#67e8f9; letter-spacing:.12em; }
+      @keyframes nexa-finish-bg { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
+      @keyframes nexa-finish-content { from{opacity:0;transform:translateY(1cqw)} to{opacity:1;transform:translateY(0)} }
+      @keyframes nexa-finish-title { 0%{opacity:0;transform:scale(.45);letter-spacing:.45em} 55%{opacity:1;transform:scale(1.12);letter-spacing:.12em} 100%{transform:scale(1);letter-spacing:.04em} }
+      @keyframes nexa-finish-ring { 0%{opacity:.9;transform:translate(-50%,-50%) scale(.1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.35)} }
       .duel-finish h2 { margin: 0; color: #fde68a; font-size: 4cqw; font-weight: 900; }
       .duel-finish p { margin: 0; font-size: 1.4cqw; }
       .duel-finish > div { display: flex; gap: 1cqw; margin-top: 1cqw; }
@@ -502,14 +518,15 @@ const LifeBar: React.FC<{ hp: number; player?: boolean }> = ({ hp, player = fals
 const NexoBar: React.FC<{ count: number; highlighted?: boolean; player?: boolean }> = ({ count, highlighted = false, player = false }) => <div className={`grid grid-cols-6 gap-[2px] text-[7px] leading-none ${highlighted || player ? 'text-cyan-300' : 'text-amber-300'}`} aria-label={`${count} de 12 Nexos`}>{Array.from({ length: 12 }, (_, index) => <span key={index} className={index < count ? 'opacity-100 drop-shadow-[0_0_4px_currentColor]' : 'opacity-15'}>◆</span>)}</div>;
 const SpentNexos: React.FC<{ count: number; side: 'cpu' | 'player'; visible: boolean }> = ({ count, side, visible }) => visible && count > 0 ? <div className={`duel-spent-nexos duel-spent-${side}`} aria-label={`${count} Nexos investidos`}><div className="duel-spent-gems">{Array.from({ length: count }, (_, index) => <span key={index} style={{ '--nexo-i': index } as React.CSSProperties}>◆</span>)}</div><strong>+{count} NEXOS</strong></div> : null;
 const HiddenCard: React.FC<{ compact?: boolean }> = ({ compact = false }) => <div className={`relative flex ${compact ? 'min-h-[110px]' : 'h-[205px] w-[150px] sm:h-[220px] sm:w-[168px]'} w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-purple-300/50 bg-[radial-gradient(circle_at_50%_35%,rgba(97,58,178,.55),transparent_35%),linear-gradient(145deg,#11162e,#090b19)] text-center shadow-[inset_0_0_25px_rgba(168,85,247,.22),0_0_16px_rgba(168,85,247,.18)]`}><div className="absolute inset-2 rounded-lg border border-cyan-300/20" /><span className="relative font-heading text-sm font-black tracking-[.25em] text-purple-200">NEXA</span><span className="relative my-1 text-3xl text-cyan-300 drop-shadow-[0_0_10px_currentColor]">◇</span><span className="relative text-[7px] font-bold uppercase tracking-[.2em] text-purple-300">DUEL<br />CARTA OCULTA</span></div>;
-const DuelResult: React.FC<{ summary: ArenaMatchSummary; rewardStatus: RewardStatus; onAgain: () => void; onGames: () => void }> = ({ summary, rewardStatus, onAgain, onGames }) => <div className="duel-finish" role="dialog" aria-modal="true" aria-labelledby="duel-final-title">
+const DuelResult: React.FC<{ summary: ArenaMatchSummary; rewardStatus: RewardStatus; onAgain: () => void; onGames: () => void }> = ({ summary, rewardStatus, onAgain, onGames }) => <div className="duel-finish" data-result={summary.winner.toLowerCase()} role="dialog" aria-modal="true" aria-labelledby="duel-final-title">
+  <div className="duel-finish-burst" aria-hidden="true"><i /><i /><i /></div>
   <span>NEXA · FIM DA PARTIDA</span>
   <h2 id="duel-final-title">{summary.winner === 'PLAYER' ? 'VITÓRIA' : summary.winner === 'CPU' ? 'DERROTA' : 'EMPATE'}</h2>
   <p>PV FINAL · VOCÊ {summary.playerFinalHp} × CPU {summary.cpuFinalHp}</p>
   <p>RODADAS VENCIDAS · VOCÊ {summary.playerRoundsWon} × CPU {summary.cpuRoundsWon}</p>
   <p>NEXOS RESTANTES · VOCÊ {summary.playerNexosRemaining} × CPU {summary.cpuNexosRemaining}</p>
   <p>{summary.roundsPlayed}/{MAX_ROUNDS} RODADAS DISPUTADAS</p>
-  <section aria-live="polite" style={{ fontSize: '1.4cqw' }}>
+  <section className="duel-rewards" aria-live="polite" style={{ fontSize: '1.4cqw' }}>
     {rewardStatus.status === 'pending' && <p>Calculando recompensas...</p>}
     {rewardStatus.status === 'error' && <p>Não foi possível registrar a recompensa.</p>}
     {rewardStatus.status === 'success' && rewardStatus.rewards && <>
