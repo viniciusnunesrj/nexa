@@ -243,6 +243,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
   const currentMilestone = [...progressionMilestones].reverse().find((reward) => reward.level <= user.level);
   const progressionTimeline = ProgressionService.getProgressionTimeline(user.level, user.levelRewardsClaimed || []);
   const nextSlotMilestone = SLOTS_CONFIG.find((config) => config.minLevel > user.level);
+  const levelsToNextMilestone = nextMilestone ? Math.max(0, nextMilestone.level - user.level) : 0;
 
   const progressPercent = Math.min(
     100,
@@ -524,7 +525,9 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
                   <p className="text-[11px] font-mono text-slate-400 mt-2 leading-relaxed">{reward.description}</p>
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <span className="text-[10px] font-mono font-bold uppercase text-purple-300">{reward.badge || 'Marco'}</span>
-                    <span className={`text-[10px] font-mono font-bold uppercase ${reward.isReached ? 'text-emerald-300' : 'text-slate-500'}`}>{reward.isReached ? 'Desbloqueado' : 'Bloqueado'}</span>
+                    <span className={`text-[10px] font-mono font-bold uppercase ${reward.isReached ? 'text-emerald-300' : reward.level === nextMilestone?.level ? 'text-cyan-300' : 'text-slate-500'}`}>
+                      {reward.isReached ? 'Desbloqueado' : reward.level === nextMilestone?.level ? `Próximo · faltam ${levelsToNextMilestone} níveis` : 'Bloqueado'}
+                    </span>
                   </div>
                 </div>
               ))}
