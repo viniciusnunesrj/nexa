@@ -143,6 +143,26 @@ const DueloPveStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
 };
 
 
+
+interface BattleRun {
+  id: string; outcome: 'VICTORY' | 'DEFEAT' | 'DRAW'; rewards: { nex_gained?: number; xp_gained?: number; nxa_gained?: number } | null; completed_at: string | null; created_at: string;
+}
+const BattleStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
+  const [records, setRecords] = useState<BattleRun[]>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void supabase.from('battle_runs').select('id,outcome,rewards,completed_at,created_at').eq('owner_id', ownerId).eq('status','COMPLETED').order('completed_at',{ascending:false}).limit(500).abortSignal(controller.signal).then(({data}) => { if (!controller.signal.aborted && data) setRecords(data as BattleRun[]); });
+    return () => controller.abort();
+  }, [ownerId]);
+  const wins=records.filter(r=>r.outcome==='VICTORY').length, losses=records.filter(r=>r.outcome==='DEFEAT').length, draws=records.filter(r=>r.outcome==='DRAW').length;
+  const nex=records.reduce((n,r)=>n+Number(r.rewards?.nex_gained||0),0), xp=records.reduce((n,r)=>n+Number(r.rewards?.xp_gained||0),0);
+  return <section className="p-5 sm:p-6 rounded-3xl bg-[#0b0b12] border border-emerald-400/20 space-y-5">
+    <div><p className="text-xs font-mono text-emerald-300 uppercase tracking-wider">JOGO 1 · PVE</p><h2 className="font-heading text-2xl font-black text-white mt-1">NEXA BATTLE</h2></div>
+    <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">{[['Partidas',records.length],['Vitórias',wins],['Derrotas',losses],['Empates',draws],['Taxa de vitória',records.length?Math.round(wins/records.length*100)+'%':'0%'],['NEX conquistado',nex],['XP conquistado',xp]].map(([label,value])=><div key={String(label)} className="p-4 rounded-2xl bg-white/[0.03] border border-white/10"><dt className="text-[10px] font-mono text-slate-400 uppercase">{label}</dt><dd className="font-heading text-xl font-black text-emerald-300">{value}</dd></div>)}</dl>
+    <div className="pt-4 border-t border-white/10 space-y-3"><h3 className="text-xs font-mono text-slate-300 font-bold tracking-wider">PARTIDAS RECENTES</h3>{records.length===0?<p className="text-xs font-mono text-slate-400">Nenhuma partida do BATTLE registrada.</p>:<ul className="space-y-2">{records.slice(0,5).map(r=><li key={r.id} className="p-3 rounded-xl bg-black/25 border border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-mono"><span className={`font-bold ${dueloOutcomes[r.outcome].color}`}>{dueloOutcomes[r.outcome].label}</span><span className="text-emerald-300">+{Number(r.rewards?.nex_gained||0)} NEX / +{Number(r.rewards?.xp_gained||0)} XP</span><time className="text-slate-400 text-[11px]">{new Date(r.completed_at||r.created_at).toLocaleString('pt-BR')}</time></li>)}</ul>}</div>
+  </section>;
+};
+
 interface DueloPvpReward {
   room_id: string; outcome: 'VICTORY' | 'DEFEAT' | 'DRAW' | 'FORFEIT';
   nex_gained: number; xp_gained: number; rewarded: boolean; created_at: string;
@@ -166,12 +186,12 @@ const DueloPvpStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
   const nex = records.reduce((n,r) => n + Number(r.nex_gained || 0), 0);
   const xp = records.reduce((n,r) => n + Number(r.xp_gained || 0), 0);
   return <section className="p-5 sm:p-6 rounded-3xl bg-[#0b0b12] border border-purple-400/20 space-y-5">
-    <div><p className="text-xs font-mono text-purple-300 uppercase tracking-wider">ESTATÍSTICAS PVP</p><h2 className="font-heading text-2xl font-black text-white mt-1">Duelo Nexal Online</h2></div>
+    <div><p className="text-xs font-mono text-purple-300 uppercase tracking-wider">JOGO 2 · PVP</p><h2 className="font-heading text-2xl font-black text-white mt-1">Duelo Nexal Online</h2></div>
     <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {[['Partidas',completed.length],['Vitórias',wins],['Derrotas',losses],['Empates',draws],['Taxa de vitória',completed.length ? Math.round(wins/completed.length*100)+'%' : '0%'],['NEX conquistado',nex],['XP conquistado',xp],['Partidas recompensadas',records.filter(r=>r.rewarded).length]].map(([label,value]) =>
         <div key={String(label)} className="p-4 rounded-2xl bg-white/[0.03] border border-white/10"><dt className="text-[10px] font-mono text-slate-400 uppercase">{label}</dt><dd className="font-heading text-xl font-black text-purple-300">{value}</dd></div>)}
     </dl>
-    <p className="text-[11px] font-mono text-slate-500">PvP e PvE usam o mesmo nível de Piloto. O limite anti-farm continua valendo apenas para recompensas repetidas contra o mesmo adversário.</p>
+    <div className="pt-4 border-t border-white/10 space-y-3"><h3 className="text-xs font-mono text-slate-300 font-bold tracking-wider">PARTIDAS RECENTES</h3>{records.length===0?<p className="text-xs font-mono text-slate-400">Nenhuma partida PvP registrada.</p>:<ul className="space-y-2">{records.slice(0,5).map(r=><li key={r.room_id} className="p-3 rounded-xl bg-black/25 border border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-mono"><span className={`font-bold ${r.outcome==='VICTORY'?'text-cyan-300':r.outcome==='DEFEAT'?'text-rose-400':'text-slate-300'}`}>{r.outcome==='VICTORY'?'Vitória':r.outcome==='DEFEAT'?'Derrota':r.outcome==='DRAW'?'Empate':'Desistência'}</span><span className="text-purple-300">+{r.nex_gained} NEX / +{r.xp_gained} XP</span><time className="text-slate-400 text-[11px]">{new Date(r.created_at).toLocaleString('pt-BR')}</time></li>)}</ul>}</div><p className="text-[11px] font-mono text-slate-500">PvP e PvE usam o mesmo nível de Piloto. O limite anti-farm continua valendo apenas para recompensas repetidas contra o mesmo adversário.</p>
   </section>;
 };
 
@@ -200,7 +220,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
             Progressão do Piloto
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-1">
-            Avance na Arena, desbloqueie capacidades e acompanhe os marcos permanentes da sua conta.
+            Avance jogando BATTLE ou ARENA, desbloqueie capacidades e acompanhe os marcos permanentes da sua conta.
           </p>
         </div>
 
@@ -277,7 +297,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
                     Avançar patente do piloto
                   </h4>
                   <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-                    Ganhe XP no PvE ou PvP. Os dois modos avançam a mesma progressão permanente.
+                    Ganhe XP no BATTLE ou na ARENA (PvE/PvP). Os jogos avançam a mesma progressão permanente.
                   </p>
                 </div>
               </div>
@@ -334,7 +354,7 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {currentUser && <div className="grid gap-5 xl:grid-cols-2"><DueloPveStats key={'pve-'+currentUser.id} ownerId={currentUser.id} /><DueloPvpStats key={'pvp-'+currentUser.id} ownerId={currentUser.id} /></div>}
+      {currentUser && <div className="space-y-5"><BattleStats key={'battle-'+currentUser.id} ownerId={currentUser.id} /><div className="grid gap-5 xl:grid-cols-2"><DueloPveStats key={'pve-'+currentUser.id} ownerId={currentUser.id} /><DueloPvpStats key={'pvp-'+currentUser.id} ownerId={currentUser.id} /></div></div>}
 
       {/* Tabs Navigation */}
       <div className="flex items-center gap-2 overflow-x-auto border-b border-white/10 pb-3 scrollbar-none">
