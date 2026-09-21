@@ -143,6 +143,7 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
   const createPvpRoom = async () => { if (!canStart) return; setPvpStatus('Criando sala...'); const { data, error } = await supabase.rpc('create_duelo_nexal_pvp_room', { p_deck: deck.map(card => card.id) }); if (error || !data) { setPvpStatus('Não foi possível criar a sala.'); return; } const room = Array.isArray(data) ? data[0] : data; setPvpCode(room.code); setPvpRoomId(room.id); setPvpRoomState(room); setPvpStatus('Sala criada. Compartilhe o código e aguarde o adversário.'); };
   const joinPvpRoom = async () => { if (!canStart || !pvpCode.trim()) return; setPvpStatus('Entrando na sala...'); const { data, error } = await supabase.rpc('join_duelo_nexal_pvp_room', { p_code: pvpCode.trim().toUpperCase(), p_deck: deck.map(card => card.id) }); if (error || !data) { setPvpStatus('Sala indisponível ou código inválido.'); return; } const room = Array.isArray(data) ? data[0] : data; setPvpRoomId(room.id); setPvpRoomState(room); setPvpStatus('Adversário conectado. Sala pronta.'); };
   const pvpIsHost = !!currentUser && pvpRoomState?.hostId === currentUser.id;
+  const pvpMyDeckIds = useMemo(() => new Set(deck.map((card) => card.id)), [deck]);
   useEffect(() => {
     if (!pvpRoomId || !pvpRoomState || pvpResumeSyncing) return;
     const resolvedCount = pvpRoomState.status === 'FINISHED' ? Number(pvpRoomState.round || 0) : Math.max(0, Number(pvpRoomState.round || 1) - 1);
@@ -155,7 +156,7 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
         const { data: result } = await supabase.rpc('get_duelo_nexal_pvp_round_result', { p_room_id: pvpRoomId, p_round: round });
         if (!result?.resolved || cancelled) continue;
         const mine = pvpIsHost ? result.hostCard : result.guestCard;
-        if (mine && !usedMine.includes(mine)) usedMine.push(mine);
+        if (mine && pvpMyDeckIds.has(mine) && !usedMine.includes(mine)) usedMine.push(mine);
       }
       if (!cancelled) {
         setPvpUsedCards(usedMine);
@@ -166,7 +167,7 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
     };
     restoreHistory();
     return () => { cancelled = true; };
-  }, [pvpRoomId, pvpRoomState?.round, pvpRoomState?.status, pvpIsHost]);
+  }, [pvpRoomId, pvpRoomState?.round, pvpRoomState?.status, pvpIsHost, pvpMyDeckIds]);
   useEffect(() => {
     if (!pvpRoomId) return;
     let active = true;
