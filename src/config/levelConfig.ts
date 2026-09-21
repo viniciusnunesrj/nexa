@@ -4,7 +4,7 @@ import { LevelConfig, LevelReward } from '../types/progression';
  * ============================================================================
  * LEVEL_CONFIG — Sistema Central de Experiência Progressiva do NEXA
  * ============================================================================
- * - Níveis iniciais rápidos (2 a 4 vitórias na Arena).
+ * - Níveis iniciais rápidos, alimentados pelos jogos da Rede Nexus.
  * - Dificuldade aumenta progressivamente para valorizar a progressão do jogador.
  * - Suporte até o nível 50 (Prestígio Máximo).
  * ============================================================================
@@ -115,14 +115,14 @@ export const getSlotsForLevel = getUnlockedSlotsForLevel;
  * ============================================================================
  */
 export const LEVEL_REWARDS: Record<number, LevelReward> = {
-  1: { level: 1, type: 'EXCLUSIVE', name: 'Recruta Nexal', description: 'Entrada na progressão unificada da Arena. PvE e PvP alimentam o mesmo nível.', icon: 'N1', value: 'Recruta Nexal', badge: 'Início' },
-  5: { level: 5, type: 'EXCLUSIVE', name: 'Operador Nexal', description: 'Marco de experiência nos dois modos de Duelo Nexal. Libera o módulo de Coleções.', icon: 'N5', value: 'Operador Nexal', featureId: 'COLLECTIONS', badge: 'Coleções' },
+  1: { level: 1, type: 'EXCLUSIVE', name: 'Recruta Nexal', description: 'Entrada na progressão unificada da Rede Nexus. RIFT BATTLE e NEXUS DUEL alimentam o mesmo nível.', icon: 'N1', value: 'Recruta Nexal', badge: 'Início' },
+  5: { level: 5, type: 'EXCLUSIVE', name: 'Operador Nexal', description: 'Marco de experiência na Rede Nexus. Libera o módulo de Coleções.', icon: 'N5', value: 'Operador Nexal', featureId: 'COLLECTIONS', badge: 'Coleções' },
   10: { level: 10, type: 'EXCLUSIVE', name: 'Combatente Nexal', description: 'Desbloqueia o quarto slot de síntese. Não aumenta Poder ou Dano das cartas.', icon: 'N10', value: 'Combatente Nexal', unlockedSlots: 4, badge: '4 Slots' },
-  15: { level: 15, type: 'EXCLUSIVE', name: 'Veterano da Arena', description: 'Marco de veterania conquistado jogando PvE, PvP ou combinando os dois.', icon: 'N15', value: 'Veterano da Arena', badge: 'Veterano' },
+  15: { level: 15, type: 'EXCLUSIVE', name: 'Veterano Nexus', description: 'Marco de veterania conquistado jogando RIFT BATTLE, NEXUS DUEL ou combinando os dois.', icon: 'N15', value: 'Veterano Nexus', badge: 'Veterano' },
   20: { level: 20, type: 'EXCLUSIVE', name: 'Elite Nexal', description: 'Desbloqueia o quinto slot de síntese mantendo as batalhas competitivamente equilibradas.', icon: 'N20', value: 'Elite Nexal', unlockedSlots: 5, badge: '5 Slots' },
-  25: { level: 25, type: 'EXCLUSIVE', name: 'Comandante da Arena', description: 'Marco avançado de dedicação ao ecossistema de batalhas NEXA.', icon: 'N25', value: 'Comandante da Arena', badge: 'Comandante' },
+  25: { level: 25, type: 'EXCLUSIVE', name: 'Comandante Nexus', description: 'Marco avançado de dedicação ao ecossistema de jogos NEXA.', icon: 'N25', value: 'Comandante Nexus', badge: 'Comandante' },
   30: { level: 30, type: 'EXCLUSIVE', name: 'Mestre do Vórtice', description: 'Desbloqueia o sexto e último slot de síntese.', icon: 'N30', value: 'Mestre do Vórtice', unlockedSlots: 6, badge: '6 Slots' },
-  40: { level: 40, type: 'EXCLUSIVE', name: 'Lenda da Arena', description: 'Patente de alto prestígio pela progressão combinada em PvE e PvP.', icon: 'N40', value: 'Lenda da Arena', badge: 'Prestígio' },
+  40: { level: 40, type: 'EXCLUSIVE', name: 'Lenda Nexus', description: 'Patente de alto prestígio pela progressão combinada em RIFT BATTLE e NEXUS DUEL.', icon: 'N40', value: 'Lenda Nexus', badge: 'Prestígio' },
   50: { level: 50, type: 'EXCLUSIVE', name: 'Lenda Cósmica Nexa', description: 'Prestígio máximo da conta. A vantagem é de status, não de força em batalha.', icon: 'N50', value: 'Lenda Cósmica Nexa', badge: 'Prestígio Máximo' },
 };
 
