@@ -221,7 +221,7 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     const phase = duel.phase;
     const delays: Record<Exclude<DuelPhase, 'SELECT'>, number> = {
       LOCK: 150, CPU: 200, ENTER: 350, REVEAL: 1150, CALC: 1450,
-      VS: 1150, IMPACT: 650, DAMAGE: 950, RESULT: 1250, NEXT: 450,
+      VS: 1150, IMPACT: 650, DAMAGE: 950, RESULT: 1400, NEXT: 700,
     };
     const timer = window.setTimeout(() => setDuel((current) => {
       if (!current || current.result || current.phase !== phase) return current;
@@ -346,6 +346,13 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-announcement { position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 18%; box-sizing: border-box; padding: .65cqw .5cqw; overflow-wrap: anywhere; background: #07101ed9; border: 1px solid #67e8f955; border-radius: 999px; pointer-events: none; text-align: center; box-shadow: 0 0 2.4cqw #22d3ee22; animation: nexa-announcement-in 260ms ease-out; }
       .duel-announcement small { font-size: .85cqw; color: #cbd5e1; }
       .duel-announcement strong { font-size: 2cqw; color: #fde68a; }
+      .duel-round-result { animation:nexa-round-result 1.25s ease-out both; }
+      .duel-next-round { position:absolute; inset:0; z-index:38; display:grid; place-items:center; pointer-events:none; background:radial-gradient(circle at center,#0f274044 0,transparent 42%); }
+      .duel-next-round span { padding:.55cqw 1.3cqw; border-top:1px solid #67e8f966; border-bottom:1px solid #67e8f966; color:#bae6fd; font-size:1.05cqw; font-weight:900; letter-spacing:.24em; text-shadow:0 0 1cqw #22d3eeaa; animation:nexa-next-round 650ms ease-out both; }
+      .duel-canvas[data-phase="NEXT"] .duel-slot[data-active="true"] .duel-motion-content { animation:nexa-card-return 650ms ease-in both; }
+      @keyframes nexa-round-result { 0%{opacity:0;transform:translate(-50%,-50%) scale(.72)} 18%{opacity:1;transform:translate(-50%,-50%) scale(1.06)} 72%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:.15;transform:translate(-50%,-50%) scale(.94)} }
+      @keyframes nexa-next-round { 0%{opacity:0;transform:scaleX(.45)} 35%{opacity:1;transform:scaleX(1.04)} 75%{opacity:1} 100%{opacity:0;transform:scaleX(1)} }
+      @keyframes nexa-card-return { 0%{opacity:1;filter:brightness(1.15)} 70%{opacity:.72;filter:brightness(.8) grayscale(.35)} 100%{opacity:.35;filter:grayscale(1)} }
       .duel-versus { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .7cqw; width: 100%; }
       .duel-versus b { font-size: 2.7cqw; font-variant-numeric: tabular-nums; }
       .duel-versus span { font-size: 1.4cqw; color: #c4b5fd; }
@@ -445,7 +452,8 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
     {!playing && selectedCard && <aside className="duel-invest"><InvestPanel card={selectedCard} duel={duel} setDuel={setDuel} confirm={confirm} /></aside>}
     {['VS', 'IMPACT'].includes(duel.phase) && <div className="duel-announcement duel-attack-race" role="status"><small>ATAQUE · CPU × VOCÊ</small><strong className="duel-versus"><b>{duel.cpuAttack}</b><span>VS</span><b>{duel.playerAttack}</b></strong><div className="duel-attack-meter"><i style={{ '--attack': Math.max(1, duel.cpuAttack ?? 1) } as React.CSSProperties} /><i style={{ '--attack': Math.max(1, duel.playerAttack ?? 1) } as React.CSSProperties} /></div></div>}
     {duel.phase === 'DAMAGE' && <div className={`duel-damage ${duel.playerAttack! > duel.cpuAttack! ? 'duel-damage-cpu' : 'duel-damage-player'}`} role="status">{duel.roundDamage ? `−${duel.roundDamage} PV` : 'SEM DANO'}</div>}
-    {duel.phase === 'RESULT' && <div className="duel-announcement" role="status"><small>RESULTADO DA RODADA</small><strong>{roundOutcome}</strong><small>{duel.roundMessage}</small></div>}
+    {duel.phase === 'RESULT' && <div className="duel-announcement duel-round-result" role="status"><small>RESULTADO DA RODADA</small><strong>{roundOutcome}</strong><small>{duel.roundMessage}</small></div>}
+    {duel.phase === 'NEXT' && <div className="duel-next-round" aria-hidden="true"><span>RODADA {Math.min(MAX_ROUNDS, duel.round + 1)}</span></div>}
     {duel.result && duel.matchSummary && <DuelResult summary={duel.matchSummary} rewardStatus={rewardStatus.requestId === duel.requestId ? rewardStatus : { requestId: duel.requestId, status: 'pending' }} onAgain={() => { setSecondsLeft(ROUND_TIME_SECONDS); setDuel(freshDuel(duel.playerCards)); }} onGames={onGames} />}
   </div>;
 };
