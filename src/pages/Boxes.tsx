@@ -294,13 +294,6 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
         {selectedTab === 'BOXES' && (
           <div className="flex items-center gap-1 bg-black/25 p-1 rounded-lg border border-white/[0.06] text-xs font-mono">
             <button
-              onClick={() => setCategoryFilter('GENERAL')}
-              className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition-colors"
-            >
-              Arsenal
-            </button>
-
-            <button
               onClick={() =>
                 setCategoryFilter('GENERAL')
               }
