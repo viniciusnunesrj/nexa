@@ -117,9 +117,12 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-round { text-align: right; color: #a5b4fc; font-weight: 800; font-size: 1.1cqw; letter-spacing: .08em; }
       .duel-row { display: flex; justify-content: center; align-items: center; gap: 1.2cqw; min-height: 0; }
       .duel-slot { position: relative; height: 94%; width: auto; aspect-ratio: .70 / 1; flex: 0 0 auto; min-width: 0; min-height: 0; border-radius: .8cqw; background: #050d18; box-shadow: inset 0 0 0 1px #ffffff14; }
-      .duel-slot[data-active="true"] { z-index: 20; }
+      /* Keep shared ancestors open so movers use the canvas stacking context. */
+      .duel-layout, .duel-row, .duel-slot { z-index: auto; isolation: auto; }
+      .duel-mover, .duel-hud, .duel-gap { z-index: 1; }
+      .duel-slot[data-active="true"] > .duel-mover { z-index: 30; }
       /* Lift the original moving elements above the scrim; never clone/remount cards. */
-      .duel-confrontation { position: absolute; inset: 0; z-index: 10; background: #030915b8; pointer-events: none; }
+      .duel-confrontation { position: absolute; inset: 0; z-index: 20; background: #030915b8; pointer-events: none; }
       .duel-canvas[data-confrontation="true"] .duel-slot:not([data-active="true"]) .duel-mover { opacity: .22; }
       .duel-canvas[data-confrontation="true"] .duel-hud { opacity: .55; }
       .duel-canvas[data-confrontation="true"] .duel-gap { visibility: hidden; }
@@ -167,13 +170,13 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-calculation > strong { color: #fde68a; border-top: 1px solid #fde68a55; padding-top: .4cqw; }
       .duel-calculation b { color: #67e8f9; }
       @keyframes duel-value-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-      .duel-announcement { position: absolute; z-index: 30; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 17%; box-sizing: border-box; padding: .7cqw .5cqw; overflow-wrap: anywhere; background: #07101eef; border: 1px solid #67e8f955; border-radius: .7cqw; pointer-events: none; text-align: center; }
+      .duel-announcement { position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 17%; box-sizing: border-box; padding: .7cqw .5cqw; overflow-wrap: anywhere; background: #07101eef; border: 1px solid #67e8f955; border-radius: .7cqw; pointer-events: none; text-align: center; }
       .duel-announcement small { font-size: .85cqw; color: #cbd5e1; }
       .duel-announcement strong { font-size: 2cqw; color: #fde68a; }
       .duel-versus { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .7cqw; width: 100%; }
       .duel-versus b { font-size: 2.7cqw; font-variant-numeric: tabular-nums; }
       .duel-versus span { font-size: 1.4cqw; color: #c4b5fd; }
-      .duel-damage { position: absolute; z-index: 30; top: 28%; transform: translateX(-50%); color: #fda4af; text-shadow: 0 2px 5px #000; font-size: 3cqw; font-weight: 900; pointer-events: none; animation: duel-damage-in 800ms ease-out; }
+      .duel-damage { position: absolute; z-index: 40; top: 28%; transform: translateX(-50%); color: #fda4af; text-shadow: 0 2px 5px #000; font-size: 3cqw; font-weight: 900; pointer-events: none; animation: duel-damage-in 800ms ease-out; }
       .duel-damage-cpu { left: 32%; }
       .duel-damage-player { left: 68%; }
       @keyframes duel-damage-in { from { opacity: 0; margin-top: 1cqw; } 25% { opacity: 1; } to { margin-top: -1cqw; } }
