@@ -99,13 +99,13 @@ const DueloPveStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
     <section aria-labelledby="duelo-pve-title" className="p-5 sm:p-6 rounded-3xl bg-[#0b0b12] border border-cyan-400/20 space-y-5">
       <div>
         <p className="text-xs font-mono text-cyan-400 uppercase tracking-wider">ESTATÍSTICAS PVE</p>
-        <h2 id="duelo-pve-title" className="font-heading text-2xl font-black text-white mt-1">Duelo Nexal</h2>
+        <h2 id="duelo-pve-title" className="font-heading text-2xl font-black text-white mt-1">NEXUS DUEL</h2>
       </div>
       {status === 'loading' ? (
-        <p role="status" className="text-xs font-mono text-slate-400">Carregando histórico do Duelo Nexal...</p>
+        <p role="status" className="text-xs font-mono text-slate-400">Carregando histórico do NEXUS DUEL...</p>
       ) : status === 'error' ? (
         <div role="alert" className="text-xs font-mono text-slate-400 space-y-3">
-          <p>Não foi possível carregar o histórico do Duelo Nexal.</p>
+          <p>Não foi possível carregar o histórico do NEXUS DUEL.</p>
           <button onClick={() => setAttempt(value => value + 1)} className="px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 transition-colors">
             Tentar novamente
           </button>
@@ -123,7 +123,7 @@ const DueloPveStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
           <div className="pt-4 border-t border-white/10 space-y-3">
             <h3 className="text-xs font-mono text-slate-300 font-bold tracking-wider">PARTIDAS RECENTES</h3>
             {records.length === 0 ? (
-              <p className="text-xs font-mono text-slate-400">Nenhuma partida PVE registrada. Jogue Duelo Nexal para acompanhar seus resultados aqui.</p>
+              <p className="text-xs font-mono text-slate-400">Nenhuma partida PVE registrada. Jogue NEXUS DUEL para acompanhar seus resultados aqui.</p>
             ) : (
               <ul className="space-y-2">
                 {records.slice(0, 5).map(record => (
@@ -186,7 +186,7 @@ const DueloPvpStats: React.FC<{ ownerId: string }> = ({ ownerId }) => {
   const nex = records.reduce((n,r) => n + Number(r.nex_gained || 0), 0);
   const xp = records.reduce((n,r) => n + Number(r.xp_gained || 0), 0);
   return <section className="p-5 sm:p-6 rounded-3xl bg-[#0b0b12] border border-purple-400/20 space-y-5">
-    <div><p className="text-xs font-mono text-purple-300 uppercase tracking-wider">NEXA: NEXUS DUEL · PVP</p><h2 className="font-heading text-2xl font-black text-white mt-1">Duelo Nexal Online</h2></div>
+    <div><p className="text-xs font-mono text-purple-300 uppercase tracking-wider">NEXA: NEXUS DUEL · PVP</p><h2 className="font-heading text-2xl font-black text-white mt-1">NEXUS DUEL · PVP</h2></div>
     <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {[['Partidas',completed.length],['Vitórias',wins],['Derrotas',losses],['Empates',draws],['Taxa de vitória',completed.length ? Math.round(wins/completed.length*100)+'%' : '0%'],['NEX conquistado',nex],['XP conquistado',xp],['Partidas recompensadas',records.filter(r=>r.rewarded).length]].map(([label,value]) =>
         <div key={String(label)} className="p-4 rounded-2xl bg-white/[0.03] border border-white/10"><dt className="text-[10px] font-mono text-slate-400 uppercase">{label}</dt><dd className="font-heading text-xl font-black text-purple-300">{value}</dd></div>)}
@@ -225,11 +225,11 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
         </div>
 
         <button
-          onClick={() => onNavigate('play')}
+          onClick={() => onNavigate('games')}
           className="self-start sm:self-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-heading font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(34,211,238,0.35)] flex items-center gap-2"
         >
           <Zap className="w-4 h-4" />
-          <span>GANHAR XP NA ARENA</span>
+          <span>ESCOLHER JOGO</span>
         </button>
       </div>
 
@@ -434,11 +434,11 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
             </div>
 
             <button
-              onClick={() => onNavigate('play')}
+              onClick={() => onNavigate('games')}
               className="mt-5 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading font-black text-xs uppercase tracking-wider transition-all inline-flex items-center gap-2"
             >
               <Zap className="w-4 h-4" />
-              Ganhar XP na Arena
+              Escolher jogo
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -562,10 +562,10 @@ export const Progression: React.FC<ProgressionProps> = ({ onNavigate }) => {
                 Nenhum Avanço Registrado
               </h3>
               <p className="text-xs text-slate-400 font-mono mt-1 max-w-sm mx-auto">
-                Batalhe na Arena para ganhar seus primeiros pontos de experiência e registrar seus avanços!
+                Jogue RIFT BATTLE ou NEXUS DUEL para ganhar XP e registrar seus avanços.
               </p>
               <button
-                onClick={() => onNavigate('play')}
+                onClick={() => onNavigate('games')}
                 className="mt-4 px-4 py-2 rounded-xl bg-cyan-500 text-black font-heading font-black text-xs uppercase tracking-wider hover:bg-cyan-400"
               >
                 Jogar Agora
