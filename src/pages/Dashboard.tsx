@@ -32,6 +32,7 @@ import {
   Layers,
   CheckCircle2,
   Lock,
+  Gamepad2,
 } from 'lucide-react';
 import { ProgressionService } from '../services/progressionService';
 import { getXpRequiredForLevel, MAX_GAME_LEVEL } from '../config/levelConfig';
@@ -118,45 +119,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </h1>
 
             <p className="text-slate-400 text-sm max-w-2xl leading-relaxed">
-              Prepare seu esquadrão, enfrente a Arena e fortaleça seu arsenal na Rede Nexus.
+              Escolha entre Rift Battle e Nexus Duel, evolua seu Piloto e fortaleça sua coleção na Rede Nexus.
             </p>
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1">
-              <button
-                onClick={() => onNavigate(hasBattleCard ? 'play' : 'boxes')}
-                className="px-6 py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all shadow-[0_0_28px_rgba(34,211,238,0.22)] flex items-center gap-2.5 hover:-translate-y-0.5"
-              >
-                {hasBattleCard ? (
-                  <Swords className="w-5 h-5" />
-                ) : (
-                  <PackageOpen className="w-5 h-5" />
-                )}
-                <span>{hasBattleCard ? 'Entrar na Arena' : 'Adquirir primeira carta'}</span>
-              </button>
-
-              <button
-                onClick={() => onNavigate('boxes')}
-                className="px-4 py-3 rounded-xl bg-white/[0.025] hover:bg-cyan-500/[0.07] border border-white/10 hover:border-cyan-500/25 text-slate-300 hover:text-cyan-200 font-heading font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2"
-              >
-                <PackageOpen className="w-4 h-4 text-cyan-400" />
-                <span>Caixas</span>
-              </button>
-
-              <button
-                onClick={() => onNavigate('collections')}
-                className="px-4 py-3 rounded-xl bg-white/[0.025] hover:bg-purple-500/[0.07] border border-white/10 hover:border-purple-500/25 text-slate-300 hover:text-purple-200 font-heading font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2"
-              >
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span>Coleções</span>
-              </button>
-
-              <button
-                onClick={() => onNavigate('marketplace')}
-                className="px-4 py-3 rounded-xl bg-white/[0.025] hover:bg-amber-500/[0.06] border border-white/10 hover:border-amber-500/25 text-slate-300 hover:text-amber-200 font-heading font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2"
-              >
-                <ShoppingBag className="w-4 h-4 text-amber-400" />
-                <span>Mercado</span>
-              </button>
+              <button onClick={() => onNavigate('games')} className="px-6 py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all shadow-[0_0_28px_rgba(34,211,238,0.22)] flex items-center gap-2.5 hover:-translate-y-0.5"><Gamepad2 className="w-5 h-5" /><span>Escolher jogo</span></button>
+              <button onClick={() => onNavigate('progression')} className="px-4 py-3 rounded-xl bg-white/[0.025] border border-white/10 text-slate-300 font-heading font-bold text-xs uppercase tracking-wider"><TrendingUp className="inline w-4 h-4 mr-2 text-purple-400" />Progressão</button>
             </div>
           </div>
 
@@ -209,6 +177,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <section className="rounded-[24px] border border-cyan-500/25 bg-gradient-to-br from-[#0b1520] to-[#090b12] p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-mono font-bold tracking-[.18em] text-cyan-400">JOGO 01</p><h2 className="mt-1 font-heading text-2xl font-black text-white">NEXA: RIFT BATTLE</h2></div><Swords className="w-7 h-7 text-cyan-400" /></div>
+          <p className="mt-3 text-sm text-slate-400">Monte seu esquadrão e enfrente combates PvE. Suas partidas geram NEX, XP e alimentam a progressão do mesmo Piloto.</p>
+          <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-mono"><span className="rounded-full border border-cyan-500/25 px-2.5 py-1 text-cyan-300">PvE</span><span className="rounded-full border border-white/10 px-2.5 py-1 text-slate-400">Esquadrão</span><span className="rounded-full border border-white/10 px-2.5 py-1 text-slate-400">Recompensas</span></div>
+          <button onClick={() => onNavigate('play')} className="mt-5 w-full rounded-xl bg-cyan-500 px-4 py-3 font-heading text-xs font-black uppercase text-slate-950">Jogar Rift Battle</button>
+        </section>
+        <section className="rounded-[24px] border border-purple-500/25 bg-gradient-to-br from-[#160e22] to-[#090b12] p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-mono font-bold tracking-[.18em] text-purple-400">JOGO 02</p><h2 className="mt-1 font-heading text-2xl font-black text-white">NEXA: NEXUS DUEL</h2></div><Trophy className="w-7 h-7 text-purple-400" /></div>
+          <p className="mt-3 text-sm text-slate-400">Duelo estratégico 4×4 com Nexos, habilidades e blefe. Use sua coleção nos modos PvE ou PvP.</p>
+          <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-mono"><span className="rounded-full border border-purple-500/25 px-2.5 py-1 text-purple-300">PvE + PvP</span><span className="rounded-full border border-white/10 px-2.5 py-1 text-slate-400">Deck 4×4</span><span className="rounded-full border border-white/10 px-2.5 py-1 text-slate-400">Nexos</span></div>
+          <button onClick={() => onNavigate('arena')} className="mt-5 w-full rounded-xl bg-purple-600 px-4 py-3 font-heading text-xs font-black uppercase text-white">Jogar Nexus Duel</button>
+        </section>
       </div>
 
       {/* If unopened recruit box exists: Callout Banner (Requirement 20) */}
@@ -294,7 +277,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   </span>
                 </div>
                 <span className="text-xs text-slate-400 font-mono block">
-                  {isMaxLevel ? 'Progressão concluída' : 'Avance sua patente na Arena'}
+                  {isMaxLevel ? 'Progressão concluída' : 'Avance jogando os dois jogos'}
                 </span>
                 <div className="mt-2 flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-cyan-400" />
@@ -317,7 +300,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 <span className="text-xs text-slate-400 font-mono block">Progressão permanente</span>
                 <div className="mt-2">
                   <h4 className="font-heading font-bold text-white text-xs">
-                    Nível e XP confirmados pela Arena
+                    Nível e XP compartilhados nos jogos
                   </h4>
                   <span className="text-[10px] font-mono text-purple-300">
                     Recompensas econômicas vêm das atividades do jogo.
