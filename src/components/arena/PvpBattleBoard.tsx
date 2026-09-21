@@ -28,6 +28,14 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
   const settlingReward = useRef(false);
   const boardRef = useRef<HTMLElement>(null);
   const [gameMode, setGameMode] = useState(false);
+  const [mobileLandscape, setMobileLandscape] = useState(() => window.innerWidth > window.innerHeight && window.innerHeight <= 600);
+  useEffect(() => {
+    const measure = () => setMobileLandscape(window.innerWidth > window.innerHeight && window.innerHeight <= 600);
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('orientationchange', measure);
+    return () => { window.removeEventListener('resize', measure); window.removeEventListener('orientationchange', measure); };
+  }, []);
   const enterGameMode = async () => {
     setGameMode(true);
     const el = boardRef.current;
@@ -167,7 +175,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
     }
   };
 
-  return <><div className="pvp-portrait-gate"><div><strong>GIRE O CELULAR</strong><p>O Duelo Nexal foi preparado para jogar com o celular deitado.</p><button type="button" onClick={enterGameMode}>TELA CHEIA E JOGAR</button></div></div><section ref={boardRef} data-game-mode={gameMode ? 'true' : 'false'} className="pvp-battle-board mx-auto w-full min-w-0 max-w-4xl space-y-3 rounded-2xl border border-cyan-400/20 bg-[#07101f] p-3 text-white sm:space-y-4 sm:p-6" aria-label="Tabuleiro PvP">
+  return <><div className="pvp-portrait-gate"><div><strong>GIRE O CELULAR</strong><p>O Duelo Nexal foi preparado para jogar com o celular deitado.</p><button type="button" onClick={enterGameMode}>TELA CHEIA E JOGAR</button></div></div><section ref={boardRef} data-game-mode={gameMode ? 'true' : 'false'} data-phone-landscape={mobileLandscape ? 'true' : 'false'} className="pvp-battle-board mx-auto w-full min-w-0 max-w-4xl space-y-3 rounded-2xl border border-cyan-400/20 bg-[#07101f] p-3 text-white sm:space-y-4 sm:p-6" aria-label="Tabuleiro PvP">
     <button type="button" onClick={enterGameMode} className="pvp-mobile-play-button">TELA CHEIA</button>
     <PvpRoundReveal snapshot={snapshot} userId={userId} />
     <header className="flex flex-wrap items-center justify-between gap-3">
