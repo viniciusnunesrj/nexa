@@ -283,10 +283,11 @@ const DuelView: React.FC<{ duel: DuelState; setDuel: React.Dispatch<React.SetSta
       .duel-portrait { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; min-width: 0; aspect-ratio: .70 / 1; box-sizing: border-box; overflow: hidden; border: 1px solid #627393; border-radius: .8cqw; background: #0d1b2c; }
       .duel-portrait[data-selected="true"] { border-color: #67e8f9; box-shadow: 0 0 1.2cqw #22d3ee55; }
       .duel-portrait[data-used="true"], .duel-turn[data-used="true"] { opacity: .35; filter: grayscale(1); }
-      .duel-front { display: grid; grid-template-rows: 8% 12% minmax(0, 1fr) 13% 14%; padding: .65cqw; gap: .2cqw; }
+       .duel-front { display: grid; grid-template-rows: 8% 12% minmax(0, 1fr) 13% 14%; padding: .65cqw; gap: .2cqw; }
       .duel-meta { display: flex; align-items: center; justify-content: space-between; gap: .3cqw; overflow: hidden; font-size: .68cqw; text-transform: uppercase; color: #a5b4fc; white-space: nowrap; }
       .duel-name { align-self: center; margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-size: 1.25cqw; font-weight: 900; line-height: 1.2; }
-      .duel-art { display: grid; place-items: center; min-height: 0; overflow: hidden; border-block: 1px solid #ffffff1c; background: linear-gradient(150deg, #1c3b52, #282347); font-size: 5.3cqw; line-height: 1; }
+       .duel-art { position: relative; display: grid; place-items: center; min-height: 0; overflow: hidden; border-block: 1px solid #ffffff1c; background: linear-gradient(150deg, #1c3b52, #282347); font-size: 5.3cqw; line-height: 1; }
+      .duel-art > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
       .duel-card-stats { display: flex; align-items: center; justify-content: space-between; gap: .4cqw; min-width: 0; overflow: hidden; font-size: .86cqw; white-space: nowrap; }
       .duel-card-stats b { color: #67e8f9; }
       .duel-card-stats span:last-child b { color: #fda4af; }
