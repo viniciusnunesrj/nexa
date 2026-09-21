@@ -100,6 +100,7 @@ function mount(api, user) {
     '../../lib/supabase': { supabase: api.client(user) },
     '../common/CardImage': { CardImage: () => null },
     './pvpBattleState': state,
+    './PvpRoundReveal': { PvpRoundReveal: () => null },
   }, {
     setTimeout: callback => { timers.set(++timerId, callback); return timerId; },
     clearTimeout: id => timers.delete(id),
@@ -193,4 +194,51 @@ test('server knockout ends before round four, with both final perspectives', asy
   assert.match(host.text(), /DERROTA/); assert.match(guest.text(), /VITÓRIA/);
   assert.equal(host.confirm(), undefined); assert.equal(guest.confirm(), undefined);
   host.unmount(); guest.unmount();
+});
+
+test('visual reveal uses seven stages, ignores repeated polls, skips restored history and cleans timers', () => {
+  const slots = [], effects = [], timers = new Map();
+  let cursor = 0, timerId = 0;
+  const react = {
+    Fragment: 'fragment',
+    createElement: (type, props, ...children) => ({ type, props: { ...props, children } }),
+    useState(initial) {
+      const i = cursor++; if (!(i in slots)) slots[i] = initial;
+      return [slots[i], value => { slots[i] = value; }];
+    },
+    useRef(initial) { const i = cursor++; return slots[i] ||= { current: initial }; },
+    useEffect(effect, deps) {
+      const i = cursor++, old = slots[i];
+      if (!old || deps.some((dep, index) => dep !== old.deps[index])) {
+        effects.push(() => { old?.cleanup?.(); slots[i] = { deps, cleanup: effect() }; });
+      }
+    },
+  };
+  const { PvpRoundReveal } = load('src/components/arena/PvpRoundReveal.tsx', {
+    react: { ...react, default: react }, '../../config/arenaCards': { ARENA_CARDS },
+    '../common/CardImage': { CardImage: () => null }, './pvpRoundReveal.css': {},
+  }, { setTimeout: (callback, delay) => { timers.set(++timerId, { callback, delay }); return timerId; }, clearTimeout: id => timers.delete(id) });
+  const api = server();
+  let snapshot = { room: { ...api.room }, deck: hostDeck, history: [], submitted: false };
+  const render = () => {
+    cursor = 0; const tree = PvpRoundReveal({ snapshot, userId: 'host' });
+    effects.splice(0).forEach(effect => effect()); return tree;
+  };
+  assert.equal(render(), null);
+  const result = { round: 1, winner: 'HOST', damage: 2, hostCard: hostDeck[0], guestCard: guestDeck[0], hostAttack: 25, guestAttack: 18, hostNexosSpent: 3, guestNexosSpent: 2, hostHp: 12, guestHp: 10 };
+  snapshot = { ...snapshot, history: [result], room: { ...api.room, round: 2 } };
+  render(); let tree = render();
+  assert.match(tree.props.className, /step-1/); assert.equal(timers.size, 7);
+  snapshot = { ...snapshot, history: [{ ...result }] }; render(); render();
+  assert.equal(timers.size, 7, 'Polling must not restart presentation');
+  const scheduled = [...timers.values()].sort((a, b) => a.delay - b.delay);
+  for (let index = 0; index < 6; index++) {
+    scheduled[index].callback(); tree = render(); assert.match(tree.props.className, new RegExp(`step-${index + 2}`));
+  }
+  scheduled[6].callback(); assert.equal(render(), null); assert.equal(timers.size, 0);
+  slots.length = 0; // A remount with history should not replay it.
+  assert.equal(render(), null); assert.equal(render(), null); assert.equal(timers.size, 0);
+  snapshot = { ...snapshot, history: [result, { ...result, round: 2 }] }; render(); render();
+  assert.equal(timers.size, 7);
+  slots.forEach(slot => slot?.cleanup?.()); assert.equal(timers.size, 0);
 });

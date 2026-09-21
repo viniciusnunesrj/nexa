@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { CardImage } from '../common/CardImage';
 import { pvpPerspective, readPvpSnapshot } from './pvpBattleState';
 import type { PvpSnapshot } from './pvpBattleState';
+import { PvpRoundReveal } from './PvpRoundReveal';
 
 function PvpCard({ id }: { id: string }) {
   const card = ARENA_CARDS.find(item => item.id === id);
@@ -124,6 +125,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
   };
 
   return <section className="mx-auto w-full min-w-0 max-w-4xl space-y-4 rounded-2xl border border-cyan-400/20 bg-[#07101f] p-3 text-white sm:p-6" aria-label="Tabuleiro PvP">
+    <PvpRoundReveal snapshot={snapshot} userId={userId} />
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><p className="text-xs font-bold text-cyan-300">DUELO NEXAL · PVP</p><h1 className="text-lg font-bold">Sala {room?.code || '· sincronizando'}</h1></div>
       {finished ? <button onClick={onExit} className="rounded-lg border border-white/20 px-4 py-2 text-sm">Sair da sala</button> : <button onClick={forfeit} disabled={busy || !snapshot} className="rounded-lg border border-rose-400/30 px-4 py-2 text-sm text-rose-300 disabled:opacity-40">Desistir</button>}
@@ -138,12 +140,22 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
       <p className="flex flex-wrap justify-between gap-2 text-sm text-cyan-200"><strong>Você · PV {perspective.hp}</strong><span>{perspective.nexos} Nexos</span></p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{snapshot.deck.map(id => {
         const used = perspective.used.has(id);
-        return <button key={id} type="button" disabled={locked || used} aria-pressed={selected === id} onClick={() => setChoice({ round: room.round, card: id, nexos })} className={`min-w-0 rounded-xl border p-2 text-left disabled:cursor-not-allowed ${used ? 'border-white/10 opacity-40' : selected === id ? 'border-cyan-300 bg-cyan-400/10' : 'border-white/20'}`}><PvpCard id={id} /><span className="mt-2 block text-center text-[10px] text-cyan-200">{used ? 'USADA' : selected === id ? 'SELECIONADA' : 'DISPONÍVEL'}</span></button>;
+        return <button key={id} type="button" disabled={locked || used} aria-pressed={selected === id} onClick={() => setChoice({ round: room.round, card: id, nexos })} className={`min-w-0 rounded-xl border p-2 text-left disabled:cursor-not-allowed ${used ? 'border-white/10 opacity-40' : selected === id ? 'border-cyan-300 bg-cyan-400/15 ring-2 ring-cyan-300/40 shadow-[0_0_24px_#22d3ee30]' : 'border-white/20'}`}><PvpCard id={id} /><span className="mt-2 block text-center text-[10px] text-cyan-200">{used ? 'USADA' : selected === id ? `${nexos} NEXOS INVESTIDOS` : 'DISPONÍVEL'}</span></button>;
       })}</div>
-      {!finished && <div className="flex flex-wrap items-center gap-3 rounded-xl border border-cyan-400/20 p-3">
-        <label htmlFor="pvp-investment" className="text-sm">Nexos: {nexos}</label>
-        <input id="pvp-investment" type="range" min={0} max={perspective.nexos} value={nexos} disabled={locked} onChange={event => setChoice({ round: room.round, card: selected, nexos: Number(event.target.value) })} className="min-w-0 flex-1 accent-cyan-400" />
-        <button onClick={submit} disabled={locked || !selected} className="w-full rounded-lg bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950 disabled:opacity-40 sm:w-auto">{busy ? 'ENVIANDO...' : 'CONFIRMAR'}</button>
+      {!finished && <div className="space-y-3 rounded-xl border border-cyan-400/30 bg-gradient-to-r from-cyan-400/10 to-blue-500/5 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <label htmlFor="pvp-investment" className="text-xs font-bold text-cyan-200">{selected ? ARENA_CARDS.find(card => card.id === selected)?.name : 'SELECIONE UMA CARTA'}<span className="mt-1 block text-[10px] font-normal text-slate-400">INVESTIR ENERGIA · {perspective.nexos} Nexos disponíveis</span></label>
+          <strong className="text-2xl font-black text-cyan-300">{nexos}<span className="ml-1 text-[10px]">NEXOS</span></strong>
+        </div>
+        <div className="flex items-center gap-3">
+          <button type="button" aria-label="Diminuir Nexos" disabled={locked || !selected || nexos === 0} onClick={() => setChoice({ round: room.round, card: selected, nexos: Math.max(0, nexos - 1) })} className="h-11 w-11 shrink-0 rounded-lg border border-cyan-300/30 text-xl text-cyan-200 disabled:opacity-30">−</button>
+          <input id="pvp-investment" type="range" min={0} max={perspective.nexos} value={nexos} disabled={locked || !selected} onChange={event => setChoice({ round: room.round, card: selected, nexos: Number(event.target.value) })} className="h-8 min-w-0 flex-1 accent-cyan-400" />
+          <button type="button" aria-label="Aumentar Nexos" disabled={locked || !selected || nexos >= perspective.nexos} onClick={() => setChoice({ round: room.round, card: selected, nexos: Math.min(perspective.nexos, nexos + 1) })} className="h-11 w-11 shrink-0 rounded-lg border border-cyan-300/30 text-xl text-cyan-200 disabled:opacity-30">+</button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {[0, perspective.nexos].filter((value, index, values) => values.indexOf(value) === index).map(value => <button key={value} type="button" disabled={locked || !selected} onClick={() => setChoice({ round: room.round, card: selected, nexos: value })} className="rounded-lg border border-white/15 px-3 py-2 text-xs text-slate-300 disabled:opacity-30">{value === 0 ? 'ZERAR' : 'MÁXIMO'}</button>)}
+          <button onClick={submit} disabled={locked || !selected} className="min-w-0 flex-1 rounded-lg bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950 disabled:opacity-40">{busy ? 'ENVIANDO...' : 'CONFIRMAR'}</button>
+        </div>
       </div>}
       <p role="status" className="text-center text-sm text-cyan-200">{finished ? room.winnerId ? room.winnerId === userId ? 'VITÓRIA' : 'DERROTA' : room.status === 'CANCELLED' ? 'SALA CANCELADA' : 'EMPATE' : syncing ? 'Sincronizando com o servidor...' : snapshot.submitted ? 'Jogada confirmada. Aguardando adversário' : 'Escolha uma carta e confirme sua jogada.'}</p>
       {finished && <p className="text-center text-sm">PV final · Você {perspective.hp} × {perspective.opponentHp} Adversário</p>}
