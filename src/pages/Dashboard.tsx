@@ -355,7 +355,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               {winRate}%
             </span>
             <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
-              {user.victories}V / {user.defeats}D na Arena
+              {user.victories}V / {user.defeats}D no Rift Battle
             </span>
           </div>
         </div>
