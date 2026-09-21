@@ -29,3 +29,19 @@
 .pvp-round-reveal button{min-height:44px;flex-shrink:0}
 @media(max-width:639px){.pvp-selection-grid{gap:.6rem}.pvp-selection-grid img{max-height:150px}.pvp-selection-grid button{padding:.5rem}.pvp-reveal-panel{padding-bottom:env(safe-area-inset-bottom)}.pvp-reveal-cards{margin-top:1rem}.pvp-reveal-art{max-width:180px}.pvp-reveal-values{font-size:.65rem}}
 @media(max-height:600px) and (min-width:640px){.pvp-reveal-art{max-width:140px}.pvp-reveal-cards{margin-top:.5rem}}
+
+/* Dedicated phone battle presentation: do not scale the desktop board down. */
+@media(max-width:639px){
+  .pvp-battle-board{width:100vw!important;max-width:none!important;min-height:100dvh;margin-left:calc(50% - 50vw)!important;margin-right:calc(50% - 50vw)!important;border-left:0!important;border-right:0!important;border-radius:0!important;padding:12px 14px calc(110px + env(safe-area-inset-bottom))!important;overflow-x:hidden}
+  .pvp-battle-board .pvp-selection-grid{margin-left:-14px!important;margin-right:-14px!important;padding:4px 7vw 14px!important;gap:5vw!important;scroll-padding-inline:7vw;overflow-x:auto!important}
+  .pvp-battle-board .pvp-selection-grid>button{width:86vw!important;max-width:none!important;min-width:86vw!important;padding:10px!important;border-radius:16px!important}
+  .pvp-battle-board .pvp-selection-grid img{width:100%!important;height:auto!important;max-height:none!important;aspect-ratio:3/4!important;object-fit:cover!important;border-radius:12px!important}
+  .pvp-battle-board .pvp-selection-grid p:first-of-type{font-size:1rem!important;line-height:1.25!important}
+  .pvp-battle-board .pvp-selection-grid p:nth-of-type(2){font-size:.82rem!important;line-height:1.25!important}
+  .pvp-battle-board .pvp-selection-grid>button>span{font-size:.8rem!important;padding:.35rem 0!important}
+  .pvp-battle-board input[type=range]{min-height:44px}
+  .pvp-round-reveal{padding:10px 10px calc(12px + env(safe-area-inset-bottom))}
+  .pvp-reveal-panel{max-width:none!important;width:100%!important}
+  .pvp-reveal-cards{grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr)!important;gap:6px!important}
+  .pvp-reveal-art{max-width:none!important;width:100%!important}
+}
