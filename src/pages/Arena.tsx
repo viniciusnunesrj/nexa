@@ -184,7 +184,7 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
     if (!pvpRoomId) return;
     let active = true;
     const refresh = async () => { const { data } = await supabase.rpc('get_duelo_nexal_pvp_room', { p_room_id: pvpRoomId }); if (!active || !data) return;
-    setPvpRoomState(data); const { data: history } = await supabase.rpc('get_duelo_nexal_pvp_round_history', { p_room_id: pvpRoomId }); if (Array.isArray(history)) setPvpHistory(history); const { data: moveState } = await supabase.rpc('get_duelo_nexal_pvp_move_state', { p_room_id: pvpRoomId }); const serverSubmitted = !!moveState?.submitted;
+    setPvpRoomState(data); const { data: history } = await supabase.rpc('get_duelo_nexal_pvp_round_history', { p_room_id: pvpRoomId }); if (Array.isArray(history)) setPvpHistory(history); const { data: moveState } = await supabase.rpc('get_duelo_nexal_pvp_move_state', { p_room_id: pvpRoomId }); const serverSubmitted = !!moveState?.submitted && Number(moveState?.round || 0) === Number(data.round || 1);
     if (serverSubmitted !== pvpWaitingMove) setPvpWaitingMove(serverSubmitted);
     if (data.status === 'READY' || data.status === 'PLAYING') {
       const serverRound = Number(data.round || 1);
