@@ -24,6 +24,18 @@ interface BoxesPageProps {
 
 type CategoryFilter = 'GENERAL' | 'COLLECTIONS';
 
+const getBoxOriginLabel = (source?: string) => {
+  if (!source) return null;
+  if (source === 'NEW_ACCOUNT_RECRUIT' || source === 'STARTER_KIT') return 'Boas-vindas';
+  if (source === 'SHOP_PURCHASE') return 'Compra';
+  if (source.startsWith('RIFT_VICTORY_DROP:')) return 'Drop · Rift Battle';
+  if (source.startsWith('NEXUS_DUEL_PVE_VICTORY_DROP:')) return 'Drop · Nexus Duel PvE';
+  if (source.startsWith('NEXUS_DUEL_PVP_VICTORY_DROP:')) return 'Drop · Nexus Duel PvP';
+  if (source === 'SEASON_REWARD') return 'Temporada';
+  if (source === 'EVENT') return 'Evento';
+  return 'Drop de gameplay';
+};
+
 export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
   const { user } = useAuth();
 
@@ -61,6 +73,9 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
 
   const myBoxes = boxes.filter((b) => b.ownerId === user.id);
   const totalBoxes = myBoxes.length;
+  const latestOwnedBox = [...myBoxes].sort(
+    (a, b) => new Date(b.acquiredAt).getTime() - new Date(a.acquiredAt).getTime()
+  )[0];
 
   const handleOpenBox = async (boxType: BoxType) => {
     const availableBox = myBoxes.find(
@@ -201,6 +216,27 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
           </div>
         </div>
 
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div className="rounded-xl border border-white/[0.07] bg-black/25 px-3 py-2.5">
+            <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-500">Rift Battle</span>
+            <p className="text-xs text-slate-300 mt-1"><strong className="text-cyan-300">8%</strong> de chance de Caixa Básica por vitória.</p>
+          </div>
+          <div className="rounded-xl border border-white/[0.07] bg-black/25 px-3 py-2.5">
+            <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-500">Nexus Duel PvE</span>
+            <p className="text-xs text-slate-300 mt-1"><strong className="text-cyan-300">15%</strong> de chance de Caixa Básica por vitória.</p>
+          </div>
+          <div className="rounded-xl border border-white/[0.07] bg-black/25 px-3 py-2.5">
+            <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-500">Nexus Duel PvP</span>
+            <p className="text-xs text-slate-300 mt-1"><strong className="text-cyan-300">18%</strong> por vitória elegível a recompensa.</p>
+          </div>
+        </div>
+
+        {latestOwnedBox && getBoxOriginLabel(latestOwnedBox.source) && (
+          <div className="mt-2 text-[10px] font-mono text-slate-500">
+            Caixa mais recente: <span className="text-slate-300">{latestOwnedBox.name}</span> · {getBoxOriginLabel(latestOwnedBox.source)}
+          </div>
+        )}
+
         {/* INTEGRIDADE ONLINE */}
         <div className="mt-5 pt-4 border-t border-white/[0.06] flex items-center gap-3">
           <div className="p-2 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20 text-emerald-300">
@@ -258,12 +294,8 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
         {selectedTab === 'BOXES' && (
           <div className="flex items-center gap-1 bg-black/25 p-1 rounded-lg border border-white/[0.06] text-xs font-mono">
             <button
-              onClick={() => setCategoryFilter('ALL')}
-              className={`px-3 py-1.5 rounded-lg transition-colors ${
-                categoryFilter === 'ALL'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              onClick={() => setCategoryFilter('GENERAL')}
+              className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition-colors"
             >
               Arsenal
             </button>
@@ -327,6 +359,14 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
 
             const canAfford =
               user.balanceNEX >= def.priceNEX;
+            const ownedOrigins = Array.from(
+              new Set(
+                myBoxes
+                  .filter((box) => box.boxType === type)
+                  .map((box) => getBoxOriginLabel(box.source))
+                  .filter(Boolean)
+              )
+            );
 
             return (
               <div
@@ -404,7 +444,17 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                     <span className="line-clamp-2">{def.guarantees}</span>
                   </div>
 
-                  {/* PREÇO */}
+                  {ownedOrigins.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {ownedOrigins.map((origin) => (
+                        <span key={origin} className="px-2 py-1 rounded-md bg-cyan-500/[0.07] border border-cyan-500/15 text-[9px] font-mono font-bold uppercase tracking-wider text-cyan-300">
+                          {origin}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* PREÇO */
                   <div className="flex items-center justify-between p-3 rounded-xl bg-black/30 border border-white/[0.06] font-mono text-xs">
                     <span className="text-slate-400">
                       Preço:
