@@ -124,7 +124,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
     }
   };
 
-  return <section className="mx-auto w-full min-w-0 max-w-4xl space-y-3 rounded-2xl border border-cyan-400/20 bg-[#07101f] p-3 text-white sm:space-y-4 sm:p-6" aria-label="Tabuleiro PvP">
+  return <section className="pvp-battle-board mx-auto w-full min-w-0 max-w-4xl space-y-3 rounded-2xl border border-cyan-400/20 bg-[#07101f] p-3 text-white sm:space-y-4 sm:p-6" aria-label="Tabuleiro PvP">
     <PvpRoundReveal snapshot={snapshot} userId={userId} />
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><p className="text-xs font-bold text-cyan-300">DUELO NEXAL · PVP</p><h1 className="text-lg font-bold">Sala {room?.code || '· sincronizando'}</h1></div>
