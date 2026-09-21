@@ -109,12 +109,10 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
   const [pvpWaitingMove, setPvpWaitingMove] = useState(false);
   const [pvpReveal, setPvpReveal] = useState(false);
   const [pvpLastResolvedRound, setPvpLastResolvedRound] = useState(0);
-  const [pvpRevealStep, setPvpRevealStep] = useState(0);
   const [pvpUsedCards, setPvpUsedCards] = useState<string[]>([]);
   const [pvpOpponentUsedCount, setPvpOpponentUsedCount] = useState(0);
   const [pvpResumeSyncing, setPvpResumeSyncing] = useState(false);
   const [pvpHistory, setPvpHistory] = useState<any[]>([]);
-  const [pvpRoundTransition, setPvpRoundTransition] = useState(false);
   useEffect(() => {
     if (!currentUser || pvpRoomId) return;
     let active = true;
@@ -133,10 +131,6 @@ export const Arena: React.FC<ArenaProps> = ({ onNavigate }) => {
     setPvpLastResolvedRound(resolvedRound);
     setPvpWaitingMove(false);
     setPvpReveal(true);
-    setPvpRevealStep(1);
-    pvpRevealTimers.current.push(window.setTimeout(() => setPvpRevealStep(2), 700));
-    pvpRevealTimers.current.push(window.setTimeout(() => setPvpRevealStep(3), 1550));
-    pvpRevealTimers.current.push(window.setTimeout(() => setPvpRevealStep(4), 2450));
     pvpRevealTimers.current.push(window.setTimeout(() => { setPvpReveal(false); setPvpRevealStep(0); if (resetChoice) { setPvpCardId(null); setPvpNexos(0); setPvpRoundTransition(true); pvpRevealTimers.current.push(window.setTimeout(() => setPvpRoundTransition(false), 850)); } }, 4200));
   };
   // Revalidate against the current inventory, including after returning from battle.
