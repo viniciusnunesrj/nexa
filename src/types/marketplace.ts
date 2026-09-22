@@ -16,6 +16,22 @@ export interface Listing {
   itemSnapshot: NexaAsset;
 }
 
+export interface FragmentListing {
+  id: string;
+  templateId: string;
+  cardName: string;
+  cardRarity: import('./assets').Rarity;
+  cardImage: string;
+  collectionId: string;
+  collectionName: string;
+  quantity: number;
+  price: number;
+  sellerId: string;
+  sellerName: string;
+  status: ListingStatus;
+  createdAt: string;
+}
+
 export interface NexaTransaction {
   id: string;
   listingId: string;

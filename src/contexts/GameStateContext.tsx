@@ -9,6 +9,7 @@ import {
   CardTemplate,
   CollectionBoxOpenResult,
   Listing,
+  FragmentListing,
   NexaTransaction,
   TradeOffer,
   LedgerEntry,
@@ -26,10 +27,10 @@ import {
 import { INITIAL_CHARACTERS } from '../data/mockCharacters';
 import { INITIAL_ITEMS } from '../data/mockItems';
 import { INITIAL_CARDS } from '../data/mockCards';
-import { GUARDIANS_TEMPLATES } from '../config/collectionsData';
+import { GUARDIANS_TEMPLATES, getTemplateById } from '../config/collectionsData';
 import { INITIAL_LISTINGS, INITIAL_TRANSACTIONS, INITIAL_MARKET_STATS } from '../data/mockMarket';
 import { INITIAL_TRADES } from '../data/mockTrades';
-import { MarketplaceOnlineService, MarketplaceOperation, canSellOnlineCard } from '../services/marketplaceOnlineService';
+import { MarketplaceOnlineService, MarketplaceOperation, FragmentMarketplaceOperation, canSellOnlineCard } from '../services/marketplaceOnlineService';
 import { MarketplaceService } from '../services/marketplaceService';
 import { TradeService } from '../services/tradeService';
 import { TradeOnlineService } from '../services/tradeOnlineService';
@@ -80,7 +81,7 @@ interface GameStateContextType {
   claimCollectionReward: (collectionId: string) => void;
   openGuardiansBox: () => CollectionBoxOpenResult;
   openRandomCollectionBox: () => CollectionBoxOpenResult;
-  craftCardWithFragments: (templateId: string) => void;
+  craftCardWithFragments: (templateId: string) => Promise<void>;
   refreshCardFragments: () => void;
   // Boxes & Fragments State
   boxes: PlayerBox[];
@@ -97,6 +98,11 @@ interface GameStateContextType {
   notify: (type: ToastNotification['type'], title: string, message: string) => void;
   marketplaceBusy: boolean;
   refreshMarketplace: () => Promise<void>;
+  fragmentListings: FragmentListing[];
+  refreshFragmentMarketplace: () => Promise<void>;
+  listFragments: (templateId: string, quantity: number, priceNXA: number) => Promise<boolean>;
+  cancelFragmentListing: (listingId: string) => Promise<boolean>;
+  buyFragmentListing: (listingId: string) => Promise<boolean>;
   listAsset: (assetId: string, priceNXA: number) => Promise<boolean>;
   cancelListing: (listingId: string) => Promise<boolean>;
   buyListing: (listingId: string) => Promise<boolean>;
@@ -181,6 +187,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [levelUpData, setLevelUpData] = useState<LevelUpResult | null>(null);
   const pendingBattles = useRef(new Set<string>());
   const [marketplaceBusy, setMarketplaceBusy] = useState(false);
+  const [fragmentListings, setFragmentListings] = useState<FragmentListing[]>([]);
   const marketPending = useRef(false);
   const marketRevision = useRef(0);
   const marketUser = useRef<string | null>(null);
@@ -229,6 +236,66 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ++marketRevision.current;
     }
   };
+
+  const refreshFragmentMarketplace = async () => {
+    if (!isSupabaseConfigured() || !isAuthenticated || !currentUser || marketPending.current) return;
+    const userId = currentUser.id;
+    try {
+      const state = await MarketplaceOnlineService.refreshFragments(userId);
+      if (marketUser.current !== userId) return;
+      setCardFragments(state.fragments);
+      setFragmentListings(state.listings);
+      if (state.profile) {
+        SupabaseService.acceptConfirmedProfile(state.profile);
+        EconomyService.hydrateProfileFromSupabase(state.profile);
+        syncUser(state.profile);
+      }
+    } catch (error) {
+      if (marketUser.current === userId) {
+        notify('error', 'Fragmentos indisponíveis', error instanceof Error ? error.message : 'Falha ao atualizar.');
+      }
+    }
+  };
+
+  const executeFragmentMarketplace = async (
+    operation: FragmentMarketplaceOperation,
+    subject: string,
+    quantity?: number,
+    price?: number,
+  ): Promise<boolean> => {
+    if (!isSupabaseConfigured() || !isAuthenticated || !currentUser || marketPending.current) return false;
+    marketPending.current = true;
+    setMarketplaceBusy(true);
+    const userId = currentUser.id;
+    try {
+      const state = await MarketplaceOnlineService.executeFragment(userId, operation, subject, quantity, price);
+      if (marketUser.current !== userId) return false;
+      setCardFragments(state.fragments);
+      setFragmentListings(state.listings);
+      if (state.profile) {
+        SupabaseService.acceptConfirmedProfile(state.profile);
+        EconomyService.hydrateProfileFromSupabase(state.profile);
+        syncUser(state.profile);
+      }
+      notify('success', 'Marketplace de Fragmentos', 'Operação confirmada pelo servidor.');
+      return true;
+    } catch (error) {
+      if (marketUser.current === userId) {
+        notify('error', 'Falha nos Fragmentos', error instanceof Error ? error.message : 'Tente novamente.');
+      }
+      return false;
+    } finally {
+      marketPending.current = false;
+      setMarketplaceBusy(false);
+    }
+  };
+
+  const listFragments = (templateId: string, quantity: number, priceNXA: number) =>
+    executeFragmentMarketplace('CREATE', templateId, quantity, priceNXA);
+  const cancelFragmentListing = (listingId: string) =>
+    executeFragmentMarketplace('CANCEL', listingId);
+  const buyFragmentListing = (listingId: string) =>
+    executeFragmentMarketplace('BUY', listingId);
 
   // Derived progression slot counters
   const unlockedSlots = ProgressionService.getUnlockedSlots(user.level);
@@ -1432,10 +1499,22 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return result;
   };
 
-  const craftCardWithFragments = (templateId: string) => {
+  const craftCardWithFragments = async (templateId: string) => {
     try {
-      const tmpl = GUARDIANS_TEMPLATES.find((t) => t.templateId === templateId);
+      const tmpl = getTemplateById(templateId);
       if (!tmpl) throw new Error('Template da carta não encontrado.');
+      if (isSupabaseConfigured()) {
+        if (!isAuthenticated || !currentUser || marketPending.current) return;
+        marketPending.current = true;
+        setMarketplaceBusy(true);
+        const result = await MarketplaceOnlineService.craftCard(currentUser.id, templateId);
+        if (marketUser.current !== currentUser.id) return;
+        setAssets((prev) => [...prev, result.card]);
+        setCardFragments(result.fragments);
+        soundService.playSuccess();
+        notify('success', '✨ Carta Desbloqueada!', `Você forjou com sucesso "${result.card.name}" usando 100 fragmentos!`);
+        return;
+      }
       const result = CardFragmentService.craftCardWithFragments(user.id, tmpl, user.username);
       if (!result.success || !result.card) {
         throw new Error(result.error || 'Fragmentos insuficientes.');
@@ -1450,6 +1529,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       );
     } catch (err: any) {
       notify('error', 'Falha ao Forjar', err.message || 'Erro ao forjar carta.');
+    } finally {
+      if (isSupabaseConfigured()) {
+        marketPending.current = false;
+        setMarketplaceBusy(false);
+      }
     }
   };
 
@@ -1509,6 +1593,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         notify,
         marketplaceBusy,
         refreshMarketplace,
+        fragmentListings,
+        refreshFragmentMarketplace,
+        listFragments,
+        cancelFragmentListing,
+        buyFragmentListing,
         listAsset,
         cancelListing,
         buyListing,

@@ -12,12 +12,14 @@ import { RarityBadge } from '../components/common/RarityBadge';
 import { CurrencyBadge } from '../components/common/CurrencyBadge';
 import { AssetModal } from '../components/modals/AssetModal';
 import { SellModal } from '../components/modals/SellModal';
+import { FragmentMarketplacePanel } from '../components/marketplace/FragmentMarketplacePanel';
 import {
   ShoppingBag,
   Search,
   ArrowUpDown,
   Tag,
   AlertCircle,
+  Puzzle,
 } from 'lucide-react';
 
 interface MarketplaceProps {
@@ -26,11 +28,13 @@ interface MarketplaceProps {
 
 export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
   const { user } = useAuth();
-  const { listings, assets, marketStats, buyListing, cancelListing, listAsset, marketplaceBusy, refreshMarketplace } = useGameState();
+  const { listings, assets, marketStats, buyListing, cancelListing, listAsset, marketplaceBusy, refreshMarketplace, refreshFragmentMarketplace } = useGameState();
+  const [marketTab, setMarketTab] = useState<'cards' | 'fragments'>('cards');
 
   useEffect(() => {
     void refreshMarketplace();
-    const refresh = () => { void refreshMarketplace(); };
+    void refreshFragmentMarketplace();
+    const refresh = () => { void refreshMarketplace(); void refreshFragmentMarketplace(); };
     window.addEventListener('focus', refresh);
     return () => window.removeEventListener('focus', refresh);
   }, [user.id]);
@@ -105,12 +109,12 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
             Marketplace NEXA
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 font-mono mt-1.5 max-w-2xl leading-relaxed">
-            Negocie Cards diretamente entre jogadores e acompanhe os principais indicadores do mercado.
+            Negocie Cards e fragmentos diretamente entre jogadores com liquidação segura em NXA.
           </p>
         </div>
 
         {/* Action Button: List My Item */}
-        <div className="flex items-center gap-3">
+        {marketTab === 'cards' && <div className="flex items-center gap-3">
           <button
             onClick={() => setSellPickerOpen(true)}
             className="px-5 py-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-200 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all flex items-center gap-2 hover:-translate-y-0.5"
@@ -118,9 +122,22 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
             <Tag className="w-4 h-4" />
             <span>Anunciar Item Meu</span>
           </button>
-        </div>
+        </div>}
         </div>
       </section>
+
+      <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/[0.08] bg-[#090a0f] p-2">
+        <button onClick={() => setMarketTab('cards')}
+          className={`rounded-xl px-4 py-3 flex items-center justify-center gap-2 font-heading font-black text-xs uppercase tracking-wider transition-colors ${marketTab === 'cards' ? 'bg-amber-500/15 border border-amber-400/35 text-amber-200' : 'border border-transparent text-slate-500 hover:text-slate-300'}`}>
+          <ShoppingBag className="w-4 h-4" /> Cards
+        </button>
+        <button onClick={() => setMarketTab('fragments')}
+          className={`rounded-xl px-4 py-3 flex items-center justify-center gap-2 font-heading font-black text-xs uppercase tracking-wider transition-colors ${marketTab === 'fragments' ? 'bg-cyan-500/15 border border-cyan-400/35 text-cyan-200' : 'border border-transparent text-slate-500 hover:text-slate-300'}`}>
+          <Puzzle className="w-4 h-4" /> Fragmentos
+        </button>
+      </div>
+
+      {marketTab === 'cards' ? <>
 
       {/* Market Statistics Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl bg-[#090a0f] border border-white/[0.08] font-mono text-xs overflow-hidden">
@@ -482,6 +499,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
         onClose={() => setSellingAsset(null)}
         onConfirmList={(id, price) => listAsset(id, price)}
       />
+      </> : <FragmentMarketplacePanel />}
     </div>
   );
 };
