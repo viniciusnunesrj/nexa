@@ -7,6 +7,7 @@ import { useGameState } from '../contexts/GameStateContext';
 import { NexaAsset, Character, Rarity, BoxRewardSummary, BoxType, CardFragment } from '../types';
 import { RARITY_CONFIG } from '../config/designTokens';
 import { BOX_DEFINITIONS } from '../config/boxRates';
+import { CARD_FRAGMENT_IMAGE } from '../config/fragmentVisual';
 import { AssetCard } from '../components/common/AssetCard';
 import { AssetModal } from '../components/modals/AssetModal';
 import { SellModal } from '../components/modals/SellModal';
@@ -399,7 +400,7 @@ refreshFragmentMarketplace,
                       <div className="w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0"
                         style={{ borderColor: RARITY_CONFIG[frag.cardRarity]?.color || '#06b6d4' }}
                       >
-                        <img src={frag.cardImage} alt={frag.cardName} className="w-full h-full object-cover" />
+                        <img src={CARD_FRAGMENT_IMAGE} alt={`Fragmentos de ${frag.cardName}`} className="w-full h-full object-cover" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <RarityBadge rarity={frag.cardRarity} size="sm" />

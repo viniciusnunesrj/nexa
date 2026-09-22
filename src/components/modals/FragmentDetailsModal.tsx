@@ -4,6 +4,7 @@ import { CardFragment, FragmentListing } from '../../types';
 import { getTemplateById } from '../../config/collectionsData';
 import { RarityBadge } from '../common/RarityBadge';
 import { formatEconomicValue } from '../../utils/formatEconomicValue';
+import { CARD_FRAGMENT_IMAGE } from '../../config/fragmentVisual';
 
 interface FragmentDetailsModalProps {
   fragment: CardFragment | null;
@@ -44,7 +45,7 @@ export const FragmentDetailsModal: React.FC<FragmentDetailsModalProps> = ({
 
         <div className="grid md:grid-cols-[240px_1fr]">
           <div className="relative min-h-64 bg-slate-950 overflow-hidden">
-            <img src={fragment.cardImage} alt={fragment.cardName} className="absolute inset-0 w-full h-full object-cover" />
+            <img src={CARD_FRAGMENT_IMAGE} alt={`Fragmentos de ${fragment.cardName}`} className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a0b10] via-transparent to-black/20" />
             <div className="absolute left-4 top-4"><RarityBadge rarity={fragment.cardRarity} size="sm" /></div>
             <div className="absolute inset-x-4 bottom-4 rounded-xl bg-black/75 border border-cyan-500/25 p-3 text-center">

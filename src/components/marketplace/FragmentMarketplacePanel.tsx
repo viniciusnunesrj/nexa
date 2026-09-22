@@ -6,6 +6,7 @@ import { FragmentListing, CardFragment } from '../../types';
 import { RARITY_CONFIG } from '../../config/designTokens';
 import { RarityBadge } from '../common/RarityBadge';
 import { formatEconomicValue } from '../../utils/formatEconomicValue';
+import { CARD_FRAGMENT_IMAGE } from '../../config/fragmentVisual';
 
 export const FragmentMarketplacePanel: React.FC = () => {
   const { user } = useAuth();
@@ -98,7 +99,7 @@ export const FragmentMarketplacePanel: React.FC = () => {
             return (
               <div key={listing.id} className={`rounded-2xl overflow-hidden border bg-[#090a0f] ${rarity.border}`}>
                 <div className="relative aspect-[4/3] bg-slate-950 overflow-hidden">
-                  <img src={listing.cardImage} alt={listing.cardName} className="w-full h-full object-cover" />
+                  <img src={CARD_FRAGMENT_IMAGE} alt={`Fragmentos de ${listing.cardName}`} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#090a0f] via-transparent to-black/20" />
                   <div className="absolute top-2.5 left-2.5"><RarityBadge rarity={listing.cardRarity} size="sm" /></div>
                   <div className="absolute bottom-2 left-3 rounded-lg bg-black/75 border border-cyan-400/25 px-2 py-1 text-xs font-mono font-bold text-cyan-300">
@@ -140,7 +141,7 @@ export const FragmentMarketplacePanel: React.FC = () => {
                 sellableFragments.map((fragment) => (
                   <button key={fragment.id} onClick={() => { setSelling(fragment); setQuantity(''); setPrice(''); setPickerOpen(false); }}
                     className="w-full p-3 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-cyan-500/30 flex items-center gap-3 text-left">
-                    <img src={fragment.cardImage} alt={fragment.cardName} className="w-12 h-12 rounded-lg object-cover" />
+                    <img src={CARD_FRAGMENT_IMAGE} alt={`Fragmentos de ${fragment.cardName}`} className="w-12 h-12 rounded-lg object-cover" />
                     <div className="flex-1 min-w-0"><strong className="text-sm text-white block truncate">{fragment.cardName}</strong><span className="text-xs font-mono text-cyan-300">{fragment.amount} disponíveis</span></div>
                     <span className="text-xs text-cyan-300">Anunciar →</span>
                   </button>

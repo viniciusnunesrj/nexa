@@ -638,9 +638,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                       </div>
 
                       <span className="text-[11px] text-slate-400 block mt-0.5">
-                        {record.rewardAssetNames.join(
-                          ', '
-                        )}
+                        {record.itemsReceivedNames?.join(', ') || record.rewardsSummary || 'Recompensa registrada'}
                       </span>
                     </div>
                   </div>
@@ -648,7 +646,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                   <div className="text-right text-xs text-slate-400">
                     <span className="block font-mono">
                       {new Date(
-                        record.openedAt
+                        record.timestamp
                       ).toLocaleString('pt-BR')}
                     </span>
 
