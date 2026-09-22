@@ -2,7 +2,7 @@ import { formatEconomicValue } from '../../utils/formatEconomicValue';
 import { CardImage } from '../common/CardImage';
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, Shield, Coins, Flame, Info, CheckCircle2 } from 'lucide-react';
+import { X, Shield, Coins, Flame, Info, CheckCircle2 } from 'lucide-react';
 import { BoxType } from '../../types';
 import { BOX_DEFINITIONS, BOX_CONFIG, PITY_CONFIG } from '../../config/boxRates';
 import { getTemplatesByCollection } from '../../config/collectionsData';
@@ -49,19 +49,28 @@ export const BoxRewardsModal: React.FC<BoxRewardsModalProps> = ({ boxType, isOpe
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-2xl bg-[#0e0e18] border border-cyan-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+          className="relative w-full max-w-2xl bg-[#0e0e18] border rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+          style={{
+            borderColor: `${def.accentColor}55`,
+            boxShadow: `0 0 60px ${def.glowColor}`,
+          }}
         >
+          <div
+            className="absolute -top-28 -left-20 w-72 h-72 rounded-full blur-3xl opacity-20 pointer-events-none"
+            style={{ backgroundColor: def.accentColor }}
+          />
           {/* Header */}
-          <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/10">
+          <div className="relative z-10 flex items-start justify-between gap-4 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center border shadow-lg"
+                className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center border shadow-lg overflow-hidden shrink-0"
                 style={{
                   backgroundColor: `${def.accentColor}15`,
                   borderColor: `${def.accentColor}40`,
                 }}
               >
-                <Sparkles className="w-6 h-6" style={{ color: def.accentColor }} />
+                <img src={def.image} alt={def.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 ring-1 ring-inset ring-white/10" />
               </div>
               <div>
                 <span className="text-xs font-mono uppercase tracking-wider text-cyan-400 font-bold block">
@@ -79,7 +88,7 @@ export const BoxRewardsModal: React.FC<BoxRewardsModalProps> = ({ boxType, isOpe
           </div>
 
           {/* Description & Guarantees */}
-          <div className="py-4 space-y-3">
+          <div className="relative z-10 py-4 space-y-3">
             <p className="text-sm text-slate-300 leading-relaxed">{def.description}</p>
             <div className="p-3.5 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center gap-3">
               <Shield className="w-5 h-5 text-cyan-400 shrink-0" />

@@ -364,26 +364,43 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
             return (
               <div
                 key={type}
-                className="rounded-2xl bg-[#090a0f] border border-white/[0.08] hover:border-cyan-500/30 transition-all flex flex-col justify-between overflow-hidden group"
+                className="relative rounded-2xl bg-[#090a0f] border border-white/[0.08] hover:border-cyan-500/30 transition-all duration-300 flex flex-col justify-between overflow-hidden group hover:-translate-y-0.5"
+                style={{
+                  boxShadow: hasBox
+                    ? `0 0 28px ${def.glowColor}`
+                    : undefined,
+                }}
               >
                 {/* IMAGEM */}
-                <div className="relative aspect-[16/8] overflow-hidden bg-slate-950">
+                <div
+                  className="relative aspect-[16/9] overflow-hidden bg-[#070a10] border-b border-white/[0.06]"
+                  style={{
+                    background: `radial-gradient(circle at 50% 55%, ${def.accentColor}20 0%, #070a10 68%)`,
+                  }}
+                >
+                  <img
+                    src={def.image}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-20"
+                  />
                   <img
                     src={def.image}
                     alt={def.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    className="relative z-[1] w-full h-full object-contain p-2 sm:p-3 group-hover:scale-[1.04] transition-transform duration-500 drop-shadow-[0_14px_18px_rgba(0,0,0,0.55)]"
                   />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#090a0f] via-[#090a0f]/35 to-black/10" />
+                  <div className="absolute z-[2] inset-0 bg-gradient-to-t from-[#090a0f] via-transparent to-black/20 pointer-events-none" />
 
                   <div
-                    className="absolute inset-x-0 bottom-0 h-20 opacity-35 pointer-events-none"
+                    className="absolute z-[2] inset-x-0 bottom-0 h-20 opacity-50 pointer-events-none"
                     style={{
                       background: `linear-gradient(to top, ${def.accentColor}35, transparent)`,
                     }}
                   />
 
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute z-[3] top-3 left-3">
                     <span
                       className="px-2.5 py-1 rounded-md text-[9px] font-mono font-bold tracking-wider uppercase border backdrop-blur-md"
                       style={{
@@ -396,7 +413,7 @@ export const Boxes: React.FC<BoxesPageProps> = ({ onNavigate }) => {
                     </span>
                   </div>
 
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute z-[3] top-3 right-3">
                     <span
                       className={`px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border backdrop-blur-md ${
                         hasBox

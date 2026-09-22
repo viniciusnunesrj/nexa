@@ -289,20 +289,34 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
             exit={{ opacity: 0, scale: 1.05, filter: 'blur(8px)' }}
             className="relative w-full max-w-4xl bg-[#0b0c16]/95 border border-cyan-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center z-10 overflow-hidden"
           >
+            <img
+              src={def.image}
+              alt=""
+              aria-hidden="true"
+              className="absolute -right-20 -top-20 w-72 h-72 object-cover opacity-[0.08] blur-sm pointer-events-none"
+            />
             {/* Box Opening Title */}
-            <div className="text-center space-y-2 mb-6">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-widest uppercase bg-cyan-950/60 border border-cyan-500/40 text-cyan-300">
-                <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                {stage === 'WINNER_HIGHLIGHT' ? 'SORTEIO CONCLUÍDO!' : 'DESCRIPTOGRAFANDO RECOMPENSAS...'}
-              </span>
-              <h2 className="font-heading text-2xl sm:text-3xl font-black text-white">
-                {def.name}
-              </h2>
-              <p className="text-xs font-mono text-slate-400">
-                {stage === 'WINNER_HIGHLIGHT'
-                  ? 'Ativo selecionado com sucesso pela Ordem NEXA.'
-                  : 'A roleta quântica está desacelerando no ativo sorteado...'}
-              </p>
+            <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 text-center sm:text-left">
+              <div
+                className="w-20 h-20 rounded-2xl overflow-hidden border shrink-0"
+                style={{ borderColor: `${def.accentColor}70`, boxShadow: `0 0 24px ${def.glowColor}` }}
+              >
+                <img src={def.image} alt={def.name} className="w-full h-full object-cover" />
+              </div>
+              <div className="space-y-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-widest uppercase bg-cyan-950/60 border border-cyan-500/40 text-cyan-300">
+                  <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                  {stage === 'WINNER_HIGHLIGHT' ? 'SORTEIO CONCLUÍDO!' : 'DESCRIPTOGRAFANDO RECOMPENSAS...'}
+                </span>
+                <h2 className="font-heading text-2xl sm:text-3xl font-black text-white">
+                  {def.name}
+                </h2>
+                <p className="text-xs font-mono text-slate-400">
+                  {stage === 'WINNER_HIGHLIGHT'
+                    ? 'Ativo selecionado com sucesso pela Ordem NEXA.'
+                    : 'A roleta quântica está desacelerando no ativo sorteado...'}
+                </p>
+              </div>
             </div>
 
             {/* ROULETTE TRACK CONTAINER */}
