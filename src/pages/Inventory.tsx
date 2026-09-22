@@ -1,10 +1,10 @@
 import { isSupabaseConfigured } from '../lib/supabase';
 import { canSellOnlineCard } from '../services/marketplaceOnlineService';
 import { getCardPower } from '../utils/cardPower';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
-import { NexaAsset, Character, Rarity, BoxRewardSummary, BoxType } from '../types';
+import { NexaAsset, Character, Rarity, BoxRewardSummary, BoxType, CardFragment } from '../types';
 import { RARITY_CONFIG } from '../config/designTokens';
 import { BOX_DEFINITIONS } from '../config/boxRates';
 import { AssetCard } from '../components/common/AssetCard';
@@ -13,6 +13,7 @@ import { SellModal } from '../components/modals/SellModal';
 import { TradeProposalModal } from '../components/modals/TradeProposalModal';
 import { BoxOpeningModal } from '../components/boxes/BoxOpeningModal';
 import { RarityBadge } from '../components/common/RarityBadge';
+import { FragmentDetailsModal } from '../components/modals/FragmentDetailsModal';
 import {
   Package,
   PackageOpen,
@@ -36,7 +37,15 @@ boxes,
 cardFragments,
 openBox,
 craftCardWithFragments,
+fragmentListings,
+listFragments,
+marketplaceBusy,
+refreshFragmentMarketplace,
   } = useGameState();
+
+  useEffect(() => {
+    if (isSupabaseConfigured()) void refreshFragmentMarketplace();
+  }, [user.id]);
 
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [selectedRarity, setSelectedRarity] = useState<string>('ALL');
@@ -48,6 +57,7 @@ craftCardWithFragments,
   const [sellingAsset, setSellingAsset] = useState<NexaAsset | null>(null);
   const [tradingAsset, setTradingAsset] = useState<NexaAsset | null>(null);
   const [activeOpeningSummary, setActiveOpeningSummary] = useState<BoxRewardSummary | null>(null);
+  const [inspectedFragment, setInspectedFragment] = useState<CardFragment | null>(null);
 
   const myAssets = assets.filter((a) => a.ownerId === user.id && a.type !== 'Character');
   const isEquipment = (asset: NexaAsset) => ['Weapon', 'Armor', 'Artifact', 'Skin'].includes(asset.type);
@@ -72,6 +82,17 @@ craftCardWithFragments,
     Lendário: 5,
     Mítico: 6,
   };
+
+  const filteredFragments = myFragments.filter((fragment) => {
+    if (selectedRarity !== 'ALL' && fragment.cardRarity !== selectedRarity) return false;
+    const term = search.trim().toLowerCase();
+    return !term || fragment.cardName.toLowerCase().includes(term);
+  }).sort((a, b) => {
+    if (sortBy === 'power_desc') return b.amount - a.amount;
+    if (sortBy === 'power_asc') return a.amount - b.amount;
+    if (sortBy === 'rarity') return rarityRank[b.cardRarity] - rarityRank[a.cardRarity];
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
 
   const filteredAssets = myAssets.filter((asset) => {
     if (activeTab === 'EQUIPMENT') {
@@ -207,8 +228,8 @@ craftCardWithFragments,
             onChange={(e) => setSortBy(e.target.value as any)}
             className="bg-[#07090d] border border-white/[0.08] rounded-lg px-3 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-cyan-500/60"
           >
-            <option value="power_desc">Maior Poder</option>
-            <option value="power_asc">Menor Poder</option>
+            <option value="power_desc">{activeTab === 'FRAGMENTS' ? 'Maior Quantidade' : 'Maior Poder'}</option>
+            <option value="power_asc">{activeTab === 'FRAGMENTS' ? 'Menor Quantidade' : 'Menor Poder'}</option>
             <option value="rarity">Maior Raridade</option>
             <option value="recent">Mais Recentes</option>
           </select>
@@ -346,25 +367,33 @@ craftCardWithFragments,
             </div>
           </div>
 
-          {myFragments.length === 0 ? (
+          {filteredFragments.length === 0 ? (
             <div className="py-16 text-center rounded-3xl bg-[#0a0a10] border border-dashed border-white/10 p-8">
               <Repeat className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <h4 className="font-heading text-lg font-bold text-white">Nenhum fragmento acumulado</h4>
+              <h4 className="font-heading text-lg font-bold text-white">Nenhum fragmento encontrado</h4>
               <p className="text-xs text-slate-400 font-mono mt-1 max-w-sm mx-auto">
-                Nenhum fragmento está registrado para este piloto no momento.
+                {myFragments.length === 0 ? 'Nenhum fragmento está registrado para este piloto no momento.' : 'Nenhum fragmento corresponde aos filtros selecionados.'}
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {myFragments.map((frag) => {
+              {filteredFragments.map((frag) => {
                 const required = 100;
-                const canUnlock = frag.amount >= required;
-                const pct = Math.min(100, Math.round((frag.amount / required) * 100));
+                const activeListing = fragmentListings.find((listing) =>
+                  listing.status === 'ACTIVE' && listing.sellerId === user.id && listing.templateId === frag.templateId);
+                const reserved = activeListing?.quantity ?? 0;
+                const available = Math.max(0, frag.amount - reserved);
+                const canUnlock = available >= required;
+                const pct = Math.min(100, Math.round((available / required) * 100));
 
                 return (
                   <div
                     key={frag.id}
-                    className="rounded-2xl bg-[#0e0e1a] border border-white/10 p-5 flex flex-col justify-between space-y-4 shadow-lg"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setInspectedFragment(frag)}
+                    onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setInspectedFragment(frag); }}
+                    className="rounded-2xl bg-[#0e0e1a] border border-white/10 hover:border-cyan-500/35 p-5 flex flex-col justify-between space-y-4 shadow-lg cursor-pointer transition-all hover:-translate-y-0.5"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0"
@@ -389,7 +418,7 @@ craftCardWithFragments,
                         <span className="text-slate-400">Progresso</span>
                         <span className="font-bold text-white">
                           <strong className={canUnlock ? 'text-emerald-400' : 'text-amber-400'}>
-                            {frag.amount}
+                            {available}
                           </strong>{' '}
                           / {required}
                         </span>
@@ -406,30 +435,19 @@ craftCardWithFragments,
                           }}
                         />
                       </div>
+                      {reserved > 0 && <div className="flex justify-between text-[10px] font-mono text-amber-400"><span>Reservados no Marketplace</span><strong>{reserved}</strong></div>}
                     </div>
 
-                    {/* Button [ DESBLOQUEAR ] - disabled if < 100 */}
-                    <button
-                      onClick={() => craftCardWithFragments(frag.templateId)}
-                      disabled={!canUnlock}
-                      className={`w-full py-3 rounded-xl font-heading font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                        canUnlock
-                          ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer'
-                          : 'bg-white/5 border border-white/10 text-slate-500 cursor-not-allowed'
-                      }`}
-                    >
-                      {canUnlock ? (
-                        <>
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>SINTETIZAR CARTA</span>
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="w-4 h-4" />
-                          <span>SINTETIZAR (Faltam {required - frag.amount})</span>
-                        </>
-                      )}
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={(event) => { event.stopPropagation(); setInspectedFragment(frag); }} className="py-3 rounded-xl bg-cyan-500/10 border border-cyan-400/25 text-cyan-300 font-heading font-black text-xs uppercase">Detalhes / Vender</button>
+                      <button
+                        onClick={(event) => { event.stopPropagation(); void craftCardWithFragments(frag.templateId); }}
+                        disabled={!canUnlock || marketplaceBusy}
+                        className={`py-3 rounded-xl font-heading font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${canUnlock ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950' : 'bg-white/5 border border-white/10 text-slate-500 cursor-not-allowed'}`}
+                      >
+                        {canUnlock ? <><CheckCircle2 className="w-4 h-4" /><span>Forjar</span></> : <><Lock className="w-4 h-4" /><span>Faltam {required - available}</span></>}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -514,6 +532,20 @@ craftCardWithFragments,
           onClose={() => setActiveOpeningSummary(null)}
         />
       )}
+
+      <FragmentDetailsModal
+        fragment={inspectedFragment}
+        activeListing={inspectedFragment ? fragmentListings.find((listing) => listing.status === 'ACTIVE' && listing.sellerId === user.id && listing.templateId === inspectedFragment.templateId) : undefined}
+        busy={marketplaceBusy}
+        onClose={() => setInspectedFragment(null)}
+        onList={listFragments}
+        onCraft={async (templateId) => { await craftCardWithFragments(templateId); setInspectedFragment(null); }}
+        onOpenMarketplace={() => {
+          sessionStorage.setItem('nexa_marketplace_tab', 'fragments');
+          setInspectedFragment(null);
+          onNavigate('marketplace');
+        }}
+      />
 
       {/* Detailed Modal */}
       <AssetModal

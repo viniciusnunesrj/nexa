@@ -29,7 +29,11 @@ interface MarketplaceProps {
 export const Marketplace: React.FC<MarketplaceProps> = ({ onNavigate }) => {
   const { user } = useAuth();
   const { listings, assets, marketStats, buyListing, cancelListing, listAsset, marketplaceBusy, refreshMarketplace, refreshFragmentMarketplace } = useGameState();
-  const [marketTab, setMarketTab] = useState<'cards' | 'fragments'>('cards');
+  const [marketTab, setMarketTab] = useState<'cards' | 'fragments'>(() => {
+    const requested = sessionStorage.getItem('nexa_marketplace_tab');
+    sessionStorage.removeItem('nexa_marketplace_tab');
+    return requested === 'fragments' ? 'fragments' : 'cards';
+  });
 
   useEffect(() => {
     void refreshMarketplace();
