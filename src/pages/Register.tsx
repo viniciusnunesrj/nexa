@@ -127,11 +127,11 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate, onSuccess }) => 
           <div className="grid grid-cols-2 gap-2 text-center text-[11px] font-mono text-slate-300">
             <div className="p-2 rounded-xl bg-white/5 border border-white/5">
               <span className="block text-cyan-400 font-bold">+1.000 NEX</span>
-              <span className="text-[10px] text-slate-400">Para sua primeira caixa</span>
+              <span className="text-[10px] text-slate-400">Saldo inicial para sua jornada</span>
             </div>
             <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-              <span className="block text-emerald-400 font-bold">1 Herói</span>
-              <span className="text-[10px] text-slate-400">Recruta Inicial</span>
+              <span className="block text-emerald-400 font-bold">4 Cartas</span>
+              <span className="text-[10px] text-slate-400">Caixa Recruta grátis • esquadrão inicial</span>
             </div>
           </div>
         </div>
