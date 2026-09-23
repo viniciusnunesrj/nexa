@@ -102,8 +102,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="absolute inset-0 opacity-[.13] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
         <div className="relative min-h-[390px] px-4 py-5 sm:min-h-[345px] sm:px-7 lg:h-[344px] lg:min-h-0 lg:px-8">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <img src="/assets/nexa-rivals-hero.png" alt="" aria-hidden="true" className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center opacity-70 sm:opacity-85 lg:h-[112%] lg:w-[112%] lg:opacity-100" />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,8,18,.02)_0%,rgba(2,8,18,.08)_28%,rgba(2,8,18,.52)_41%,rgba(2,8,18,.68)_50%,rgba(2,8,18,.52)_59%,rgba(2,8,18,.08)_72%,rgba(2,8,18,.02)_100%)]" />
+            <img src="/assets/nexa-rivals-hero.png" alt="" aria-hidden="true" className="absolute left-1/2 top-1/2 h-[155%] w-[155%] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center opacity-90 sm:h-[135%] sm:w-[135%] sm:opacity-90 lg:h-[112%] lg:w-[112%] lg:opacity-100" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,8,18,.01)_0%,rgba(2,8,18,.03)_24%,rgba(2,8,18,.34)_40%,rgba(2,8,18,.54)_50%,rgba(2,8,18,.34)_60%,rgba(2,8,18,.03)_76%,rgba(2,8,18,.01)_100%)] lg:bg-[linear-gradient(90deg,rgba(2,8,18,.02)_0%,rgba(2,8,18,.08)_28%,rgba(2,8,18,.52)_41%,rgba(2,8,18,.68)_50%,rgba(2,8,18,.52)_59%,rgba(2,8,18,.08)_72%,rgba(2,8,18,.02)_100%)]" />
             <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#050b14]/90 via-[#050b14]/35 to-transparent" />
           </div>
           <div className="pointer-events-none absolute -bottom-16 left-[-3%] z-0 h-32 w-[42%] rounded-[50%] bg-cyan-400/[.13] blur-[55px] lg:block" />
