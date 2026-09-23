@@ -100,17 +100,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="relative min-h-[320px] px-5 py-5 sm:px-8 lg:min-h-[350px]">
           <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-[28%] lg:block">
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/[.12] to-transparent" />
-            <div className="absolute bottom-8 left-8 flex h-44 w-36 -rotate-6 items-center justify-center rounded-[28px] border border-cyan-300/20 bg-cyan-400/[.05] shadow-[0_0_60px_rgba(34,211,238,.12)]">
-              <Swords className="h-14 w-14 text-cyan-300/65" />
+            <div className="absolute bottom-7 left-5 h-52 w-44 -rotate-6 rounded-[32px] border border-cyan-300/15 bg-[linear-gradient(145deg,rgba(34,211,238,.12),rgba(2,6,23,.15))] shadow-[0_0_70px_rgba(34,211,238,.13)]">
+              <div className="absolute inset-4 rounded-[24px] border border-cyan-300/10" />
+              <Swords className="absolute bottom-8 right-7 h-12 w-12 text-cyan-300/35" />
             </div>
-            <span className="absolute bottom-5 left-8 font-mono text-[8px] uppercase tracking-[.25em] text-cyan-500/50">Arte Rift · slot</span>
           </div>
           <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[28%] lg:block">
             <div className="absolute inset-0 bg-gradient-to-l from-violet-500/[.13] to-transparent" />
-            <div className="absolute bottom-8 right-8 flex h-44 w-36 rotate-6 items-center justify-center rounded-[28px] border border-violet-300/20 bg-violet-400/[.05] shadow-[0_0_60px_rgba(168,85,247,.14)]">
-              <Zap className="h-14 w-14 text-violet-300/65" />
+            <div className="absolute bottom-7 right-5 h-52 w-44 rotate-6 rounded-[32px] border border-violet-300/15 bg-[linear-gradient(215deg,rgba(168,85,247,.14),rgba(2,6,23,.15))] shadow-[0_0_70px_rgba(168,85,247,.14)]">
+              <div className="absolute inset-4 rounded-[24px] border border-violet-300/10" />
+              <Zap className="absolute bottom-8 left-7 h-12 w-12 text-violet-300/35" />
             </div>
-            <span className="absolute bottom-5 right-8 font-mono text-[8px] uppercase tracking-[.25em] text-violet-400/50">Arte Duel · slot</span>
           </div>
           <div className="relative z-10 mx-auto flex max-w-[650px] flex-col items-center text-center">
             <div className="mb-3 flex items-center gap-3 font-mono text-[8px] font-bold uppercase tracking-[.3em] text-slate-500"><span className="h-px w-10 bg-cyan-400/30" /> Rede Nexus <span className="h-px w-10 bg-violet-400/30" /></div>
@@ -126,7 +126,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="absolute inset-x-5 bottom-4 z-20 grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-400/15 bg-[#06101b]/95 backdrop-blur-md sm:inset-x-8 lg:grid-cols-4">
             <div className="border-r border-white/[.07] px-4 py-3"><p className="font-heading text-lg font-black text-white">{userCards.length}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">Cartas no inventário</p></div>
             <div className="border-r border-white/[.07] px-4 py-3"><p className="font-heading text-lg font-black text-cyan-300">Nv. {currentLevel}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">Piloto</p></div>
-            <div className="border-r border-white/[.07] px-4 py-3"><p className="font-heading text-lg font-black text-sky-300">{currentExp} / {maxExp}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">XP</p></div>
+            <div className="border-r border-white/[.07] px-4 py-3"><div className="flex items-baseline gap-1"><p className="font-heading text-lg font-black text-sky-300">{currentExp}</p><span className="text-[9px] text-slate-500">/ {maxExp} XP</span></div><div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[.07]"><div style={{width:`${xpPercent}%`}} className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400"/></div></div>
             <div className="hidden px-4 py-3 lg:block"><p className="font-heading text-lg font-black text-violet-300">{Math.max(0,maxExp-currentExp)}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">XP para próximo nível</p></div>
           </div>
         </div>
@@ -135,7 +135,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <div className="grid gap-4 lg:grid-cols-2">
         <button onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[205px] overflow-hidden rounded-[18px] border border-cyan-400/50 bg-[#07131d] p-5 text-left transition hover:-translate-y-0.5 hover:border-cyan-300">
           <div className="absolute inset-y-0 right-0 w-[43%] bg-[radial-gradient(circle_at_center,rgba(34,211,238,.15),transparent_60%)]" />
-          <div className="absolute right-5 top-5 flex h-28 w-28 items-center justify-center rounded-2xl border border-cyan-400/15 bg-cyan-400/[.04]"><Swords className="h-12 w-12 text-cyan-300/60"/></div>
+          <div className="absolute -right-4 top-3 flex h-36 w-36 rotate-6 items-center justify-center rounded-[28px] border border-cyan-400/15 bg-gradient-to-br from-cyan-400/[.08] to-transparent shadow-[0_0_55px_rgba(34,211,238,.12)]"><Swords className="h-12 w-12 text-cyan-300/60"/></div>
           <div className="relative flex h-full max-w-[70%] flex-col justify-between">
             <div><div className="flex items-center gap-2"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-cyan-300">Jogo principal</span><span className="rounded-full border border-emerald-400/25 bg-emerald-400/[.07] px-2 py-0.5 text-[8px] font-bold uppercase text-emerald-300">● Online</span></div><h2 className="mt-2 font-heading text-2xl font-black text-white">RIFT BATTLE <span className="text-cyan-300">V2</span></h2><p className="mt-2 text-xs leading-5 text-slate-400">Combate tático em equipe. Forme seu esquadrão, enfrente o Rift e conquiste recompensas.</p><div className="mt-3 flex flex-wrap gap-1.5">{['PvE','2×2','3×3','4×4','NEX + NXA + XP'].map(x=><span key={x} className="rounded-full border border-cyan-400/20 bg-black/20 px-2.5 py-1 text-[8px] font-bold text-slate-300">{x}</span>)}</div></div>
             <span className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-cyan-300 font-heading text-[10px] font-black uppercase tracking-[.1em] text-slate-950">Jogar agora <ArrowRight className="h-4 w-4"/></span>
@@ -144,7 +144,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
         <button onClick={() => onNavigate('arena')} className="group relative min-h-[205px] overflow-hidden rounded-[18px] border border-fuchsia-400/50 bg-[#120a19] p-5 text-left transition hover:-translate-y-0.5 hover:border-fuchsia-300">
           <div className="absolute inset-y-0 right-0 w-[43%] bg-[radial-gradient(circle_at_center,rgba(217,70,239,.15),transparent_60%)]" />
-          <div className="absolute right-5 top-5 flex h-28 w-28 items-center justify-center rounded-2xl border border-fuchsia-400/15 bg-fuchsia-400/[.04]"><Layers className="h-12 w-12 text-fuchsia-300/60"/></div>
+          <div className="absolute -right-4 top-3 flex h-36 w-36 -rotate-6 items-center justify-center rounded-[28px] border border-fuchsia-400/15 bg-gradient-to-br from-fuchsia-400/[.08] to-transparent shadow-[0_0_55px_rgba(217,70,239,.12)]"><Layers className="h-12 w-12 text-fuchsia-300/60"/></div>
           <div className="relative flex h-full max-w-[70%] flex-col justify-between">
             <div><div className="flex items-center gap-2"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-fuchsia-300">Duelo estratégico</span><span className="rounded-full border border-emerald-400/25 bg-emerald-400/[.07] px-2 py-0.5 text-[8px] font-bold uppercase text-emerald-300">● Online</span></div><h2 className="mt-2 font-heading text-2xl font-black text-white">NEXUS DUEL</h2><p className="mt-2 text-xs leading-5 text-slate-400">Duelo individual 4×4. Use suas cartas, Nexos e habilidades em confrontos PvE ou PvP.</p><div className="mt-3 flex flex-wrap gap-1.5">{['PvE','PvP','Deck 4×4','Habilidades','XP compartilhado'].map(x=><span key={x} className="rounded-full border border-fuchsia-400/20 bg-black/20 px-2.5 py-1 text-[8px] font-bold text-slate-300">{x}</span>)}</div></div>
             <span className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 font-heading text-[10px] font-black uppercase tracking-[.1em] text-white">Jogar agora <ArrowRight className="h-4 w-4"/></span>
