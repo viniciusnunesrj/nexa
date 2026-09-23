@@ -616,8 +616,10 @@ class SupabaseServiceClass {
     });
     if (error) throw new Error(error.message);
     if (!data?.success || data.box_id !== params.boxId || !data.reward?.templateId ||
-        (!data.card && !data.fragment)) throw new Error('Resposta de abertura inválida; repita a solicitação.');
-    const cards = data.card ? [mapRowToCard(data.card)] : [];
+        (!data.card && !data.fragment && !Array.isArray(data.cards))) throw new Error('Resposta de abertura inválida; repita a solicitação.');
+    const cards = Array.isArray(data.cards) && data.cards.length > 0
+      ? data.cards.map(mapRowToCard)
+      : data.card ? [mapRowToCard(data.card)] : [];
     return {
       boxId: data.box_id, boxType: data.box_type, boxName: data.box_name, openedAt: data.opened_at,
       assets: cards, cards, items: [], characters: [], fragments: [],

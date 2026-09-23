@@ -44,6 +44,8 @@ export interface Card extends BaseAsset {
   templateId: string;
   /** Instâncias antigas sem este campo são tratadas visualmente como ★1. */
   starLevel?: StarLevel;
+  /** Carta inicial vinculada à conta: não comercializável e limitada a ★1. */
+  isStarter?: boolean;
   collectionId: string;
   collectionName: string;
   element: CardElement;
