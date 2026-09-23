@@ -101,21 +101,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="absolute left-1/2 top-[44%] h-44 w-44 -translate-x-1/2 rounded-full bg-sky-400/[.06] blur-3xl" />
         <div className="absolute inset-0 opacity-[.13] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
         <div className="relative min-h-[390px] px-4 py-5 sm:min-h-[345px] sm:px-7 lg:min-h-[338px] lg:px-8">
-          <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-[28%] lg:block">
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/[.12] to-transparent" />
-            <div className="absolute bottom-7 left-5 h-52 w-44 -rotate-6 rounded-[32px] border border-cyan-300/15 bg-[linear-gradient(145deg,rgba(34,211,238,.12),rgba(2,6,23,.15))] shadow-[0_0_70px_rgba(34,211,238,.13)]">
-              <div className="absolute inset-4 rounded-[24px] border border-cyan-300/10" />
-              <Swords className="absolute bottom-8 right-7 h-12 w-12 text-cyan-300/35" />
-            </div>
+          <div className="pointer-events-none absolute inset-0 hidden overflow-hidden lg:block">
+            <img src="/assets/nexa-rivals-hero.png" alt="" aria-hidden="true" className="absolute bottom-0 left-1/2 h-[112%] w-auto max-w-none -translate-x-1/2 object-contain opacity-95 drop-shadow-[0_0_28px_rgba(56,189,248,.18)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,8,17,.02)_0%,rgba(4,8,17,.10)_23%,rgba(4,8,17,.72)_42%,rgba(4,8,17,.82)_50%,rgba(4,8,17,.72)_58%,rgba(4,8,17,.10)_77%,rgba(4,8,17,.02)_100%)]" />
+            <div className="absolute inset-y-0 left-0 w-[31%] bg-gradient-to-r from-cyan-500/[.06] to-transparent" />
+            <div className="absolute inset-y-0 right-0 w-[31%] bg-gradient-to-l from-fuchsia-500/[.07] to-transparent" />
           </div>
-          <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[28%] lg:block">
-            <div className="absolute inset-0 bg-gradient-to-l from-violet-500/[.13] to-transparent" />
-            <div className="absolute bottom-7 right-5 h-52 w-44 rotate-6 rounded-[32px] border border-violet-300/15 bg-[linear-gradient(215deg,rgba(168,85,247,.14),rgba(2,6,23,.15))] shadow-[0_0_70px_rgba(168,85,247,.14)]">
-              <div className="absolute inset-4 rounded-[24px] border border-violet-300/10" />
-              <Zap className="absolute bottom-8 left-7 h-12 w-12 text-violet-300/35" />
-            </div>
-          </div>
-          <div className="relative z-10 mx-auto flex max-w-[620px] flex-col items-center pt-1 text-center lg:pt-2">
+          <div className="relative z-10 mx-auto flex max-w-[590px] flex-col items-center pt-1 text-center lg:pt-2">
             <div className="mb-2.5 flex items-center gap-3 font-mono text-[8px] font-bold uppercase tracking-[.34em] text-slate-500"><span className="h-px w-10 bg-cyan-400/30" /> Rede Nexus <span className="h-px w-10 bg-violet-400/30" /></div>
             <h1 className="font-heading text-[28px] font-black uppercase leading-[.94] tracking-[.015em] text-white drop-shadow-[0_3px_18px_rgba(0,0,0,.7)] sm:text-4xl">
               Sua próxima<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400">batalha começa aqui</span>
