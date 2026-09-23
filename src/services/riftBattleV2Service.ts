@@ -52,6 +52,36 @@ export async function finishAuthoritativeRiftBattleV2(runId: string, actions: re
   return data as { outcome: 'VICTORY' | 'DEFEAT'; reward: RiftBattleReward; idempotent: boolean };
 }
 
+
+export interface RiftBattleResume {
+  success: true;
+  active: boolean;
+  expired?: boolean;
+  runId?: string;
+  arena?: RiftBattleArenaConfig;
+  playerCards?: RiftBattleCard[];
+  opponentCards?: RiftBattleCard[];
+  difficulty?: RiftBattleDifficulty;
+  actions?: RiftBattleAction[];
+  expiresInSeconds?: number;
+  reward?: RiftBattleReward;
+}
+
+export async function resumeAuthoritativeRiftBattleV2(): Promise<RiftBattleResume> {
+  const configurationError = getSupabaseConfigurationError();
+  if (configurationError) throw new Error(configurationError);
+  const { data, error } = await supabase.functions.invoke('riftbattle-v2-authoritative', { body: { action: 'resume' } });
+  if (error || !data?.success) throw new Error('Não foi possível verificar a partida em andamento.');
+  return data as RiftBattleResume;
+}
+
+export async function checkpointAuthoritativeRiftBattleV2(runId: string, actions: readonly RiftBattleAction[]): Promise<void> {
+  const configurationError = getSupabaseConfigurationError();
+  if (configurationError) throw new Error(configurationError);
+  const { data, error } = await supabase.functions.invoke('riftbattle-v2-authoritative', { body: { action: 'checkpoint', runId, actions: [...actions] } });
+  if (error || !data?.success) throw new Error(data?.expired ? 'Tempo de reconexão encerrado. A partida foi registrada como derrota.' : 'Não foi possível salvar o progresso da partida.');
+}
+
 /** Mantido para compatibilidade com o preflight antigo. Não concede recompensa. */
 export async function validateRiftBattleV2Squad(request: RiftBattleValidationRequest) {
   const params = validationParams(request);
