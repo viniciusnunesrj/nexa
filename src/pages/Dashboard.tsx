@@ -115,9 +115,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               <Zap className="absolute bottom-8 left-7 h-12 w-12 text-violet-300/35" />
             </div>
           </div>
-          <div className="relative z-10 mx-auto flex max-w-[650px] flex-col items-center text-center">
+          <div className="relative z-10 mx-auto flex max-w-[620px] flex-col items-center pt-1 text-center lg:pt-2">
             <div className="mb-3 flex items-center gap-3 font-mono text-[8px] font-bold uppercase tracking-[.3em] text-slate-500"><span className="h-px w-10 bg-cyan-400/30" /> Rede Nexus <span className="h-px w-10 bg-violet-400/30" /></div>
-            <h1 className="font-heading text-3xl font-black uppercase leading-[.95] tracking-[.02em] text-white sm:text-4xl">
+            <h1 className="font-heading text-[28px] font-black uppercase leading-[.94] tracking-[.015em] text-white drop-shadow-[0_3px_18px_rgba(0,0,0,.7)] sm:text-4xl">
               Sua próxima<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400">batalha começa aqui</span>
             </h1>
             <p className="mt-3 text-xs text-slate-400 sm:text-sm">Estratégia. Coleção. Evolução. Uma Rede de possibilidades.</p>
@@ -182,7 +182,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       )}
 
       {/* Requirement 4: PROGRESSÃO & PRÓXIMO NÍVEL NO DASHBOARD */}
-      <div className="p-4 sm:p-5 rounded-[18px] bg-gradient-to-br from-[#09111b] via-[#090b13] to-[#08090f] border border-cyan-500/20 shadow-[0_20px_60px_rgba(0,0,0,0.22)] relative overflow-hidden">
+      <div className="p-4 sm:p-5 rounded-[18px] bg-gradient-to-br from-[#09111b] via-[#090b13] to-[#08090f] border border-cyan-500/20 shadow-[0_22px_65px_rgba(0,0,0,.30),inset_0_1px_0_rgba(255,255,255,.025)] relative overflow-hidden">
         <div className="absolute top-0 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -214,10 +214,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
             {/* Glowing progress bar */}
             <div className="space-y-1.5">
-              <div className="h-3.5 w-full bg-black/60 rounded-full overflow-hidden border border-white/10 p-0.5">
+              <div className="h-2.5 w-full bg-black/70 rounded-full overflow-hidden border border-white/10 p-0.5 shadow-inner">
                 <div
                   style={{ width: `${xpPercent}%` }}
-                  className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.5)] transition-all duration-700"
+                  className="h-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 rounded-full shadow-[0_0_16px_rgba(34,211,238,.55)] transition-all duration-700"
                 />
               </div>
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
@@ -293,7 +293,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
       {/* Compact live dashboard — only existing NEXA data */}
       <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1.15fr]">
-        <div className="rounded-[18px] border border-cyan-400/15 bg-[#07101a] p-4">
+        <div className="rounded-[18px] border border-cyan-400/15 bg-[#07101a]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.025)]">
           <div className="flex items-center justify-between"><h3 className="font-heading text-xs font-black uppercase tracking-[.1em] text-cyan-300">Arsenal</h3><button onClick={() => onNavigate('inventory')} className="text-[9px] font-mono text-slate-500 hover:text-cyan-300">Ver tudo →</button></div>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {userItems.slice(0,3).map(item=><button key={item.id} onClick={()=>onNavigate('inventory')} className="group min-w-0"><div className="aspect-[.82] overflow-hidden rounded-lg border border-white/[.07] bg-black/30"><CardImage asset={item} src={item.image} alt={item.name} className="h-full w-full object-cover transition group-hover:scale-105"/></div><p className="mt-1 truncate text-[9px] font-bold text-slate-300">{item.name}</p></button>)}
@@ -301,7 +301,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        <div className="rounded-[18px] border border-violet-400/15 bg-[#0d0a15] p-4">
+        <div className="rounded-[18px] border border-violet-400/15 bg-[#0d0a15]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.025)]">
           <div className="flex items-center justify-between"><h3 className="font-heading text-xs font-black uppercase tracking-[.1em] text-violet-300">Status da conta</h3><Shield className="h-4 w-4 text-violet-300"/></div>
           <div className="mt-3 space-y-2">
             <div className="flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2"><span className="text-[9px] uppercase text-slate-500">Poder do arsenal</span><strong className="text-xs text-cyan-300">{totalPower===null?'—':totalPower.toLocaleString('pt-BR')}</strong></div>
@@ -311,7 +311,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        <div className="rounded-[18px] border border-white/[.08] bg-[#090d14] p-4">
+        <div className="rounded-[18px] border border-white/[.08] bg-[#090d14]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.025)]">
           <div className="flex items-center justify-between"><h3 className="font-heading text-xs font-black uppercase tracking-[.1em] text-sky-300">Atividade do mercado</h3><button onClick={() => onNavigate('history')} className="text-[9px] font-mono text-slate-500 hover:text-sky-300">Histórico →</button></div>
           <div className="mt-3 space-y-2">
             {transactions.slice(0,4).map(tx=><div key={tx.id} className="flex items-center justify-between gap-3 border-b border-white/[.05] pb-2 text-[9px] last:border-0"><div className="min-w-0"><p className="truncate font-bold text-slate-300">{tx.itemSnapshot.name}</p><p className="truncate text-slate-600">{tx.buyerName} comprou de {tx.sellerName}</p></div><span className="shrink-0 font-bold text-cyan-300">{formatEconomicValue(tx.amount)} NXA</span></div>)}
