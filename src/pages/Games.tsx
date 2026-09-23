@@ -1,6 +1,6 @@
 import React from 'react';
 // Vercel production sync: Nexus portal
-import { ArrowRight, CheckCircle2, Swords, Shield, Zap, Users } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Swords, Zap, Users } from 'lucide-react';
 
 interface GamesProps {
   onNavigate: (page: string) => void;
@@ -28,45 +28,20 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <section className="relative overflow-hidden rounded-[24px] border border-cyan-500/25 bg-gradient-to-br from-[#0a0c14] via-[#0c0d18] to-[#090a10] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
-          <div className="absolute -top-24 -right-24 w-56 h-56 rounded-full bg-cyan-500/[0.08] blur-3xl pointer-events-none" />
+        <section className="relative overflow-hidden rounded-[24px] border border-cyan-400/25 bg-gradient-to-br from-[#07151d] via-[#0a1019] to-[#090a10] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
+          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-cyan-400/[0.09] blur-3xl pointer-events-none" />
           <div className="relative space-y-5">
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-mono font-bold tracking-[0.16em] text-cyan-400">
-                  NEXA
-                </p>
-                <h2 className="mt-1 font-heading text-2xl font-black text-white">RIFT BATTLE CLÁSSICO</h2>
-              </div>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px] font-mono font-bold uppercase">
-                <CheckCircle2 className="w-3 h-3" />
-                Disponível
-              </span>
+              <div><p className="text-[10px] font-mono font-bold tracking-[0.16em] text-cyan-400">NEXA · RIFT V2</p><h2 className="mt-1 font-heading text-2xl font-black text-white">RIFT BATTLE</h2></div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-emerald-300"><CheckCircle2 className="h-3 w-3" />Disponível</span>
             </div>
-            <p className="text-sm leading-relaxed text-slate-400">
-              Monte seu esquadrão de cartas e enfrente combates PvE para avançar pelas rupturas da Rede Nexus.
-            </p>
+            <p className="text-sm leading-relaxed text-slate-400">Combate tático PvE em arenas 2×2, 3×3 e 4×4. Monte seu esquadrão e conquiste NEX, NXA e XP.</p>
             <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Swords className="mb-2 h-4 w-4 text-cyan-300" /><span className="block text-[10px] font-mono font-bold text-white">PvE</span><span className="text-[9px] text-slate-500">Esquadrão</span></div>
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Zap className="mb-2 h-4 w-4 text-cyan-300" /><span className="block text-[10px] font-mono font-bold text-white">NEX + XP</span><span className="text-[9px] text-slate-500">Recompensas</span></div>
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Shield className="mb-2 h-4 w-4 text-cyan-300" /><span className="block text-[10px] font-mono font-bold text-white">Coleção</span><span className="text-[9px] text-slate-500">Suas cartas</span></div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Swords className="mb-2 h-4 w-4 text-cyan-300" /><span className="block text-[10px] font-mono font-bold text-white">PvE</span><span className="text-[9px] text-slate-500">Tático</span></div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Zap className="mb-2 h-4 w-4 text-cyan-300" /><span className="block text-[10px] font-mono font-bold text-white">NEX + NXA</span><span className="text-[9px] text-slate-500">Recompensas</span></div>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><span className="mb-2 block text-sm font-black text-cyan-300">4×4</span><span className="block text-[10px] font-mono font-bold text-white">Arenas</span><span className="text-[9px] text-slate-500">Até 4×4</span></div>
             </div>
-            <button
-              type="button"
-              onClick={() => onNavigate('play')}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all"
-            >
-              Jogar clássico
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigate('riftbattle-v2')}
-              className="ml-2 inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-cyan-400/50 bg-cyan-400/10 text-cyan-200 hover:bg-cyan-400/20 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all"
-            >
-              Testar Rift Battle V2
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <button type="button" onClick={() => onNavigate('riftbattle-v2')} className="inline-flex items-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.12em] text-slate-950 transition-all hover:bg-cyan-200">Jogar Rift Battle <ArrowRight className="h-4 w-4" /></button>
           </div>
         </section>
 
