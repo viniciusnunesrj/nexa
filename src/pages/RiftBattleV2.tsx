@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { RotateCcw, Search, ScrollText, Swords, X, Zap } from 'lucide-react';
+import { Search, ScrollText, Swords, X, Zap } from 'lucide-react';
 import { RIFTBATTLE_V2_CARDS } from '../features/riftbattle-v2/cardCatalog';
 import { createOwnedRiftBattleCards } from '../features/riftbattle-v2/inventoryAdapter';
-import { finishAuthoritativeRiftBattleV2, startAuthoritativeRiftBattleV2, type RiftBattleReward } from '../services/riftBattleV2Service';
+import { checkpointAuthoritativeRiftBattleV2, finishAuthoritativeRiftBattleV2, resumeAuthoritativeRiftBattleV2, startAuthoritativeRiftBattleV2, type RiftBattleReward } from '../services/riftBattleV2Service';
 import { SupabaseService } from '../services/supabaseService';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -54,6 +54,27 @@ const createInitialState = (
   initializeRiftBattle(playerIds.map(cardById), aiIds.map(cardById), arena);
 const needsTarget = (ability?: string) =>
   ability === 'RUPTURA' || ability === 'SOBRECARGA' || ability === 'IMPULSO' || ability === 'MARCA';
+
+const replaySavedMatch = (
+  playerCards: readonly RiftBattleCard[],
+  opponentCards: readonly RiftBattleCard[],
+  arena: RiftBattleState['arena'],
+  difficulty: RiftBattleDifficulty,
+  actions: readonly RiftBattleAction[],
+): RiftBattleState => {
+  let next = initializeRiftBattle(playerCards, opponentCards, arena);
+  for (const action of actions) {
+    if (next.phase === 'FINISHED') break;
+    next = applyRiftBattleAction(next, action);
+    let guard = 0;
+    while (next.phase !== 'FINISHED' && next.currentPlayerId === AI_PLAYER_ID && guard < MAX_AI_ACTIONS_PER_TURN + 1) {
+      const aiAction = chooseRiftBattleAiAction(next, AI_PLAYER_ID, difficulty) ?? { type: 'END_TURN' as const, playerId: AI_PLAYER_ID };
+      next = applyRiftBattleAction(next, aiAction);
+      guard += 1;
+    }
+  }
+  return next;
+};
 
 type Feedback = { id: string; text: string; kind: 'damage' | 'heal' | 'defeat' };
 type CombatAnimation = {
@@ -374,6 +395,7 @@ export const RiftBattleV2: React.FC = () => {
   const runIdRef = useRef<string>();
   const playerActionsRef = useRef<RiftBattleAction[]>([]);
   const settlementBusyRef = useRef(false);
+  const resumeCheckedRef = useRef<string>();
   const [earnedReward, setEarnedReward] = useState<RiftBattleReward>();
 
   const currentPlayer = state.players[state.currentPlayerId];
@@ -401,6 +423,38 @@ export const RiftBattleV2: React.FC = () => {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    if (!user.id || resumeCheckedRef.current === user.id) return;
+    resumeCheckedRef.current = user.id;
+    void (async () => {
+      try {
+        const resumed = await resumeAuthoritativeRiftBattleV2();
+        if (resumed.expired) {
+          setMessage('A partida anterior excedeu 5 minutos sem atividade e foi registrada como derrota por abandono.');
+          const confirmed = await SupabaseService.fetchRemoteProfile(user.id);
+          if (confirmed) syncUser(confirmed);
+          return;
+        }
+        if (!resumed.active || !resumed.runId || !resumed.arena || !resumed.playerCards || !resumed.opponentCards || !resumed.difficulty) return;
+        const actions = resumed.actions ?? [];
+        const restored = replaySavedMatch(resumed.playerCards, resumed.opponentCards, resumed.arena, resumed.difficulty, actions);
+        runIdRef.current = resumed.runId;
+        playerActionsRef.current = [...actions];
+        stateRef.current = restored;
+        setState(restored);
+        setSelectedArenaId(resumed.arena.id);
+        setDifficulty(resumed.difficulty);
+        setSelectedSquad(resumed.playerCards.map((card) => card.id));
+        setOpponentTeam(resumed.opponentCards.map((card) => card.id));
+        setScreen('BATTLE');
+        setIntro(false);
+        setMessage('Partida restaurada. Você voltou ao Rift dentro do limite de 5 minutos.');
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : 'Não foi possível restaurar a partida em andamento.');
+      }
+    })();
+  }, [user.id, syncUser]);
 
   useEffect(() => {
     setSelectedSquad((current) => current.filter((id) => ownedPlayableById.has(id)));
@@ -539,7 +593,16 @@ export const RiftBattleV2: React.FC = () => {
       }
       setState(next);
       stateRef.current = next;
-      if (action.playerId === HUMAN_PLAYER_ID) playerActionsRef.current.push(action);
+      if (action.playerId === HUMAN_PLAYER_ID) {
+        playerActionsRef.current.push(action);
+        const runId = runIdRef.current;
+        if (runId) {
+          const checkpoint = [...playerActionsRef.current];
+          void checkpointAuthoritativeRiftBattleV2(runId, checkpoint).catch((error) => {
+            setMessage(error instanceof Error ? error.message : 'Não foi possível salvar o progresso da partida.');
+          });
+        }
+      }
       setSelectedAction(undefined);
       setSelectedCardId(undefined);
       setMessage('');
@@ -887,110 +950,109 @@ export const RiftBattleV2: React.FC = () => {
       ? (selectedSquad.reduce((sum, id) => sum + getOwnedBattleCard(id).deployCost, 0) / selectedSquad.length).toFixed(1)
       : '—';
     return (
-      <div className="relative mx-auto min-h-screen max-w-6xl overflow-hidden px-3 pb-10 text-slate-100 sm:px-6">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.12),transparent_45%),radial-gradient(ellipse_at_bottom,rgba(217,70,239,0.14),transparent_55%)]" />
-        <header className="py-8 text-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.45em] text-cyan-300">Entrada local no Rift</p>
-          <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-6xl">RIFT<span className="text-fuchsia-300">BATTLE</span></h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-slate-400">Monte seu esquadrão e atravesse o Rift em uma batalha PvE estratégica.</p>
+      <div className="relative mx-auto max-w-6xl overflow-hidden px-3 pb-6 text-slate-100 sm:px-6">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.09),transparent_42%),radial-gradient(ellipse_at_bottom,rgba(217,70,239,0.08),transparent_52%)]" />
+        <header className="py-5 text-center sm:py-6">
+          <p className="text-[9px] font-black uppercase tracking-[0.4em] text-cyan-300">Entrada local no Rift</p>
+          <h1 className="mt-1.5 text-3xl font-black tracking-tight sm:text-4xl">RIFT<span className="text-fuchsia-300">BATTLE</span></h1>
+          <p className="mx-auto mt-2 max-w-xl text-xs text-slate-400">Monte seu esquadrão e atravesse o Rift em uma batalha PvE estratégica.</p>
         </header>
-        <section className="mb-4 rounded-3xl border border-fuchsia-300/20 bg-[#100d20]/80 p-4 sm:p-5">
+
+        <section className="mb-3 rounded-2xl border border-fuchsia-300/15 bg-[#100d20]/65 p-3 sm:p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-fuchsia-200">Escolha a Arena</p>
-              <p className="mt-1 text-sm text-slate-400">O mesmo esquadrão, regras diferentes.</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.26em] text-fuchsia-200">Escolha a arena</p>
+              <p className="mt-0.5 text-xs text-slate-500">Mesmo esquadrão, regras diferentes.</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {RIFTBATTLE_ARENAS.map((arena) => (
-                <button
-                  key={arena.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedArenaId(arena.id);
-                    setSelectedSquad([]);
-                    setOpponentTeam([]);
-                  }}
-                  className={`rounded-xl border px-4 py-2 text-left transition ${selectedArenaId === arena.id ? 'border-cyan-300/60 bg-cyan-400/10 text-cyan-100' : 'border-white/10 bg-slate-950/35 text-slate-400'}`}
-                >
-                  <span className="block text-[10px] font-black uppercase tracking-wider">{arena.name}</span>
-                  <span className="mt-0.5 block text-[9px] opacity-70">{arena.activeSlots} ativas · {arena.abilitiesEnabled ? 'habilidades ON' : 'habilidades OFF'}</span>
+                <button key={arena.id} type="button" onClick={() => { setSelectedArenaId(arena.id); setSelectedSquad([]); setOpponentTeam([]); }} className={`rounded-xl border px-3 py-2 text-left transition ${selectedArenaId === arena.id ? 'border-cyan-300/60 bg-cyan-400/10 text-cyan-100' : 'border-white/10 bg-slate-950/30 text-slate-500 hover:text-slate-300'}`}>
+                  <span className="block text-[9px] font-black uppercase tracking-wider">{arena.name}</span>
+                  <span className="mt-0.5 block text-[8px] opacity-70">{arena.activeSlots} ativas · {arena.abilitiesEnabled ? 'habilidades ON' : 'habilidades OFF'}</span>
                 </button>
               ))}
             </div>
           </div>
         </section>
-        <section className="rounded-3xl border border-cyan-300/25 bg-[#091525]/85 p-4 shadow-[0_0_45px_rgba(34,211,238,0.1)] sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-200">Monte seu esquadrão</p><p className="mt-1 text-sm text-slate-400">Escolha exatamente {selectedArena.teamSize} cartas: {selectedArena.activeSlots} entram ativas e {selectedArena.teamSize - selectedArena.activeSlots} ficam na reserva. {selectedArena.abilitiesEnabled ? 'Habilidades liberadas.' : 'Nesta arena, habilidades ficam desativadas.'}</p></div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-slate-400">INVENTÁRIO {ownedPlayableCards.length} ELEGÍVEIS</span>
-              <span className="rounded-full border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 text-sm font-black text-cyan-100">ESQUADRÃO {selectedSquad.length} / {selectedArena.teamSize}</span>
-            </div>
+
+        <section className="rounded-2xl border border-cyan-300/20 bg-[#091525]/72 p-3 shadow-[0_0_35px_rgba(34,211,238,0.07)] sm:p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div><p className="text-[10px] font-black uppercase tracking-[0.26em] text-cyan-200">Monte seu esquadrão</p><p className="mt-0.5 text-xs text-slate-400">Escolha {selectedArena.teamSize} cartas · {selectedArena.activeSlots} ativas + {selectedArena.teamSize - selectedArena.activeSlots} reserva · {selectedArena.abilitiesEnabled ? 'habilidades liberadas' : 'habilidades desativadas'}.</p></div>
+            <div className="flex items-center gap-2"><span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{ownedPlayableCards.length} elegíveis</span><span className="rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1.5 text-xs font-black text-cyan-100">{selectedSquad.length} / {selectedArena.teamSize}</span></div>
           </div>
-          <div className="mt-5 flex gap-2 overflow-x-auto pb-2">
-            {selectedSquad.map((id, index) => {
-              const card = ownedPlayableById.get(id);
-              if (!card) return null;
-              return <div key={id} className="min-w-[112px] flex-1 rounded-xl border border-cyan-300/35 bg-cyan-400/10 p-2"><span className="text-[10px] font-black text-cyan-300">SLOT {index + 1}</span><img src={getBattleCardImage(card)} alt="" className="mt-1 h-16 w-full rounded-lg object-cover" /><p className="mt-1 truncate text-[10px] font-bold">{card.name}</p></div>;
+
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {Array.from({ length: selectedArena.teamSize }, (_, index) => {
+              const id = selectedSquad[index];
+              const card = id ? ownedPlayableById.get(id) : undefined;
+              return card ? (
+                <div key={id} className="flex h-[58px] items-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-400/[0.07] p-1.5">
+                  <img src={getBattleCardImage(card)} alt="" className="h-full w-12 rounded-lg object-cover" />
+                  <div className="min-w-0"><span className="text-[8px] font-black text-cyan-300">SLOT {index + 1} · {index < selectedArena.activeSlots ? 'ATIVA' : 'RESERVA'}</span><p className="mt-0.5 truncate text-[10px] font-bold text-slate-100">{card.name}</p></div>
+                </div>
+              ) : <div key={`empty-${index}`} className="flex h-[58px] items-center justify-center rounded-xl border border-dashed border-white/10 text-[9px] uppercase tracking-widest text-slate-600">Slot {index + 1} · {index < selectedArena.activeSlots ? 'Ativa' : 'Reserva'}</div>;
             })}
-            {Array.from({ length: selectedArena.teamSize - selectedSquad.length }, (_, index) => <div key={`empty-${index}`} className="flex min-w-[112px] flex-1 items-center justify-center rounded-xl border border-dashed border-white/10 p-2 text-[10px] uppercase tracking-widest text-slate-600">Slot vazio</div>)}
           </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
-            <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2"><Search size={15} className="text-slate-500" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar carta..." className="w-full bg-transparent text-sm outline-none placeholder:text-slate-600" /></label>
-            <div className="flex gap-1 overflow-x-auto rounded-xl border border-white/10 bg-slate-950/50 p-1">
-              <button type="button" onClick={() => setCostFilter(undefined)} className={`rounded-lg px-2 py-1 text-[10px] font-bold ${!costFilter ? 'bg-cyan-300 text-slate-950' : 'text-slate-400'}`}>TODAS</button>
-              {[1, 2, 3, 4, 5].map((cost) => <button type="button" key={cost} onClick={() => setCostFilter(costFilter === cost ? undefined : cost)} className={`rounded-lg px-2 py-1 text-[10px] font-bold ${costFilter === cost ? 'bg-cyan-300 text-slate-950' : 'text-slate-400'}`}>CUSTO {cost}</button>)}
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+            <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2"><Search size={14} className="text-slate-500" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar carta..." className="w-full bg-transparent text-xs outline-none placeholder:text-slate-600" /></label>
+            <div className="flex gap-1 overflow-x-auto rounded-xl border border-white/10 bg-slate-950/45 p-1">
+              <button type="button" onClick={() => setCostFilter(undefined)} className={`rounded-lg px-2 py-1 text-[9px] font-bold ${!costFilter ? 'bg-cyan-300 text-slate-950' : 'text-slate-400'}`}>TODAS</button>
+              {[1, 2, 3, 4, 5].map((cost) => <button type="button" key={cost} onClick={() => setCostFilter(costFilter === cost ? undefined : cost)} className={`rounded-lg px-2 py-1 text-[9px] font-bold ${costFilter === cost ? 'bg-cyan-300 text-slate-950' : 'text-slate-400'}`}>CUSTO {cost}</button>)}
             </div>
           </div>
-          {ownedPlayableCards.length < selectedArena.teamSize && (
-            <div className="mt-4 rounded-xl border border-amber-300/25 bg-amber-400/[0.06] px-3 py-2 text-xs text-amber-100">
-              Esta arena exige {selectedArena.teamSize} cartas elegíveis. Seu inventário possui {ownedPlayableCards.length} carta{ownedPlayableCards.length === 1 ? '' : 's'} disponível{ownedPlayableCards.length === 1 ? '' : 'is'} para batalha.
+          {ownedPlayableCards.length < selectedArena.teamSize && <div className="mt-3 rounded-xl border border-amber-300/25 bg-amber-400/[0.06] px-3 py-2 text-xs text-amber-100">Esta arena exige {selectedArena.teamSize} cartas elegíveis. Seu inventário possui {ownedPlayableCards.length} carta{ownedPlayableCards.length === 1 ? '' : 's'} disponível{ownedPlayableCards.length === 1 ? '' : 'is'} para batalha.</div>}
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">{filteredCatalog.map((card) => <CatalogCard key={card.id} card={card} selected={selectedSquad.includes(card.id)} onSelect={() => setSelectedSquad((current) => current.includes(card.id) ? current.filter((id) => id !== card.id) : current.length < selectedArena.teamSize ? [...current, card.id] : current)} />)}</div>
+        </section>
+
+        <section className="mt-3 rounded-2xl border border-white/10 bg-[#080d16]/85 p-3 sm:p-4">
+          <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-fuchsia-200">Resumo do esquadrão</p>
+                <span className="text-[10px] text-slate-400">Custo médio <strong className="text-cyan-200">{averageCost}</strong></span>
+                {Object.entries(archetypes).map(([name, count]) => <span key={name} className="text-[10px] text-slate-400"><strong className="text-fuchsia-200">{count}</strong> {name}</span>)}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[9px] text-slate-500">
+                <span>{selectedArena.activeSlots} ativas + {selectedArena.teamSize - selectedArena.activeSlots} reserva</span><span>Energia {selectedArena.energyByTurn.join(' → ')}</span><span>1 ação por carta / turno</span><span>Vitória: elimine {selectedArena.teamSize} cartas</span><span>Habilidades {selectedArena.abilitiesEnabled ? 'ativas' : 'desativadas'}</span>
+              </div>
             </div>
-          )}
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-            {filteredCatalog.map((card) => <CatalogCard key={card.id} card={card} selected={selectedSquad.includes(card.id)} onSelect={() => setSelectedSquad((current) => current.includes(card.id) ? current.filter((id) => id !== card.id) : current.length < selectedArena.teamSize ? [...current, card.id] : current)} />)}
+            <div className="flex flex-wrap items-center gap-2">
+              <div><p className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Dificuldade</p><div className="flex gap-1">{(['RECRUTA', 'OPERADOR', 'NEXUS'] as RiftBattleDifficulty[]).map((level) => <button type="button" key={level} onClick={() => setDifficulty(level)} className={`rounded-lg px-2.5 py-2 text-[9px] font-black ${difficulty === level ? 'bg-fuchsia-300 text-slate-950' : 'border border-white/10 text-slate-400'}`}>{level}</button>)}</div></div>
+              <button type="button" disabled={selectedSquad.length !== selectedArena.teamSize} onClick={continueToMatch} className="mt-4 rounded-xl bg-cyan-300 px-6 py-2.5 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-30">CONTINUAR</button>
+            </div>
           </div>
         </section>
-        <section className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
-          <div className="rounded-2xl border border-fuchsia-300/20 bg-[#120d24]/80 p-4">
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-fuchsia-200">Resumo do esquadrão</p>
-            <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-300"><span>CUSTO MÉDIO <strong className="text-cyan-200">{averageCost}</strong></span>{Object.entries(archetypes).map(([name, count]) => <span key={name}><strong className="text-fuchsia-200">{count}</strong> {name}</span>)}</div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4 sm:min-w-[260px]"><p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-200">Dificuldade</p><div className="mt-2 grid grid-cols-3 gap-1">{(['RECRUTA', 'OPERADOR', 'NEXUS'] as RiftBattleDifficulty[]).map((level) => <button type="button" key={level} onClick={() => setDifficulty(level)} className={`rounded-lg px-2 py-2 text-[10px] font-black ${difficulty === level ? 'bg-fuchsia-300 text-slate-950' : 'border border-white/10 text-slate-400'}`}>{level}</button>)}</div><p className="mt-2 text-[10px] text-slate-500">{difficulty === 'RECRUTA' ? 'Decisões simples. Ideal para aprender.' : difficulty === 'NEXUS' ? 'IA mais estratégica.' : 'Combate equilibrado.'}</p></div>
-        </section>
-        <div className="mx-auto mt-5 grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4">
-          {[
-            ['FORMAÇÃO', `${selectedArena.activeSlots} ativas + ${selectedArena.teamSize - selectedArena.activeSlots} reserva`],
-            ['ENERGIA', selectedArena.energyByTurn.join(' → ')],
-            ['AÇÃO', '1 por carta / turno'],
-            ['VITÓRIA', `Elimine as ${selectedArena.teamSize} cartas`],
-            ['HABILIDADES', selectedArena.abilitiesEnabled ? 'ATIVAS' : 'DESATIVADAS'],
-          ].map(([label, value]) => (
-            <div key={label} className="rounded-xl border border-white/10 bg-slate-950/35 px-3 py-2 text-center">
-              <p className="text-[9px] font-black tracking-[0.18em] text-slate-500">{label}</p>
-              <p className="mt-1 text-[10px] font-bold text-slate-200">{value}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-5 flex justify-center"><button type="button" disabled={selectedSquad.length !== selectedArena.teamSize} onClick={continueToMatch} className="rounded-xl bg-cyan-300 px-8 py-3 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-30">CONTINUAR</button></div>
-        {showHints && <div className="mx-auto mt-4 flex max-w-xl items-center justify-between rounded-xl border border-cyan-300/20 bg-cyan-400/5 px-3 py-2 text-xs text-cyan-100"><span>{selectedArena.name}: use {selectedArena.teamSize} cartas, com {selectedArena.activeSlots} espaços ativos. A vitória exige eliminar todo o esquadrão adversário.</span><button type="button" onClick={() => setShowHints(false)} className="ml-3 text-[10px] font-black uppercase text-slate-400">Ocultar dicas</button></div>}
+        {showHints && <div className="mx-auto mt-2 flex max-w-2xl items-center justify-between rounded-xl border border-cyan-300/15 bg-cyan-400/[0.03] px-3 py-2 text-[10px] text-cyan-100"><span>{selectedArena.name}: {selectedArena.teamSize} cartas, {selectedArena.activeSlots} ativas. Elimine todo o esquadrão adversário.</span><button type="button" onClick={() => setShowHints(false)} className="ml-3 text-[9px] font-black uppercase text-slate-500">Ocultar</button></div>}
       </div>
     );
   };
 
   const renderVs = () => (
-    <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-3 py-8 text-slate-100">
-      <p className="text-xs font-black uppercase tracking-[0.4em] text-cyan-300">Esquadrão confirmado</p>
-      <h1 className="mt-2 text-4xl font-black">VOCÊ <span className="text-fuchsia-300">VS</span> ADVERSÁRIO</h1>
-      <p className="mt-2 rounded-full border border-fuchsia-300/30 px-4 py-1 text-xs font-bold text-fuchsia-200">{difficulty}</p>
-      <div className="mt-8 grid w-full grid-cols-2 gap-3 sm:grid-cols-4">{selectedSquad.map((id) => {
-        const card = ownedPlayableById.get(id);
-        return card ? <CatalogCard key={id} card={card} selected onSelect={() => undefined} /> : null;
-      })}</div>
-      <div className="my-6 text-2xl font-black tracking-[0.5em] text-fuchsia-200">VS</div>
-      <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">{opponentTeam.map((id) => <CatalogCard key={id} card={cardById(id)} selected={false} onSelect={() => undefined} />)}</div>
-      {message && <p role="alert" className="mt-4 text-sm text-rose-200">{message}</p>}
-      <div className="mt-8 flex flex-wrap justify-center gap-3"><button type="button" disabled={validating} onClick={() => { validationRequestRef.current = undefined; setMessage(''); setScreen('SETUP'); }} className="rounded-xl border border-white/15 px-5 py-3 text-xs font-black text-slate-300">ALTERAR ESQUADRÃO</button><button type="button" disabled={validating} onClick={startBattle} className="rounded-xl bg-cyan-300 px-7 py-3 text-xs font-black text-slate-950">{validating ? 'VALIDANDO...' : 'INICIAR BATALHA'}</button></div>
+    <div className="relative mx-auto max-w-5xl px-3 py-5 text-slate-100 sm:px-5 sm:py-6">
+      <div className="text-center">
+        <p className="text-[9px] font-black uppercase tracking-[0.38em] text-cyan-300">Esquadrão confirmado</p>
+        <h1 className="mt-1.5 text-3xl font-black sm:text-4xl">VOCÊ <span className="text-fuchsia-300">VS</span> ADVERSÁRIO</h1>
+        <p className="mx-auto mt-2 inline-flex rounded-full border border-fuchsia-300/25 bg-fuchsia-400/[0.05] px-3 py-1 text-[10px] font-bold text-fuchsia-200">{difficulty}</p>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-cyan-300/18 bg-cyan-400/[0.025] p-3">
+        <div className="mb-2 flex items-center justify-between"><p className="text-[9px] font-black uppercase tracking-[0.24em] text-cyan-200">Seu esquadrão</p><span className="text-[9px] text-slate-500">{selectedArena.activeSlots} ativas · {selectedArena.teamSize - selectedArena.activeSlots} reserva</span></div>
+        <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4">{selectedSquad.map((id) => { const card = ownedPlayableById.get(id); return card ? <CatalogCard key={id} card={card} selected onSelect={() => undefined} /> : null; })}</div>
+      </div>
+
+      <div className="relative my-2 flex items-center gap-3"><span className="h-px flex-1 bg-gradient-to-r from-transparent via-fuchsia-300/25 to-fuchsia-300/10"/><span className="text-sm font-black tracking-[0.35em] text-fuchsia-200">VS</span><span className="h-px flex-1 bg-gradient-to-l from-transparent via-fuchsia-300/25 to-fuchsia-300/10"/></div>
+
+      <div className="rounded-2xl border border-fuchsia-300/15 bg-fuchsia-400/[0.02] p-3">
+        <div className="mb-2 flex items-center justify-between"><p className="text-[9px] font-black uppercase tracking-[0.24em] text-fuchsia-200">Adversário</p><span className="text-[9px] text-slate-500">{selectedArena.teamSize} cartas</span></div>
+        <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4">{opponentTeam.map((id) => <CatalogCard key={id} card={cardById(id)} selected={false} onSelect={() => undefined} />)}</div>
+      </div>
+
+      {message && <p role="alert" className="mt-3 text-center text-xs text-rose-200">{message}</p>}
+      <div className="sticky bottom-3 z-20 mx-auto mt-3 flex w-fit flex-wrap justify-center gap-2 rounded-2xl border border-white/10 bg-[#070b13]/90 p-2 shadow-[0_12px_40px_rgba(0,0,0,.45)] backdrop-blur-xl">
+        <button type="button" disabled={validating} onClick={() => { validationRequestRef.current = undefined; setMessage(''); setScreen('SETUP'); }} className="rounded-xl border border-white/15 px-5 py-2.5 text-[10px] font-black text-slate-300">ALTERAR ESQUADRÃO</button>
+        <button type="button" disabled={validating} onClick={startBattle} className="rounded-xl bg-cyan-300 px-7 py-2.5 text-[10px] font-black text-slate-950">{validating ? 'VALIDANDO...' : 'INICIAR BATALHA'}</button>
+      </div>
     </div>
   );
 
@@ -3125,9 +3187,7 @@ export const RiftBattleV2: React.FC = () => {
           {combatAnimation.defeated && <span className="nexa-flow-ko-bridge absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full" />}
         </div>
       )}
-      <header className="flex h-6 items-center justify-end">
-        <button type="button" onClick={reset} className="rounded-lg border border-white/10 p-1.5 text-slate-500 hover:border-cyan-300/50 hover:text-cyan-200" title="Reiniciar partida" aria-label="Reiniciar partida"><RotateCcw size={14} /></button>
-      </header>
+      <header className="h-2" aria-hidden="true" />
 
       {intro && <div className="mb-4 rounded-2xl border border-fuchsia-300/30 bg-fuchsia-500/10 px-4 py-3 text-center text-xs font-black uppercase tracking-[0.3em] text-fuchsia-100">RIFT ESTABILIZADO · COMBATE INICIADO</div>}
 
