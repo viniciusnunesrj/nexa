@@ -100,7 +100,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="absolute inset-x-[10%] top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent" />
         <div className="absolute left-1/2 top-[44%] h-44 w-44 -translate-x-1/2 rounded-full bg-sky-400/[.06] blur-3xl" />
         <div className="absolute inset-0 opacity-[.13] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
-        <div className="relative min-h-[320px] px-5 py-5 sm:px-8 lg:min-h-[350px]">
+        <div className="relative min-h-[390px] px-4 py-5 sm:min-h-[345px] sm:px-7 lg:min-h-[350px] lg:px-8">
           <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-[28%] lg:block">
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/[.12] to-transparent" />
             <div className="absolute bottom-7 left-5 h-52 w-44 -rotate-6 rounded-[32px] border border-cyan-300/15 bg-[linear-gradient(145deg,rgba(34,211,238,.12),rgba(2,6,23,.15))] shadow-[0_0_70px_rgba(34,211,238,.13)]">
@@ -121,12 +121,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               Sua próxima<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400">batalha começa aqui</span>
             </h1>
             <p className="mt-3 text-xs text-slate-400 sm:text-sm">Estratégia. Coleção. Evolução. Uma Rede de possibilidades.</p>
-            <div className="mt-5 grid w-full max-w-[510px] grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="mt-5 grid w-full max-w-[510px] grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
               <button onClick={() => onNavigate('riftbattle-v2')} className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 font-heading text-[11px] font-black uppercase tracking-[.08em] text-slate-950 shadow-[0_0_28px_rgba(34,211,238,.18)] transition hover:-translate-y-0.5 hover:bg-cyan-200"><Swords className="h-4 w-4"/> Jogar Rift Battle <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></button>
               <button onClick={() => onNavigate('arena')} className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-violet-400/50 bg-violet-500/[.13] px-4 font-heading text-[11px] font-black uppercase tracking-[.08em] text-violet-100 shadow-[0_0_28px_rgba(168,85,247,.12)] transition hover:-translate-y-0.5 hover:bg-violet-500/[.2]"><Zap className="h-4 w-4"/> Jogar Nexus Duel <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></button>
             </div>
           </div>
-          <div className="absolute inset-x-5 bottom-4 z-20 grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-400/15 bg-[#06101b]/95 backdrop-blur-md sm:inset-x-8 lg:grid-cols-4">
+          <div className="absolute inset-x-4 bottom-4 z-20 grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-400/15 bg-[#06101b]/95 shadow-[0_12px_35px_rgba(0,0,0,.32)] backdrop-blur-md sm:inset-x-7 lg:inset-x-8 lg:grid-cols-4">
             <div className="border-r border-white/[.07] px-4 py-3"><p className="font-heading text-lg font-black text-white">{userCards.length}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">Cartas no inventário</p></div>
             <div className="border-r border-white/[.07] px-4 py-3"><p className="font-heading text-lg font-black text-cyan-300">Nv. {currentLevel}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">Piloto</p></div>
             <div className="border-r border-white/[.07] px-4 py-3"><div className="flex items-baseline gap-1"><p className="font-heading text-lg font-black text-sky-300">{currentExp}</p><span className="text-[9px] text-slate-500">/ {maxExp} XP</span></div><div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[.07]"><div style={{width:`${xpPercent}%`}} className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400"/></div></div>
@@ -135,11 +135,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
         <button onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[205px] overflow-hidden rounded-[18px] border border-cyan-400/45 bg-[#06121c] p-5 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(34,211,238,.10)]">
           <div className="absolute inset-y-0 right-0 w-[43%] bg-[radial-gradient(circle_at_center,rgba(34,211,238,.15),transparent_60%)]" />
-          <div className="absolute -right-4 top-3 flex h-36 w-36 rotate-6 items-center justify-center rounded-[28px] border border-cyan-400/15 bg-gradient-to-br from-cyan-400/[.08] to-transparent shadow-[0_0_55px_rgba(34,211,238,.12)]"><Swords className="h-12 w-12 text-cyan-300/60"/></div>
-          <div className="relative flex h-full max-w-[70%] flex-col justify-between">
+          <div className="absolute -right-8 top-5 flex h-32 w-32 sm:-right-4 sm:top-3 sm:h-36 sm:w-36 rotate-6 items-center justify-center rounded-[28px] border border-cyan-400/15 bg-gradient-to-br from-cyan-400/[.08] to-transparent shadow-[0_0_55px_rgba(34,211,238,.12)]"><Swords className="h-12 w-12 text-cyan-300/60"/></div>
+          <div className="relative flex h-full max-w-full flex-col justify-between pr-20 sm:max-w-[74%] sm:pr-0">
             <div><div className="flex items-center gap-2"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-cyan-300">Jogo principal</span><span className="rounded-full border border-emerald-400/25 bg-emerald-400/[.07] px-2 py-0.5 text-[8px] font-bold uppercase text-emerald-300">● Online</span></div><h2 className="mt-2 font-heading text-2xl font-black text-white">RIFT BATTLE <span className="text-cyan-300">V2</span></h2><p className="mt-2 text-xs leading-5 text-slate-400">Combate tático em equipe. Forme seu esquadrão, enfrente o Rift e conquiste recompensas.</p><div className="mt-3 flex flex-wrap gap-1.5">{['PvE','2×2','3×3','4×4','NEX + NXA + XP'].map(x=><span key={x} className="rounded-full border border-cyan-400/20 bg-black/20 px-2.5 py-1 text-[8px] font-bold text-slate-300">{x}</span>)}</div></div>
             <span className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-cyan-300 font-heading text-[10px] font-black uppercase tracking-[.1em] text-slate-950">Jogar agora <ArrowRight className="h-4 w-4"/></span>
           </div>
@@ -147,8 +147,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
         <button onClick={() => onNavigate('arena')} className="group relative min-h-[205px] overflow-hidden rounded-[18px] border border-fuchsia-400/45 bg-[#110918] p-5 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(217,70,239,.10)]">
           <div className="absolute inset-y-0 right-0 w-[43%] bg-[radial-gradient(circle_at_center,rgba(217,70,239,.15),transparent_60%)]" />
-          <div className="absolute -right-4 top-3 flex h-36 w-36 -rotate-6 items-center justify-center rounded-[28px] border border-fuchsia-400/15 bg-gradient-to-br from-fuchsia-400/[.08] to-transparent shadow-[0_0_55px_rgba(217,70,239,.12)]"><Layers className="h-12 w-12 text-fuchsia-300/60"/></div>
-          <div className="relative flex h-full max-w-[70%] flex-col justify-between">
+          <div className="absolute -right-8 top-5 flex h-32 w-32 sm:-right-4 sm:top-3 sm:h-36 sm:w-36 -rotate-6 items-center justify-center rounded-[28px] border border-fuchsia-400/15 bg-gradient-to-br from-fuchsia-400/[.08] to-transparent shadow-[0_0_55px_rgba(217,70,239,.12)]"><Layers className="h-12 w-12 text-fuchsia-300/60"/></div>
+          <div className="relative flex h-full max-w-full flex-col justify-between pr-20 sm:max-w-[74%] sm:pr-0">
             <div><div className="flex items-center gap-2"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-fuchsia-300">Duelo estratégico</span><span className="rounded-full border border-emerald-400/25 bg-emerald-400/[.07] px-2 py-0.5 text-[8px] font-bold uppercase text-emerald-300">● Online</span></div><h2 className="mt-2 font-heading text-2xl font-black text-white">NEXUS DUEL</h2><p className="mt-2 text-xs leading-5 text-slate-400">Duelo individual 4×4. Use suas cartas, Nexos e habilidades em confrontos PvE ou PvP.</p><div className="mt-3 flex flex-wrap gap-1.5">{['PvE','PvP','Deck 4×4','Habilidades','XP compartilhado'].map(x=><span key={x} className="rounded-full border border-fuchsia-400/20 bg-black/20 px-2.5 py-1 text-[8px] font-bold text-slate-300">{x}</span>)}</div></div>
             <span className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 font-heading text-[10px] font-black uppercase tracking-[.1em] text-white">Jogar agora <ArrowRight className="h-4 w-4"/></span>
           </div>
@@ -186,7 +186,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="absolute top-0 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-center gap-5">
+        <div className="relative z-10 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-center lg:gap-5">
           {/* Left: Level & XP Progress Bar */}
           <div className="flex-1 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -228,7 +228,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
 
           {/* Right: Online progression objectives */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
             <div className="p-4 rounded-2xl bg-[#0a0914] border border-cyan-500/30 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-[10px] font-mono uppercase text-cyan-400 font-bold mb-1">
@@ -276,7 +276,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3 [perspective:1200px]">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3 [perspective:1200px]">
         <button onClick={() => onNavigate('progression')} className="rounded-[18px] border border-cyan-400/20 bg-[#07111b]/95 p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,.22)] transition duration-300 hover:-translate-y-0.5 hover:border-cyan-300/40">
           <div className="flex items-center justify-between"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-cyan-300">Progressão</span><Award className="h-4 w-4 text-cyan-300"/></div>
           <p className="mt-2 font-heading text-lg font-black text-white">Nível {currentLevel}</p><p className="mt-1 text-[10px] text-slate-500">{currentExp}/{maxExp} XP · {xpPercent}% concluído</p>
@@ -292,7 +292,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       </div>
 
       {/* Compact live dashboard — only existing NEXA data */}
-      <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1.15fr]">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1.15fr]">
         <div className="rounded-[18px] border border-cyan-400/15 bg-[#07101a]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.025)]">
           <div className="flex items-center justify-between"><h3 className="font-heading text-xs font-black uppercase tracking-[.1em] text-cyan-300">Arsenal</h3><button onClick={() => onNavigate('inventory')} className="text-[9px] font-mono text-slate-500 hover:text-cyan-300">Ver tudo →</button></div>
           <div className="mt-3 grid grid-cols-3 gap-2">
