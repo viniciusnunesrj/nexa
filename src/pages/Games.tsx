@@ -36,7 +36,7 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
                 <p className="text-[10px] font-mono font-bold tracking-[0.16em] text-cyan-400">
                   NEXA
                 </p>
-                <h2 className="mt-1 font-heading text-2xl font-black text-white">RIFT BATTLE</h2>
+                <h2 className="mt-1 font-heading text-2xl font-black text-white">RIFT BATTLE CLÁSSICO</h2>
               </div>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px] font-mono font-bold uppercase">
                 <CheckCircle2 className="w-3 h-3" />
@@ -56,7 +56,15 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
               onClick={() => onNavigate('play')}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all"
             >
-              Jogar
+              Jogar clássico
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('riftbattle-v2')}
+              className="ml-2 inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-cyan-400/50 bg-cyan-400/10 text-cyan-200 hover:bg-cyan-400/20 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all"
+            >
+              Testar Rift Battle V2
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
