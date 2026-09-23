@@ -131,24 +131,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
       <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
         <button onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[178px] overflow-hidden rounded-[18px] border border-cyan-400/45 bg-[#06121c] p-4 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(34,211,238,.10)]">
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <img src="/assets/rift-battle-card.webp" alt="" aria-hidden="true" className="absolute inset-y-0 right-0 h-full w-[72%] object-cover object-center opacity-100 transition duration-500 group-hover:scale-[1.025]" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#06121c] from-[0%] via-[#06121c]/95 via-[42%] to-[#06121c]/5 to-[78%]" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#06121c]/45 via-transparent to-[#06121c]/10" />
           </div>
-          <div className="relative flex h-full max-w-full flex-col justify-between pr-20 sm:max-w-[68%] sm:pr-0">
+          <div className="relative z-10 flex h-full max-w-full flex-col justify-between pr-20 sm:max-w-[68%] sm:pr-0">
             <div><div className="flex items-center gap-2"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-cyan-300">Jogo principal</span><span className="rounded-full border border-emerald-400/25 bg-emerald-400/[.07] px-2 py-0.5 text-[8px] font-bold uppercase text-emerald-300">● Online</span></div><h2 className="mt-1.5 font-heading text-[20px] font-black leading-none text-white">RIFT BATTLE <span className="text-fuchsia-400 drop-shadow-[0_0_10px_rgba(232,121,249,.45)]">V2</span></h2><p className="mt-1.5 text-[10px] leading-[1.4] text-slate-400">Combate tático em equipe. Forme seu esquadrão, enfrente o Rift e conquiste recompensas.</p><div className="mt-2.5 flex flex-wrap gap-1.5">{['PvE','2×2','3×3','4×4','NEX + NXA + XP'].map(x=><span key={x} className="rounded-full border border-cyan-400/20 bg-black/20 px-2.5 py-1 text-[8px] font-bold text-slate-300">{x}</span>)}</div></div>
             <span className="mt-2.5 inline-flex h-9 w-full sm:w-[78%] items-center justify-center gap-2 rounded-xl bg-cyan-300 font-heading text-[10px] font-black uppercase tracking-[.1em] text-slate-950">Jogar agora <ArrowRight className="h-4 w-4"/></span>
           </div>
         </button>
 
         <button onClick={() => onNavigate('arena')} className="group relative min-h-[178px] overflow-hidden rounded-[18px] border border-fuchsia-400/45 bg-[#110918] p-4 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(217,70,239,.10)]">
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <img src="/assets/nexus-duel-card.webp" alt="" aria-hidden="true" className="absolute inset-y-0 right-0 h-full w-[72%] object-cover object-center opacity-100 transition duration-500 group-hover:scale-[1.025]" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#110918] from-[0%] via-[#110918]/95 via-[42%] to-[#110918]/5 to-[78%]" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#110918]/45 via-transparent to-[#110918]/10" />
           </div>
-          <div className="relative flex h-full max-w-full flex-col justify-between pr-20 sm:max-w-[68%] sm:pr-0">
+          <div className="relative z-10 flex h-full max-w-full flex-col justify-between pr-20 sm:max-w-[68%] sm:pr-0">
             <div><div className="flex items-center gap-2"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-fuchsia-300">Duelo estratégico</span><span className="rounded-full border border-emerald-400/25 bg-emerald-400/[.07] px-2 py-0.5 text-[8px] font-bold uppercase text-emerald-300">● Online</span></div><h2 className="mt-1.5 font-heading text-[20px] font-black leading-none text-white">NEXUS DUEL</h2><p className="mt-1.5 text-[10px] leading-[1.4] text-slate-400">Duelo individual 4×4. Use suas cartas, Nexos e habilidades em confrontos PvE ou PvP.</p><div className="mt-2.5 flex flex-wrap gap-1.5">{['PvE','PvP','Deck 4×4','Habilidades','XP compartilhado'].map(x=><span key={x} className="rounded-full border border-fuchsia-400/20 bg-black/20 px-2.5 py-1 text-[8px] font-bold text-slate-300">{x}</span>)}</div></div>
             <span className="mt-2.5 inline-flex h-9 w-full sm:w-[78%] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 font-heading text-[10px] font-black uppercase tracking-[.1em] text-white">Jogar agora <ArrowRight className="h-4 w-4"/></span>
           </div>
