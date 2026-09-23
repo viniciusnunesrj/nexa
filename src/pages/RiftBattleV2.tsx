@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { RotateCcw, Search, ScrollText, Swords, X, Zap } from 'lucide-react';
+import { Search, ScrollText, Swords, X, Zap } from 'lucide-react';
 import { RIFTBATTLE_V2_CARDS } from '../features/riftbattle-v2/cardCatalog';
 import { createOwnedRiftBattleCards } from '../features/riftbattle-v2/inventoryAdapter';
-import { finishAuthoritativeRiftBattleV2, startAuthoritativeRiftBattleV2, type RiftBattleReward } from '../services/riftBattleV2Service';
+import { checkpointAuthoritativeRiftBattleV2, finishAuthoritativeRiftBattleV2, resumeAuthoritativeRiftBattleV2, startAuthoritativeRiftBattleV2, type RiftBattleReward } from '../services/riftBattleV2Service';
 import { SupabaseService } from '../services/supabaseService';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
@@ -54,6 +54,27 @@ const createInitialState = (
   initializeRiftBattle(playerIds.map(cardById), aiIds.map(cardById), arena);
 const needsTarget = (ability?: string) =>
   ability === 'RUPTURA' || ability === 'SOBRECARGA' || ability === 'IMPULSO' || ability === 'MARCA';
+
+const replaySavedMatch = (
+  playerCards: readonly RiftBattleCard[],
+  opponentCards: readonly RiftBattleCard[],
+  arena: RiftBattleState['arena'],
+  difficulty: RiftBattleDifficulty,
+  actions: readonly RiftBattleAction[],
+): RiftBattleState => {
+  let next = initializeRiftBattle(playerCards, opponentCards, arena);
+  for (const action of actions) {
+    if (next.phase === 'FINISHED') break;
+    next = applyRiftBattleAction(next, action);
+    let guard = 0;
+    while (next.phase !== 'FINISHED' && next.currentPlayerId === AI_PLAYER_ID && guard < MAX_AI_ACTIONS_PER_TURN + 1) {
+      const aiAction = chooseRiftBattleAiAction(next, AI_PLAYER_ID, difficulty) ?? { type: 'END_TURN' as const, playerId: AI_PLAYER_ID };
+      next = applyRiftBattleAction(next, aiAction);
+      guard += 1;
+    }
+  }
+  return next;
+};
 
 type Feedback = { id: string; text: string; kind: 'damage' | 'heal' | 'defeat' };
 type CombatAnimation = {
@@ -374,6 +395,7 @@ export const RiftBattleV2: React.FC = () => {
   const runIdRef = useRef<string>();
   const playerActionsRef = useRef<RiftBattleAction[]>([]);
   const settlementBusyRef = useRef(false);
+  const resumeCheckedRef = useRef<string>();
   const [earnedReward, setEarnedReward] = useState<RiftBattleReward>();
 
   const currentPlayer = state.players[state.currentPlayerId];
@@ -401,6 +423,38 @@ export const RiftBattleV2: React.FC = () => {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    if (!user.id || resumeCheckedRef.current === user.id) return;
+    resumeCheckedRef.current = user.id;
+    void (async () => {
+      try {
+        const resumed = await resumeAuthoritativeRiftBattleV2();
+        if (resumed.expired) {
+          setMessage('A partida anterior excedeu 5 minutos sem atividade e foi registrada como derrota por abandono.');
+          const confirmed = await SupabaseService.fetchRemoteProfile(user.id);
+          if (confirmed) syncUser(confirmed);
+          return;
+        }
+        if (!resumed.active || !resumed.runId || !resumed.arena || !resumed.playerCards || !resumed.opponentCards || !resumed.difficulty) return;
+        const actions = resumed.actions ?? [];
+        const restored = replaySavedMatch(resumed.playerCards, resumed.opponentCards, resumed.arena, resumed.difficulty, actions);
+        runIdRef.current = resumed.runId;
+        playerActionsRef.current = [...actions];
+        stateRef.current = restored;
+        setState(restored);
+        setSelectedArenaId(resumed.arena.id);
+        setDifficulty(resumed.difficulty);
+        setSelectedSquad(resumed.playerCards.map((card) => card.id));
+        setOpponentTeam(resumed.opponentCards.map((card) => card.id));
+        setScreen('BATTLE');
+        setIntro(false);
+        setMessage('Partida restaurada. Você voltou ao Rift dentro do limite de 5 minutos.');
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : 'Não foi possível restaurar a partida em andamento.');
+      }
+    })();
+  }, [user.id, syncUser]);
 
   useEffect(() => {
     setSelectedSquad((current) => current.filter((id) => ownedPlayableById.has(id)));
@@ -539,7 +593,16 @@ export const RiftBattleV2: React.FC = () => {
       }
       setState(next);
       stateRef.current = next;
-      if (action.playerId === HUMAN_PLAYER_ID) playerActionsRef.current.push(action);
+      if (action.playerId === HUMAN_PLAYER_ID) {
+        playerActionsRef.current.push(action);
+        const runId = runIdRef.current;
+        if (runId) {
+          const checkpoint = [...playerActionsRef.current];
+          void checkpointAuthoritativeRiftBattleV2(runId, checkpoint).catch((error) => {
+            setMessage(error instanceof Error ? error.message : 'Não foi possível salvar o progresso da partida.');
+          });
+        }
+      }
       setSelectedAction(undefined);
       setSelectedCardId(undefined);
       setMessage('');
@@ -3124,9 +3187,7 @@ export const RiftBattleV2: React.FC = () => {
           {combatAnimation.defeated && <span className="nexa-flow-ko-bridge absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full" />}
         </div>
       )}
-      <header className="flex h-6 items-center justify-end">
-        <button type="button" onClick={reset} className="rounded-lg border border-white/10 p-1.5 text-slate-500 hover:border-cyan-300/50 hover:text-cyan-200" title="Reiniciar partida" aria-label="Reiniciar partida"><RotateCcw size={14} /></button>
-      </header>
+      <header className="h-2" aria-hidden="true" />
 
       {intro && <div className="mb-4 rounded-2xl border border-fuchsia-300/30 bg-fuchsia-500/10 px-4 py-3 text-center text-xs font-black uppercase tracking-[0.3em] text-fuchsia-100">RIFT ESTABILIZADO · COMBATE INICIADO</div>}
 
