@@ -120,11 +120,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
           </div>
           <div className="absolute inset-x-4 bottom-3 z-20 grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-300/20 bg-[#06101b]/95 backdrop-blur-md sm:inset-x-7 lg:left-[7%] lg:right-[7%] lg:grid-cols-5">
-            <div className="flex min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4"><Layers className="h-5 w-5 text-cyan-300"/><div><p className="font-heading text-base font-black text-white">{userCards.length}</p><p className="text-[9px] uppercase tracking-[.09em] text-slate-400">Cartas no inventário</p></div></div>
-            <div className="flex min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4"><Award className="h-5 w-5 text-sky-300"/><div><p className="font-heading text-base font-black text-cyan-300">Nv. {currentLevel}</p><p className="text-[9px] uppercase tracking-[.09em] text-slate-400">Piloto</p></div></div>
-            <div className="flex min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4"><span className="text-[8px] font-black text-cyan-300">XP</span><div className="min-w-0 flex-1"><p className="font-heading text-sm font-black text-sky-300">{currentExp}<span className="ml-1 text-[7px] font-normal text-slate-500">/ {maxExp} XP</span></p><p className="text-[8px] text-slate-400">Para o próximo nível</p><div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[.08]"><div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400" style={{width:`${xpPercent}%`}}/></div></div></div>
-            <div className="hidden min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4 lg:flex"><Trophy className="h-5 w-5 text-amber-300"/><div><p className="font-heading text-base font-black text-white">{user.victories}</p><p className="text-[8px] text-slate-400">Vitórias totais</p></div></div>
-            <div className="hidden min-h-[58px] items-center gap-3 px-4 lg:flex"><Swords className="h-5 w-5 text-violet-300"/><div><p className="font-heading text-base font-black text-white">{user.victories + user.defeats}</p><p className="text-[8px] text-slate-400">Batalhas registradas</p></div></div>
+            <div className="flex min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4"><Layers className="h-5 w-5 text-cyan-300"/><div><p className="font-heading text-base font-black text-white">{userCards.length}</p><p className="text-[9px] font-medium uppercase tracking-[.09em] text-slate-300">Cartas no inventário</p></div></div>
+            <div className="flex min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4"><Award className="h-5 w-5 text-sky-300"/><div><p className="font-heading text-base font-black text-cyan-300">Nv. {currentLevel}</p><p className="text-[9px] font-medium uppercase tracking-[.09em] text-slate-300">Piloto</p></div></div>
+            <div className="flex min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4"><span className="text-[8px] font-black text-cyan-300">XP</span><div className="min-w-0 flex-1"><p className="font-heading text-sm font-black text-sky-300">{currentExp}<span className="ml-1 text-[7px] font-normal text-slate-500">/ {maxExp} XP</span></p><p className="text-[8px] font-medium text-slate-300">Para o próximo nível</p><div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[.08]"><div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400" style={{width:`${xpPercent}%`}}/></div></div></div>
+            <div className="hidden min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4 lg:flex"><Trophy className="h-5 w-5 text-amber-300"/><div><p className="font-heading text-base font-black text-white">{user.victories}</p><p className="text-[8px] font-medium text-slate-300">Vitórias totais</p></div></div>
+            <div className="hidden min-h-[58px] items-center gap-3 px-4 lg:flex"><Swords className="h-5 w-5 text-violet-300"/><div><p className="font-heading text-base font-black text-white">{user.victories + user.defeats}</p><p className="text-[8px] font-medium text-slate-300">Batalhas registradas</p></div></div>
           </div>
         </div>
       </section>
@@ -133,7 +133,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <button onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[178px] overflow-hidden rounded-[18px] border border-cyan-400/45 bg-[#06121c] p-4 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(34,211,238,.10)]">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <img src="/assets/rift-battle-card.png" alt="" aria-hidden="true" className="absolute inset-y-0 right-0 h-full w-[82%] object-cover object-right opacity-100 transition duration-500 group-hover:scale-[1.015]" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#06121c] from-[0%] via-[#06121c]/95 via-[42%] to-[#06121c]/5 to-[78%]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#06121c] from-[0%] via-[#06121c]/98 via-[45%] to-[#06121c]/8 to-[80%]" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#06121c]/45 via-transparent to-[#06121c]/10" />
           </div>
           <div className="relative z-10 flex h-full max-w-full flex-col justify-between pr-20 sm:max-w-[68%] sm:pr-0">
@@ -145,7 +145,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <button onClick={() => onNavigate('arena')} className="group relative min-h-[178px] overflow-hidden rounded-[18px] border border-fuchsia-400/45 bg-[#110918] p-4 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(217,70,239,.10)]">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <img src="/assets/nexus-duel-card.png" alt="" aria-hidden="true" className="absolute inset-y-0 right-0 h-full w-[82%] object-cover object-right opacity-100 transition duration-500 group-hover:scale-[1.015]" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#110918] from-[0%] via-[#110918]/95 via-[42%] to-[#110918]/5 to-[78%]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#110918] from-[0%] via-[#110918]/98 via-[45%] to-[#110918]/8 to-[80%]" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#110918]/45 via-transparent to-[#110918]/10" />
           </div>
           <div className="relative z-10 flex h-full max-w-full flex-col justify-between pr-20 sm:max-w-[68%] sm:pr-0">
@@ -199,7 +199,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             <div className="flex h-full w-max items-center gap-1.5 animate-[nexaCardRail_12s_linear_infinite]">
               {[...userItems.slice(0,4),...userItems.slice(0,4)].map((item,i)=><div key={`${item.id}-${i}`} className="relative h-[44px] w-[34px] shrink-0 overflow-hidden rounded border border-fuchsia-300/25 bg-black/40 shadow-[0_0_8px_rgba(217,70,239,.12)]"><CardImage asset={item} src={item.image} alt={item.name} className="h-full w-full object-cover"/></div>)}
             </div>
-            {userItems.length===0&&<span className="absolute inset-0 flex items-center justify-center text-[7px] text-slate-500">Sua coleção aparecerá aqui</span>}
+            {userItems.length===0&&<span className="absolute inset-0 flex items-center justify-center text-[7px] text-slate-400">Sua coleção aparecerá aqui</span>}
           </div>
           <div className="mt-1.5 grid grid-cols-3 gap-1.5">
             <div className="flex items-center gap-1.5 rounded-md border border-fuchsia-400/10 bg-fuchsia-400/[.04] px-1.5 py-1"><Layers className="h-3 w-3 shrink-0 text-fuchsia-300"/><span className="truncate text-[7px] text-slate-300">{userCards.length} cartas</span></div>
@@ -210,10 +210,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </button>
 
         <div className="h-[172px] rounded-[14px] border border-sky-400/25 bg-[#070e17] p-3.5 shadow-[0_0_24px_rgba(56,189,248,.06)]">
-          <div className="flex h-7 items-center justify-between"><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-sky-300"/><h3 className="font-heading text-[11px] font-black uppercase tracking-[.11em] text-sky-300">Atividade recente</h3></div><button onClick={()=>onNavigate('history')} className="text-[7px] text-slate-500">Ver todas →</button></div>
+          <div className="flex h-7 items-center justify-between"><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-sky-300"/><h3 className="font-heading text-[11px] font-black uppercase tracking-[.11em] text-sky-300">Atividade recente</h3></div><button onClick={()=>onNavigate('history')} className="text-[7px] text-slate-400">Ver todas →</button></div>
           <div className="mt-1.5 space-y-1">
-            {transactions.slice(0,3).map((tx,i)=><div key={tx.id} className="grid grid-cols-[22px_1fr_auto] items-center gap-2 border-b border-white/[.05] pb-1"><span className={`flex h-5 w-5 items-center justify-center rounded border ${i===0?'border-cyan-400/20 bg-cyan-400/[.07] text-cyan-300':i===1?'border-fuchsia-400/20 bg-fuchsia-400/[.07] text-fuchsia-300':'border-amber-400/20 bg-amber-400/[.07] text-amber-300'}`}>{i===0?<ArrowLeftRight className="h-3 w-3"/>:i===1?<Sparkles className="h-3 w-3"/>:<PackageOpen className="h-3 w-3"/>}</span><div className="min-w-0"><p className="truncate text-[10px] font-bold text-slate-200">{tx.itemSnapshot.name}</p><p className="truncate text-[8px] text-slate-500">{tx.buyerName} comprou de {tx.sellerName}</p></div><span className="text-[7px] font-bold text-cyan-300">+{formatEconomicValue(tx.amount)} NXA</span></div>)}
-            {transactions.length===0&&<p className="py-4 text-center text-[8px] text-slate-500">Nenhuma atividade recente.</p>}
+            {transactions.slice(0,3).map((tx,i)=><div key={tx.id} className="grid grid-cols-[22px_1fr_auto] items-center gap-2 border-b border-white/[.05] pb-1"><span className={`flex h-5 w-5 items-center justify-center rounded border ${i===0?'border-cyan-400/20 bg-cyan-400/[.07] text-cyan-300':i===1?'border-fuchsia-400/20 bg-fuchsia-400/[.07] text-fuchsia-300':'border-amber-400/20 bg-amber-400/[.07] text-amber-300'}`}>{i===0?<ArrowLeftRight className="h-3 w-3"/>:i===1?<Sparkles className="h-3 w-3"/>:<PackageOpen className="h-3 w-3"/>}</span><div className="min-w-0"><p className="truncate text-[10px] font-bold text-slate-200">{tx.itemSnapshot.name}</p><p className="truncate text-[8px] text-slate-400">{tx.buyerName} comprou de {tx.sellerName}</p></div><span className="text-[7px] font-bold text-cyan-300">+{formatEconomicValue(tx.amount)} NXA</span></div>)}
+            {transactions.length===0&&<p className="py-4 text-center text-[8px] text-slate-400">Nenhuma atividade recente.</p>}
           </div>
         </div>
       </div>
