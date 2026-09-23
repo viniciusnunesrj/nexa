@@ -193,7 +193,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="mt-2 flex items-center justify-between border-t border-white/[.06] pt-2 text-[7px] font-bold uppercase tracking-wider text-cyan-400"><span>Progressão do piloto</span><ChevronRight className="h-3 w-3"/></div>
         </button>
 
-        <button onClick={()=>onNavigate('collections')} className="group h-[172px] overflow-hidden rounded-[14px] border border-fuchsia-400/30 bg-[#110817] p-3.5 text-left shadow-[0_0_24px_rgba(217,70,239,.07)] transition hover:border-fuchsia-300/50">
+        <button onClick={()=>onNavigate('collections')} className="group h-[172px] overflow-hidden rounded-[14px] border border-cyan-400/25 bg-[#070e17] p-3.5 text-left shadow-[0_0_24px_rgba(56,189,248,.06)] transition hover:border-fuchsia-300/45">
           <div className="flex h-7 items-center justify-between"><div className="flex items-center gap-2"><Gift className="h-4 w-4 text-fuchsia-300"/><h3 className="font-heading text-[11px] font-black uppercase tracking-[.11em] text-fuchsia-300">Coleção & Caixas</h3></div><span className="text-[7px] text-fuchsia-400">Ver todas →</span></div>
           <div className="relative mt-1.5 h-[52px] overflow-hidden rounded-lg border border-fuchsia-400/10 bg-black/15 px-2 [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
             <div className="flex h-full w-max items-center gap-1.5 animate-[nexaCardRail_12s_linear_infinite]">
