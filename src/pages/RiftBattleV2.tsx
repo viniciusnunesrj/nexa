@@ -52,27 +52,6 @@ const createInitialState = (
   arena = RIFTBATTLE_STANDARD_ARENA,
 ): RiftBattleState =>
   initializeRiftBattle(playerIds.map(cardById), aiIds.map(cardById), arena);
-const createOpponentTeam = (playerCards: RiftBattleCard[], matchCount: number, teamSize: number): string[] => {
-  const selectedTemplates = new Set(playerCards.map((card) => card.templateId ?? card.id));
-  const score = (cards: RiftBattleCard[]) => cards.reduce((total, card) => {
-    return total + card.stats.hp + card.stats.attack * 2 + card.stats.defense * 2 + card.deployCost;
-  }, 0);
-  const target = score(playerCards);
-  const candidates = RIFTBATTLE_V2_CARDS.filter((card) => !selectedTemplates.has(card.id));
-  const ranked = candidates
-    .map((card, index) => ({
-      card,
-      index,
-      distance: Math.abs((target / teamSize) - (card.stats.hp + card.stats.attack * 2 + card.stats.defense * 2 + card.deployCost)),
-    }))
-    .sort((left, right) => left.distance - right.distance || ((left.index + matchCount) % candidates.length) - ((right.index + matchCount) % candidates.length));
-  const result: string[] = [];
-  for (let offset = 0; result.length < teamSize && offset < ranked.length * 2; offset += 1) {
-    const item = ranked[(offset + matchCount * 3) % ranked.length];
-    if (!result.includes(item.card.id)) result.push(item.card.id);
-  }
-  return result;
-};
 const needsTarget = (ability?: string) =>
   ability === 'RUPTURA' || ability === 'SOBRECARGA' || ability === 'IMPULSO' || ability === 'MARCA';
 
@@ -363,7 +342,6 @@ export const RiftBattleV2: React.FC = () => {
   const [difficulty, setDifficulty] = useState<RiftBattleDifficulty>('OPERADOR');
   const [search, setSearch] = useState('');
   const [costFilter, setCostFilter] = useState<number>();
-  const [matchCount, setMatchCount] = useState(0);
   const [showHints, setShowHints] = useState(true);
   const [intro, setIntro] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string>();
@@ -717,13 +695,6 @@ export const RiftBattleV2: React.FC = () => {
     return card;
   };
 
-  const createOwnedMatchState = (playerIds: string[], aiIds: string[]): RiftBattleState =>
-    initializeRiftBattle(
-      playerIds.map(getOwnedBattleCard),
-      aiIds.map(cardById),
-      selectedArena,
-    );
-
   const prepareMatch = async (): Promise<RiftBattleState | null> => {
     if (validationBusyRef.current) return null;
     const epoch = validationEpochRef.current;
@@ -804,7 +775,6 @@ export const RiftBattleV2: React.FC = () => {
     validationRequestRef.current = undefined;
     const next = await prepareMatch();
     if (!next) return;
-    setMatchCount((count) => count + 1);
     setScreen('VS');
   };
 
