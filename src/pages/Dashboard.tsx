@@ -95,8 +95,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   return (
     <div className="space-y-4">
       {/* Cinematic portal shell — art slots receive final NEXA artwork later */}
-      <section className="relative overflow-hidden rounded-[22px] border border-cyan-400/25 bg-[#050912] shadow-[0_24px_90px_rgba(0,0,0,.42)]">
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,182,212,.08),transparent_30%,transparent_70%,rgba(168,85,247,.09)),radial-gradient(circle_at_50%_0%,rgba(56,189,248,.10),transparent_38%)]" />
+      <section className="relative isolate overflow-hidden rounded-[22px] border border-cyan-400/25 bg-[#040811] shadow-[0_30px_100px_rgba(0,0,0,.52),0_0_45px_rgba(34,211,238,.06)]">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,182,212,.10),transparent_30%,transparent_70%,rgba(168,85,247,.11)),radial-gradient(circle_at_50%_0%,rgba(56,189,248,.13),transparent_38%)]" />
+        <div className="absolute inset-x-[10%] top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent" />
+        <div className="absolute left-1/2 top-[44%] h-44 w-44 -translate-x-1/2 rounded-full bg-sky-400/[.06] blur-3xl" />
+        <div className="absolute inset-0 opacity-[.13] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
         <div className="relative min-h-[320px] px-5 py-5 sm:px-8 lg:min-h-[350px]">
           <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-[28%] lg:block">
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/[.12] to-transparent" />
@@ -133,7 +136,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <button onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[205px] overflow-hidden rounded-[18px] border border-cyan-400/50 bg-[#07131d] p-5 text-left transition hover:-translate-y-0.5 hover:border-cyan-300">
+        <button onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[205px] overflow-hidden rounded-[18px] border border-cyan-400/45 bg-[#06121c] p-5 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(34,211,238,.10)]">
           <div className="absolute inset-y-0 right-0 w-[43%] bg-[radial-gradient(circle_at_center,rgba(34,211,238,.15),transparent_60%)]" />
           <div className="absolute -right-4 top-3 flex h-36 w-36 rotate-6 items-center justify-center rounded-[28px] border border-cyan-400/15 bg-gradient-to-br from-cyan-400/[.08] to-transparent shadow-[0_0_55px_rgba(34,211,238,.12)]"><Swords className="h-12 w-12 text-cyan-300/60"/></div>
           <div className="relative flex h-full max-w-[70%] flex-col justify-between">
@@ -142,7 +145,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </button>
 
-        <button onClick={() => onNavigate('arena')} className="group relative min-h-[205px] overflow-hidden rounded-[18px] border border-fuchsia-400/50 bg-[#120a19] p-5 text-left transition hover:-translate-y-0.5 hover:border-fuchsia-300">
+        <button onClick={() => onNavigate('arena')} className="group relative min-h-[205px] overflow-hidden rounded-[18px] border border-fuchsia-400/45 bg-[#110918] p-5 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(217,70,239,.10)]">
           <div className="absolute inset-y-0 right-0 w-[43%] bg-[radial-gradient(circle_at_center,rgba(217,70,239,.15),transparent_60%)]" />
           <div className="absolute -right-4 top-3 flex h-36 w-36 -rotate-6 items-center justify-center rounded-[28px] border border-fuchsia-400/15 bg-gradient-to-br from-fuchsia-400/[.08] to-transparent shadow-[0_0_55px_rgba(217,70,239,.12)]"><Layers className="h-12 w-12 text-fuchsia-300/60"/></div>
           <div className="relative flex h-full max-w-[70%] flex-col justify-between">
@@ -273,16 +276,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <button onClick={() => onNavigate('progression')} className="rounded-[18px] border border-cyan-400/20 bg-[#07111b] p-4 text-left transition hover:border-cyan-300/40">
+      <div className="grid gap-3 md:grid-cols-3 [perspective:1200px]">
+        <button onClick={() => onNavigate('progression')} className="rounded-[18px] border border-cyan-400/20 bg-[#07111b]/95 p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,.22)] transition duration-300 hover:-translate-y-0.5 hover:border-cyan-300/40">
           <div className="flex items-center justify-between"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-cyan-300">Progressão</span><Award className="h-4 w-4 text-cyan-300"/></div>
           <p className="mt-2 font-heading text-lg font-black text-white">Nível {currentLevel}</p><p className="mt-1 text-[10px] text-slate-500">{currentExp}/{maxExp} XP · {xpPercent}% concluído</p>
         </button>
-        <button onClick={() => onNavigate('boxes')} className="rounded-[18px] border border-amber-400/20 bg-[#121009] p-4 text-left transition hover:border-amber-300/40">
+        <button onClick={() => onNavigate('boxes')} className="rounded-[18px] border border-amber-400/20 bg-[#121009]/95 p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,.22)] transition duration-300 hover:-translate-y-0.5 hover:border-amber-300/40">
           <div className="flex items-center justify-between"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-amber-300">Caixas</span><PackageOpen className="h-4 w-4 text-amber-300"/></div>
           <p className="mt-2 font-heading text-lg font-black text-white">{myBoxes.length} no inventário</p><p className="mt-1 text-[10px] text-slate-500">Abra caixas e expanda sua coleção.</p>
         </button>
-        <button onClick={() => onNavigate('collections')} className="rounded-[18px] border border-violet-400/20 bg-[#100b18] p-4 text-left transition hover:border-violet-300/40">
+        <button onClick={() => onNavigate('collections')} className="rounded-[18px] border border-violet-400/20 bg-[#100b18]/95 p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,.22)] transition duration-300 hover:-translate-y-0.5 hover:border-violet-300/40">
           <div className="flex items-center justify-between"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-violet-300">Coleções</span><Trophy className="h-4 w-4 text-violet-300"/></div>
           <p className="mt-2 font-heading text-lg font-black text-white">{distinctGuardiansCards}/4 Guardiões</p><p className="mt-1 text-[10px] text-slate-500">Acompanhe as cartas da coleção.</p>
         </button>
