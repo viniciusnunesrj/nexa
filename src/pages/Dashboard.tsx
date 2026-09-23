@@ -126,11 +126,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               <button onClick={() => onNavigate('arena')} className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-violet-400/50 bg-violet-500/[.13] px-4 font-heading text-[11px] font-black uppercase tracking-[.08em] text-violet-100 shadow-[0_0_28px_rgba(168,85,247,.12)] transition hover:-translate-y-0.5 hover:bg-violet-500/[.2]"><Zap className="h-4 w-4"/> Jogar Nexus Duel <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></button>
             </div>
           </div>
-          <div className="absolute inset-x-4 bottom-4 z-20 grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-400/15 bg-[#06101b]/95 shadow-[0_12px_35px_rgba(0,0,0,.32)] backdrop-blur-md sm:inset-x-7 lg:inset-x-8 lg:grid-cols-4">
-            <div className="border-r border-white/[.07] px-4 py-3"><p className="font-heading text-lg font-black text-white">{userCards.length}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">Cartas no inventário</p></div>
-            <div className="border-r border-white/[.07] px-4 py-3"><p className="font-heading text-lg font-black text-cyan-300">Nv. {currentLevel}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">Piloto</p></div>
-            <div className="border-r border-white/[.07] px-4 py-3"><div className="flex items-baseline gap-1"><p className="font-heading text-lg font-black text-sky-300">{currentExp}</p><span className="text-[9px] text-slate-500">/ {maxExp} XP</span></div><div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[.07]"><div style={{width:`${xpPercent}%`}} className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400"/></div></div>
-            <div className="hidden px-4 py-3 lg:block"><p className="font-heading text-lg font-black text-violet-300">{Math.max(0,maxExp-currentExp)}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">XP para próximo nível</p></div>
+          <div className="absolute inset-x-4 bottom-4 z-20 grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-300/20 bg-[#06101b]/95 shadow-[0_0_32px_rgba(34,211,238,.08),0_12px_35px_rgba(0,0,0,.38)] backdrop-blur-md sm:inset-x-7 lg:inset-x-8 lg:grid-cols-5">
+            <div className="flex items-center gap-3 border-r border-white/[.07] px-3 py-2.5"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-cyan-400/25 bg-cyan-400/[.08] text-cyan-300 shadow-[0_0_16px_rgba(34,211,238,.12)]"><Layers className="h-4 w-4"/></span><div><p className="font-heading text-base font-black text-white">{userCards.length}</p><p className="text-[7px] uppercase tracking-[.12em] text-slate-500">Cartas no inventário</p></div></div>
+            <div className="flex items-center gap-3 border-r border-white/[.07] px-3 py-2.5"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-sky-400/25 bg-sky-400/[.08] text-sky-300"><Award className="h-4 w-4"/></span><div><p className="font-heading text-base font-black text-cyan-300">Nv. {currentLevel}</p><p className="text-[7px] uppercase tracking-[.12em] text-slate-500">Piloto</p></div></div>
+            <div className="border-r border-white/[.07] px-3 py-2.5"><div className="flex items-center gap-2"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-cyan-400/20 bg-cyan-400/[.06] text-[8px] font-black text-cyan-300">XP</span><div className="min-w-0 flex-1"><div className="flex items-baseline gap-1"><p className="font-heading text-sm font-black text-sky-300">{currentExp}</p><span className="text-[7px] text-slate-500">/ {maxExp}</span></div><div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[.08]"><div style={{width:`${xpPercent}%`}} className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400 shadow-[0_0_8px_rgba(34,211,238,.5)]"/></div></div></div></div>
+            <div className="hidden items-center gap-3 border-r border-white/[.07] px-3 py-2.5 lg:flex"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-400/25 bg-amber-400/[.07] text-amber-300"><PackageOpen className="h-4 w-4"/></span><div><p className="font-heading text-base font-black text-amber-300">{myBoxes.length}</p><p className="text-[7px] uppercase tracking-[.12em] text-slate-500">Caixas</p></div></div>
+            <div className="hidden items-center gap-3 px-3 py-2.5 lg:flex"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-violet-400/25 bg-violet-400/[.07] text-violet-300"><Trophy className="h-4 w-4"/></span><div><p className="font-heading text-base font-black text-violet-300">{distinctGuardiansCards}/4</p><p className="text-[7px] uppercase tracking-[.12em] text-slate-500">Guardiões</p></div></div>
           </div>
         </div>
       </section>
@@ -181,143 +182,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Requirement 4: PROGRESSÃO & PRÓXIMO NÍVEL NO DASHBOARD */}
-      <div className="p-4 sm:p-5 rounded-[18px] bg-gradient-to-br from-[#09111b] via-[#090b13] to-[#08090f] border border-cyan-500/20 shadow-[0_22px_65px_rgba(0,0,0,.30),inset_0_1px_0_rgba(255,255,255,.025)] relative overflow-hidden">
-        <div className="absolute top-0 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-center lg:gap-5">
-          {/* Left: Level & XP Progress Bar */}
-          <div className="flex-1 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold uppercase tracking-wider">
-                <Award className="w-3.5 h-3.5" />
-                <span>PROGRESSÃO DO PILOTO</span>
-              </div>
-              <button
-                onClick={() => onNavigate('progression')}
-                className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
-              >
-                <span>Ver progressão completa</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex items-baseline gap-3">
-              <h2 className="font-heading text-2xl sm:text-3xl font-black text-white tracking-tight">
-                NÍVEL {currentLevel}
-              </h2>
-              <span className="text-sm font-mono text-cyan-400 font-bold">
-                {currentExp} / {maxExp} XP
-              </span>
-            </div>
-
-            {/* Glowing progress bar */}
-            <div className="space-y-1.5">
-              <div className="h-2.5 w-full bg-black/70 rounded-full overflow-hidden border border-white/10 p-0.5 shadow-inner">
-                <div
-                  style={{ width: `${xpPercent}%` }}
-                  className="h-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 rounded-full shadow-[0_0_16px_rgba(34,211,238,.55)] transition-all duration-700"
-                />
-              </div>
-              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                <span>Progresso para Nível {nextLevel} ({xpPercent}%)</span>
-                <span>Faltam {Math.max(0, maxExp - currentExp)} XP</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Online progression objectives */}
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
-            <div className="p-4 rounded-2xl bg-[#0a0914] border border-cyan-500/30 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between text-[10px] font-mono uppercase text-cyan-400 font-bold mb-1">
-                  <span>PRÓXIMO OBJETIVO</span>
-                  <span className="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-500/40">
-                    {isMaxLevel ? `Nv. ${MAX_GAME_LEVEL}` : `Nv. ${nextLevel}`}
-                  </span>
-                </div>
-                <span className="text-xs text-slate-400 font-mono block">
-                  {isMaxLevel ? 'Progressão concluída' : 'Avance jogando os dois jogos'}
-                </span>
-                <div className="mt-2 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-cyan-400" />
-                  <h4 className="font-heading font-bold text-white text-xs">
-                    {isMaxLevel ? 'Nível máximo atingido' : `Alcançar o Nível ${nextLevel}`}
-                  </h4>
-                </div>
-              </div>
-              <div className="mt-3 pt-2 border-t border-white/10 text-[10px] font-mono text-slate-400">
-                {isMaxLevel ? 'Patente máxima do piloto.' : `Faltam ${Math.max(0, maxExp - currentExp)} XP`}
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-[#0d091a] border border-purple-500/30 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between text-[10px] font-mono uppercase text-purple-300 font-bold mb-1">
-                  <span>REDE NEXUS</span>
-                  <Shield className="w-4 h-4 text-purple-300" />
-                </div>
-                <span className="text-xs text-slate-400 font-mono block">Progressão compartilhada</span>
-                <div className="mt-2">
-                  <h4 className="font-heading font-bold text-white text-xs">
-                    Nível e XP compartilhados nos jogos
-                  </h4>
-                  <span className="text-[10px] font-mono text-purple-300">
-                    Rift Battle e Nexus Duel alimentam a mesma conta.
-                  </span>
-                </div>
-              </div>
-              <div className="mt-3 pt-2 border-t border-white/10 text-[10px] font-mono text-slate-400">
-                Nível concede progressão e recursos de conta, sem bônus direto de combate.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3 [perspective:1200px]">
-        <button onClick={() => onNavigate('progression')} className="rounded-[18px] border border-cyan-400/20 bg-[#07111b]/95 p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,.22)] transition duration-300 hover:-translate-y-0.5 hover:border-cyan-300/40">
-          <div className="flex items-center justify-between"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-cyan-300">Progressão</span><Award className="h-4 w-4 text-cyan-300"/></div>
-          <p className="mt-2 font-heading text-lg font-black text-white">Nível {currentLevel}</p><p className="mt-1 text-[10px] text-slate-500">{currentExp}/{maxExp} XP · {xpPercent}% concluído</p>
+      {/* Reference-style utility row using real NEXA systems */}
+      <div className="grid gap-3 lg:grid-cols-3">
+        <button onClick={() => onNavigate('progression')} className="group rounded-[16px] border border-cyan-400/20 bg-[#07111a] p-4 text-left shadow-[0_16px_40px_rgba(0,0,0,.28)] transition hover:border-cyan-300/45">
+          <div className="flex items-center justify-between"><div className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-cyan-300"/><h3 className="font-heading text-[11px] font-black uppercase tracking-[.12em] text-cyan-300">Próximo objetivo</h3></div><span className="text-[8px] font-mono text-cyan-500">NÍVEL {isMaxLevel?MAX_GAME_LEVEL:nextLevel}</span></div>
+          <p className="mt-3 text-xs font-bold text-slate-200">{isMaxLevel?'Progressão concluída':`Alcance o nível ${nextLevel}`}</p>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[.07]"><div style={{width:`${xpPercent}%`}} className="h-full rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,.55)]"/></div>
+          <div className="mt-2 flex justify-between text-[8px] font-mono text-slate-500"><span>{currentExp}/{maxExp} XP</span><span>{isMaxLevel?'MAX':`Faltam ${Math.max(0,maxExp-currentExp)} XP`}</span></div>
+          <div className="mt-3 flex items-center justify-between border-t border-white/[.06] pt-2 text-[8px] uppercase tracking-wider text-slate-500"><span>Progressão do piloto</span><ChevronRight className="h-3.5 w-3.5 text-cyan-300 transition group-hover:translate-x-1"/></div>
         </button>
-        <button onClick={() => onNavigate('boxes')} className="rounded-[18px] border border-amber-400/20 bg-[#121009]/95 p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,.22)] transition duration-300 hover:-translate-y-0.5 hover:border-amber-300/40">
-          <div className="flex items-center justify-between"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-amber-300">Caixas</span><PackageOpen className="h-4 w-4 text-amber-300"/></div>
-          <p className="mt-2 font-heading text-lg font-black text-white">{myBoxes.length} no inventário</p><p className="mt-1 text-[10px] text-slate-500">Abra caixas e expanda sua coleção.</p>
-        </button>
-        <button onClick={() => onNavigate('collections')} className="rounded-[18px] border border-violet-400/20 bg-[#100b18]/95 p-4 text-left shadow-[0_14px_35px_rgba(0,0,0,.22)] transition duration-300 hover:-translate-y-0.5 hover:border-violet-300/40">
-          <div className="flex items-center justify-between"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-violet-300">Coleções</span><Trophy className="h-4 w-4 text-violet-300"/></div>
-          <p className="mt-2 font-heading text-lg font-black text-white">{distinctGuardiansCards}/4 Guardiões</p><p className="mt-1 text-[10px] text-slate-500">Acompanhe as cartas da coleção.</p>
-        </button>
-      </div>
 
-      {/* Compact live dashboard — only existing NEXA data */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1.15fr]">
-        <div className="rounded-[18px] border border-cyan-400/15 bg-[#07101a]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.025)]">
-          <div className="flex items-center justify-between"><h3 className="font-heading text-xs font-black uppercase tracking-[.1em] text-cyan-300">Arsenal</h3><button onClick={() => onNavigate('inventory')} className="text-[9px] font-mono text-slate-500 hover:text-cyan-300">Ver tudo →</button></div>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {userItems.slice(0,3).map(item=><button key={item.id} onClick={()=>onNavigate('inventory')} className="group min-w-0"><div className="aspect-[.82] overflow-hidden rounded-lg border border-white/[.07] bg-black/30"><CardImage asset={item} src={item.image} alt={item.name} className="h-full w-full object-cover transition group-hover:scale-105"/></div><p className="mt-1 truncate text-[9px] font-bold text-slate-300">{item.name}</p></button>)}
-            {userItems.length===0 && <p className="col-span-3 py-6 text-center text-[10px] text-slate-500">Nenhuma carta no inventário.</p>}
-          </div>
-        </div>
+        <button onClick={() => onNavigate('collections')} className="group rounded-[16px] border border-violet-400/20 bg-[#100a18] p-4 text-left shadow-[0_16px_40px_rgba(0,0,0,.28)] transition hover:border-violet-300/45">
+          <div className="flex items-center gap-2"><Gift className="h-4 w-4 text-violet-300"/><h3 className="font-heading text-[11px] font-black uppercase tracking-[.12em] text-violet-300">Coleção & Caixas</h3></div>
+          <div className="mt-3 grid grid-cols-2 gap-2"><div className="rounded-lg border border-violet-400/10 bg-black/20 p-2.5"><p className="font-heading text-xl font-black text-white">{distinctGuardiansCards}<span className="text-xs text-slate-500">/4</span></p><p className="text-[8px] uppercase text-slate-500">Guardiões</p></div><div className="rounded-lg border border-amber-400/10 bg-black/20 p-2.5"><p className="font-heading text-xl font-black text-amber-300">{myBoxes.length}</p><p className="text-[8px] uppercase text-slate-500">Caixas</p></div></div>
+          <div className="mt-3 flex items-center justify-between border-t border-white/[.06] pt-2 text-[8px] uppercase tracking-wider text-slate-500"><span>Acompanhar coleção</span><ChevronRight className="h-3.5 w-3.5 text-violet-300 transition group-hover:translate-x-1"/></div>
+        </button>
 
-        <div className="rounded-[18px] border border-violet-400/15 bg-[#0d0a15]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.025)]">
-          <div className="flex items-center justify-between"><h3 className="font-heading text-xs font-black uppercase tracking-[.1em] text-violet-300">Status da conta</h3><Shield className="h-4 w-4 text-violet-300"/></div>
+        <div className="rounded-[16px] border border-sky-400/15 bg-[#080e17] p-4 shadow-[0_16px_40px_rgba(0,0,0,.28)]">
+          <div className="flex items-center justify-between"><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-sky-300"/><h3 className="font-heading text-[11px] font-black uppercase tracking-[.12em] text-sky-300">Atividade recente</h3></div><button onClick={()=>onNavigate('history')} className="text-[8px] text-slate-500 hover:text-sky-300">Ver todas →</button></div>
           <div className="mt-3 space-y-2">
-            <div className="flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2"><span className="text-[9px] uppercase text-slate-500">Poder do arsenal</span><strong className="text-xs text-cyan-300">{totalPower===null?'—':totalPower.toLocaleString('pt-BR')}</strong></div>
-            <div className="flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2"><span className="text-[9px] uppercase text-slate-500">Cartas raras+</span><strong className="text-xs text-violet-300">{rareCount}</strong></div>
-            <div className="flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2"><span className="text-[9px] uppercase text-slate-500">Coleção Guardiões</span><strong className="text-xs text-white">{distinctGuardiansCards}/4</strong></div>
-            <div className="flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2"><span className="text-[9px] uppercase text-slate-500">Caixas</span><strong className="text-xs text-amber-300">{myBoxes.length}</strong></div>
+            {transactions.slice(0,4).map(tx=><div key={tx.id} className="flex items-center justify-between gap-2 border-b border-white/[.05] pb-1.5 text-[8px] last:border-0"><div className="min-w-0"><p className="truncate font-bold text-slate-300">{tx.itemSnapshot.name}</p><p className="truncate text-slate-600">{tx.buyerName} comprou de {tx.sellerName}</p></div><span className="shrink-0 font-bold text-cyan-300">+{formatEconomicValue(tx.amount)} NXA</span></div>)}
+            {transactions.length===0&&<p className="py-5 text-center text-[9px] text-slate-500">Nenhuma atividade recente.</p>}
           </div>
-        </div>
-
-        <div className="rounded-[18px] border border-white/[.08] bg-[#090d14]/95 p-4 shadow-[0_18px_45px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.025)]">
-          <div className="flex items-center justify-between"><h3 className="font-heading text-xs font-black uppercase tracking-[.1em] text-sky-300">Atividade do mercado</h3><button onClick={() => onNavigate('history')} className="text-[9px] font-mono text-slate-500 hover:text-sky-300">Histórico →</button></div>
-          <div className="mt-3 space-y-2">
-            {transactions.slice(0,4).map(tx=><div key={tx.id} className="flex items-center justify-between gap-3 border-b border-white/[.05] pb-2 text-[9px] last:border-0"><div className="min-w-0"><p className="truncate font-bold text-slate-300">{tx.itemSnapshot.name}</p><p className="truncate text-slate-600">{tx.buyerName} comprou de {tx.sellerName}</p></div><span className="shrink-0 font-bold text-cyan-300">{formatEconomicValue(tx.amount)} NXA</span></div>)}
-            {transactions.length===0 && <p className="py-6 text-center text-[10px] text-slate-500">Nenhuma atividade recente.</p>}
-          </div>
-          <button onClick={()=>onNavigate('marketplace')} className="mt-3 w-full rounded-lg border border-cyan-400/15 bg-cyan-400/[.05] py-2 text-[9px] font-black uppercase tracking-[.1em] text-cyan-300 transition hover:bg-cyan-400/[.1]">Acessar marketplace</button>
         </div>
       </div>
 
