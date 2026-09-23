@@ -101,8 +101,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="absolute left-1/2 top-[44%] h-44 w-44 -translate-x-1/2 rounded-full bg-sky-400/[.06] blur-3xl" />
         <div className="absolute inset-0 opacity-[.13] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
         <div className="relative min-h-[390px] px-4 py-5 sm:min-h-[345px] sm:px-7 lg:h-[344px] lg:min-h-0 lg:px-8">
-          <div className="pointer-events-none absolute inset-0 hidden overflow-hidden lg:block">
-            <img src="/assets/nexa-rivals-hero.png" alt="" aria-hidden="true" className="absolute left-1/2 top-1/2 h-[112%] w-[112%] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center opacity-100" />
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <img src="/assets/nexa-rivals-hero.png" alt="" aria-hidden="true" className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center opacity-70 sm:opacity-85 lg:h-[112%] lg:w-[112%] lg:opacity-100" />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,8,18,.02)_0%,rgba(2,8,18,.08)_28%,rgba(2,8,18,.52)_41%,rgba(2,8,18,.68)_50%,rgba(2,8,18,.52)_59%,rgba(2,8,18,.08)_72%,rgba(2,8,18,.02)_100%)]" />
             <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#050b14]/90 via-[#050b14]/35 to-transparent" />
           </div>
@@ -114,7 +114,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               Sua próxima<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400">batalha começa aqui</span>
             </h1>
             <p className="mt-2.5 text-[11px] text-slate-400 sm:text-xs">Estratégia. Coleção. Evolução. Uma Rede de possibilidades.</p>
-            <div className="mt-4 grid w-full max-w-[510px] grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
+            <div className="mt-4 hidden w-full max-w-[510px] grid-cols-1 gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3">
               <button onClick={() => onNavigate('riftbattle-v2')} className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 font-heading text-[11px] font-black uppercase tracking-[.08em] text-slate-950 shadow-[0_0_28px_rgba(34,211,238,.18)] transition hover:-translate-y-0.5 hover:bg-cyan-200"><Swords className="h-4 w-4"/> Jogar Rift Battle <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></button>
               <button onClick={() => onNavigate('arena')} className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-violet-400/50 bg-violet-500/[.13] px-4 font-heading text-[11px] font-black uppercase tracking-[.08em] text-violet-100 shadow-[0_0_28px_rgba(168,85,247,.12)] transition hover:-translate-y-0.5 hover:bg-violet-500/[.2]"><Zap className="h-4 w-4"/> Jogar Nexus Duel <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></button>
             </div>
