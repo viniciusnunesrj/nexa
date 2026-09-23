@@ -184,7 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
       {/* Reference-style utility row using real NEXA systems */}
       <div className="grid items-stretch gap-3 lg:grid-cols-3">
-        <button onClick={()=>onNavigate('progression')} className="group h-[168px] rounded-[14px] border border-cyan-400/30 bg-[#06111b] p-3.5 text-left shadow-[0_0_24px_rgba(34,211,238,.06)]">
+        <button onClick={()=>onNavigate('progression')} className="group h-[184px] rounded-[14px] border border-cyan-400/30 bg-[#06111b] p-3.5 text-left shadow-[0_0_24px_rgba(34,211,238,.06)]">
           <div className="flex h-7 items-center justify-between"><div className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-cyan-300"/><h3 className="font-heading text-[10px] font-black uppercase tracking-[.13em] text-cyan-300">Próximo objetivo</h3></div><span className="text-[7px] font-mono text-cyan-400">NV. {isMaxLevel?MAX_GAME_LEVEL:nextLevel}</span></div>
           <div className="mt-2 space-y-1.5">
             <div className="grid grid-cols-[22px_1fr_auto] items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded border border-cyan-400/20 bg-cyan-400/[.07]"><Award className="h-3 w-3 text-cyan-300"/></span><span className="truncate text-[9px] font-bold text-slate-200">{isMaxLevel?'Progressão concluída':`Alcance o nível ${nextLevel}`}</span><span className="text-[7px] font-bold text-cyan-300">{currentLevel}/{isMaxLevel?MAX_GAME_LEVEL:nextLevel}</span></div>
@@ -194,16 +194,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="mt-2 flex items-center justify-between border-t border-white/[.06] pt-2 text-[7px] font-bold uppercase tracking-wider text-cyan-400"><span>Progressão do piloto</span><ChevronRight className="h-3 w-3"/></div>
         </button>
 
-        <button onClick={()=>onNavigate('collections')} className="group h-[168px] overflow-hidden rounded-[14px] border border-fuchsia-400/30 bg-[#110817] p-3.5 text-left shadow-[0_0_24px_rgba(217,70,239,.07)]">
+        <button onClick={()=>onNavigate('collections')} className="group h-[184px] overflow-hidden rounded-[14px] border border-fuchsia-400/30 bg-[#110817] p-3.5 text-left shadow-[0_0_24px_rgba(217,70,239,.07)]">
           <div className="flex h-7 items-center justify-between"><div className="flex items-center gap-2"><Gift className="h-4 w-4 text-fuchsia-300"/><h3 className="font-heading text-[10px] font-black uppercase tracking-[.13em] text-fuchsia-300">Coleção & Caixas</h3></div><span className="text-[7px] text-fuchsia-400">Ver todas →</span></div>
-          <div className="mt-1.5 grid grid-cols-[22px_1fr_auto] items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded border border-fuchsia-400/20 bg-fuchsia-400/[.07]"><Layers className="h-3 w-3 text-fuchsia-300"/></span><div className="relative h-[48px] min-w-0 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]"><div className="flex w-max animate-[nexaCardRail_12s_linear_infinite] gap-1.5">{[...userItems.slice(0,4),...userItems.slice(0,4)].map((item,i)=><div key={`${item.id}-${i}`} className="relative h-[46px] w-[36px] shrink-0 overflow-hidden rounded border border-fuchsia-300/25 bg-black/40 shadow-[0_0_8px_rgba(217,70,239,.12)]"><CardImage asset={item} src={item.image} alt={item.name} className="h-full w-full object-cover"/></div>)}</div>{userItems.length===0&&<span className="absolute inset-0 flex items-center text-[7px] text-slate-500">Sua coleção aparecerá aqui</span>}</div><span className="text-[7px] font-bold text-fuchsia-300">{userCards.length}</span></div>
-          <div className="mt-1 space-y-1">
-            <div className="grid grid-cols-[22px_1fr_auto] items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded border border-violet-400/20 bg-violet-400/[.07]"><Trophy className="h-3 w-3 text-violet-300"/></span><span className="text-[8px] text-slate-400">Guardiões da coleção</span><span className="text-[7px] font-bold text-violet-300">{distinctGuardiansCards}/4</span></div>
-            <div className="grid grid-cols-[22px_1fr_auto] items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded border border-amber-400/20 bg-amber-400/[.07]"><PackageOpen className="h-3 w-3 text-amber-300"/></span><span className="text-[8px] text-slate-400">Caixas disponíveis</span><span className="text-[7px] font-bold text-amber-300">{myBoxes.length}</span></div>
+          <div className="relative mt-1.5 h-[52px] overflow-hidden rounded-lg border border-fuchsia-400/10 bg-black/15 px-2 [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+            <div className="flex h-full w-max items-center gap-1.5 animate-[nexaCardRail_12s_linear_infinite]">
+              {[...userItems.slice(0,4),...userItems.slice(0,4)].map((item,i)=><div key={`${item.id}-${i}`} className="relative h-[44px] w-[34px] shrink-0 overflow-hidden rounded border border-fuchsia-300/25 bg-black/40 shadow-[0_0_8px_rgba(217,70,239,.12)]"><CardImage asset={item} src={item.image} alt={item.name} className="h-full w-full object-cover"/></div>)}
+            </div>
+            {userItems.length===0&&<span className="absolute inset-0 flex items-center justify-center text-[7px] text-slate-500">Sua coleção aparecerá aqui</span>}
           </div>
+          <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+            <div className="flex items-center gap-1.5 rounded-md border border-fuchsia-400/10 bg-fuchsia-400/[.04] px-1.5 py-1"><Layers className="h-3 w-3 shrink-0 text-fuchsia-300"/><span className="truncate text-[7px] text-slate-300">{userCards.length} cartas</span></div>
+            <div className="flex items-center gap-1.5 rounded-md border border-violet-400/10 bg-violet-400/[.04] px-1.5 py-1"><Trophy className="h-3 w-3 shrink-0 text-violet-300"/><span className="truncate text-[7px] text-slate-300">{distinctGuardiansCards}/4 guardiões</span></div>
+            <div className="flex items-center gap-1.5 rounded-md border border-amber-400/10 bg-amber-400/[.04] px-1.5 py-1"><PackageOpen className="h-3 w-3 shrink-0 text-amber-300"/><span className="truncate text-[7px] text-slate-300">{myBoxes.length} caixas</span></div>
+          </div>
+          <div onClick={(e)=>{e.stopPropagation();onNavigate('boxes')}} className="mt-1.5 flex h-7 w-full items-center justify-center gap-2 rounded-md border border-fuchsia-400/35 bg-gradient-to-r from-fuchsia-500/[.12] to-violet-500/[.12] font-heading text-[8px] font-black uppercase tracking-[.08em] text-fuchsia-200 shadow-[0_0_14px_rgba(217,70,239,.10)] transition hover:from-fuchsia-500/[.20] hover:to-violet-500/[.20]"><PackageOpen className="h-3 w-3"/> Explorar caixas <ChevronRight className="h-3 w-3"/></div>
         </button>
 
-        <div className="h-[168px] rounded-[14px] border border-sky-400/25 bg-[#070e17] p-3.5 shadow-[0_0_24px_rgba(56,189,248,.06)]">
+        <div className="h-[184px] rounded-[14px] border border-sky-400/25 bg-[#070e17] p-3.5 shadow-[0_0_24px_rgba(56,189,248,.06)]">
           <div className="flex h-7 items-center justify-between"><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-sky-300"/><h3 className="font-heading text-[10px] font-black uppercase tracking-[.13em] text-sky-300">Atividade recente</h3></div><button onClick={()=>onNavigate('history')} className="text-[7px] text-slate-500">Ver todas →</button></div>
           <div className="mt-1.5 space-y-1">
             {transactions.slice(0,3).map((tx,i)=><div key={tx.id} className="grid grid-cols-[22px_1fr_auto] items-center gap-2 border-b border-white/[.05] pb-1"><span className={`flex h-5 w-5 items-center justify-center rounded border ${i===0?'border-cyan-400/20 bg-cyan-400/[.07] text-cyan-300':i===1?'border-fuchsia-400/20 bg-fuchsia-400/[.07] text-fuchsia-300':'border-amber-400/20 bg-amber-400/[.07] text-amber-300'}`}>{i===0?<ArrowLeftRight className="h-3 w-3"/>:i===1?<Sparkles className="h-3 w-3"/>:<PackageOpen className="h-3 w-3"/>}</span><div className="min-w-0"><p className="truncate text-[8px] font-bold text-slate-200">{tx.itemSnapshot.name}</p><p className="truncate text-[6px] text-slate-600">{tx.buyerName} comprou de {tx.sellerName}</p></div><span className="text-[7px] font-bold text-cyan-300">+{formatEconomicValue(tx.amount)} NXA</span></div>)}
@@ -214,8 +221,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
       <style>{`@keyframes nexaCardRail{from{transform:translateX(0)}to{transform:translateX(calc(-50% - .1875rem))}}`}</style>
 
-      <footer className="flex items-center justify-between border-t border-cyan-400/10 px-1 pt-2 font-mono text-[7px] uppercase tracking-[.18em] text-slate-600">
-        <span>NEXA&nbsp; // &nbsp;JOGUE. COLECIONE. EVOLUA.</span>
+      <footer className="flex min-h-[24px] items-center justify-end border-t border-cyan-400/10 px-2 font-mono text-[8px] font-semibold uppercase tracking-[.12em] text-slate-500">
         <span className="flex items-center gap-2"><span>VERSÃO 0.3.1&nbsp; // &nbsp;DESENVOLVIDO POR VINNY&nbsp; // &nbsp;REDE NEXUS ONLINE</span><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.9)]"/></span>
       </footer>
 
