@@ -42,7 +42,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onSuccess }) => {
       if (result.success && result.user) {
         soundService.playSuccess();
         if (onSuccess) onSuccess();
-        onNavigate('dashboard');
+        else onNavigate('dashboard');
       } else {
         soundService.playError();
         setError(result.error || 'Falha ao autenticar. Verifique suas credenciais.');
