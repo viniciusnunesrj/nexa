@@ -102,8 +102,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="absolute inset-0 opacity-[.13] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
         <div className="relative min-h-[390px] px-4 py-5 sm:min-h-[345px] sm:px-7 lg:min-h-[338px] lg:px-8">
           <div className="pointer-events-none absolute inset-0 hidden overflow-hidden lg:block">
-            <img src="/assets/nexa-rivals-hero.png" alt="" aria-hidden="true" className="absolute bottom-0 left-1/2 h-[112%] w-auto max-w-none -translate-x-1/2 object-contain opacity-95 drop-shadow-[0_0_28px_rgba(56,189,248,.18)]" />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,8,17,.02)_0%,rgba(4,8,17,.10)_23%,rgba(4,8,17,.72)_42%,rgba(4,8,17,.82)_50%,rgba(4,8,17,.72)_58%,rgba(4,8,17,.10)_77%,rgba(4,8,17,.02)_100%)]" />
+            <img src="/assets/nexa-rivals-hero.png" alt="" aria-hidden="true" className="absolute bottom-0 left-1/2 h-[104%] w-auto max-w-none -translate-x-1/2 object-contain opacity-100 drop-shadow-[0_0_30px_rgba(56,189,248,.16)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,8,17,.02)_0%,rgba(4,8,17,.06)_27%,rgba(4,8,17,.60)_40%,rgba(4,8,17,.76)_50%,rgba(4,8,17,.60)_60%,rgba(4,8,17,.06)_73%,rgba(4,8,17,.02)_100%)]" />
             <div className="absolute inset-y-0 left-0 w-[31%] bg-gradient-to-r from-cyan-500/[.06] to-transparent" />
             <div className="absolute inset-y-0 right-0 w-[31%] bg-gradient-to-l from-fuchsia-500/[.07] to-transparent" />
           </div>
