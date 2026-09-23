@@ -228,9 +228,9 @@ export const Topbar: React.FC<TopbarProps> = ({
             "
           >
             {soundEnabled ? (
-              <Volume2 className="w-4 h-4 text-cyan-400/80" />
+              <Volume2 className="w-4 h-4 text-purple-400 drop-shadow-[0_0_7px_rgba(192,132,252,.45)]" />
             ) : (
-              <VolumeX className="w-4 h-4" />
+              <VolumeX className="w-4 h-4 text-purple-400/70" />
             )}
           </button>
 

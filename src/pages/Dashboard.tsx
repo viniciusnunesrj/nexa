@@ -93,49 +93,66 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const isMaxLevel = currentLevel >= MAX_GAME_LEVEL;
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      {/* Hero: Active Combat Hero + Quick Battle Launch */}
-      <div className="relative rounded-[28px] overflow-hidden border border-cyan-500/25 bg-gradient-to-br from-[#0a0c14] via-[#0c0d18] to-[#090a10] p-5 sm:p-6 lg:p-7 shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
-        <div className="absolute -top-40 right-10 w-[460px] h-[460px] bg-cyan-500/[0.08] rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 grid grid-cols-1 items-center gap-6">
-          {/* Left: Player status & CTAs */}
-          <div className="space-y-4 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>CENTRAL DO PILOTO</span>
-            </div>
-
-            <h1 className="font-heading text-3xl sm:text-4xl lg:text-[42px] font-black text-white tracking-tight leading-[0.95]">
-              Bem-vindo, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400">{user.username}</span>
+    <div className="space-y-4">
+      {/* Cinematic portal shell — art slots receive final NEXA artwork later */}
+      <section className="relative isolate overflow-hidden rounded-[22px] border border-cyan-400/25 bg-[#040811] shadow-[0_30px_100px_rgba(0,0,0,.52),0_0_45px_rgba(34,211,238,.06)]">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,182,212,.10),transparent_30%,transparent_70%,rgba(168,85,247,.11)),radial-gradient(circle_at_50%_0%,rgba(56,189,248,.13),transparent_38%)]" />
+        <div className="absolute inset-x-[10%] top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent" />
+        <div className="absolute left-1/2 top-[44%] h-44 w-44 -translate-x-1/2 rounded-full bg-sky-400/[.06] blur-3xl" />
+        <div className="absolute inset-0 opacity-[.13] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
+        <div className="relative min-h-[390px] px-4 py-5 sm:min-h-[345px] sm:px-7 lg:h-[344px] lg:min-h-0 lg:px-8">
+          <div className="pointer-events-none absolute inset-0 hidden overflow-hidden lg:block">
+            <img src="/assets/nexa-rivals-hero.png" alt="" aria-hidden="true" className="absolute left-1/2 top-1/2 h-[112%] w-[112%] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center opacity-100" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,8,18,.02)_0%,rgba(2,8,18,.08)_28%,rgba(2,8,18,.52)_41%,rgba(2,8,18,.68)_50%,rgba(2,8,18,.52)_59%,rgba(2,8,18,.08)_72%,rgba(2,8,18,.02)_100%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#050b14]/90 via-[#050b14]/35 to-transparent" />
+          </div>
+          <div className="pointer-events-none absolute -bottom-16 left-[-3%] z-0 h-32 w-[42%] rounded-[50%] bg-cyan-400/[.13] blur-[55px] lg:block" />
+          <div className="pointer-events-none absolute -bottom-16 right-[-3%] z-0 h-32 w-[42%] rounded-[50%] bg-fuchsia-500/[.13] blur-[55px] lg:block" />
+          <div className="relative z-10 mx-auto flex max-w-[590px] flex-col items-center pt-1 text-center lg:pt-1">
+            <div className="mb-2.5 flex items-center gap-3 font-mono text-[8px] font-bold uppercase tracking-[.34em] text-slate-500"><span className="h-px w-10 bg-cyan-400/30" /> Rede Nexus <span className="h-px w-10 bg-violet-400/30" /></div>
+            <h1 className="font-heading text-[28px] font-black uppercase leading-[.94] tracking-[.015em] text-white drop-shadow-[0_3px_18px_rgba(0,0,0,.7)] sm:text-4xl">
+              Sua próxima<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400">batalha começa aqui</span>
             </h1>
-
-            <p className="text-slate-400 text-sm max-w-2xl leading-relaxed">
-              Escolha entre Rift Battle e Nexus Duel, evolua seu Piloto e fortaleça sua coleção na Rede Nexus.
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1">
-              <button onClick={() => onNavigate('games')} className="px-6 py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all shadow-[0_0_28px_rgba(34,211,238,0.22)] flex items-center gap-2.5 hover:-translate-y-0.5"><Gamepad2 className="w-5 h-5" /><span>Escolher jogo</span></button>
-              <button onClick={() => onNavigate('progression')} className="px-4 py-3 rounded-xl bg-white/[0.025] border border-white/10 text-slate-300 font-heading font-bold text-xs uppercase tracking-wider"><TrendingUp className="inline w-4 h-4 mr-2 text-purple-400" />Progressão</button>
+            <p className="mt-2.5 text-[11px] text-slate-400 sm:text-xs">Estratégia. Coleção. Evolução. Uma Rede de possibilidades.</p>
+            <div className="mt-4 grid w-full max-w-[510px] grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
+              <button onClick={() => onNavigate('riftbattle-v2')} className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 font-heading text-[11px] font-black uppercase tracking-[.08em] text-slate-950 shadow-[0_0_28px_rgba(34,211,238,.18)] transition hover:-translate-y-0.5 hover:bg-cyan-200"><Swords className="h-4 w-4"/> Jogar Rift Battle <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></button>
+              <button onClick={() => onNavigate('arena')} className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-violet-400/50 bg-violet-500/[.13] px-4 font-heading text-[11px] font-black uppercase tracking-[.08em] text-violet-100 shadow-[0_0_28px_rgba(168,85,247,.12)] transition hover:-translate-y-0.5 hover:bg-violet-500/[.2]"><Zap className="h-4 w-4"/> Jogar Nexus Duel <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></button>
             </div>
           </div>
-
+          <div className="absolute inset-x-4 bottom-3 z-20 grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-300/20 bg-[#06101b]/95 backdrop-blur-md sm:inset-x-7 lg:left-[7%] lg:right-[7%] lg:grid-cols-5">
+            <div className="flex min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4"><Layers className="h-5 w-5 text-cyan-300"/><div><p className="font-heading text-base font-black text-white">{userCards.length}</p><p className="text-[9px] font-medium uppercase tracking-[.09em] text-slate-300">Cartas no inventário</p></div></div>
+            <div className="flex min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4"><Award className="h-5 w-5 text-sky-300"/><div><p className="font-heading text-base font-black text-cyan-300">Nv. {currentLevel}</p><p className="text-[9px] font-medium uppercase tracking-[.09em] text-slate-300">Piloto</p></div></div>
+            <div className="flex min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4"><span className="text-[8px] font-black text-cyan-300">XP</span><div className="min-w-0 flex-1"><p className="font-heading text-sm font-black text-sky-300">{currentExp}<span className="ml-1 text-[7px] font-normal text-slate-500">/ {maxExp} XP</span></p><p className="text-[8px] font-medium text-slate-300">Para o próximo nível</p><div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[.08]"><div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400" style={{width:`${xpPercent}%`}}/></div></div></div>
+            <div className="hidden min-h-[58px] items-center gap-3 border-r border-white/[.07] px-4 lg:flex"><Trophy className="h-5 w-5 text-amber-300"/><div><p className="font-heading text-base font-black text-white">{user.victories}</p><p className="text-[8px] font-medium text-slate-300">Vitórias totais</p></div></div>
+            <div className="hidden min-h-[58px] items-center gap-3 px-4 lg:flex"><Swords className="h-5 w-5 text-violet-300"/><div><p className="font-heading text-base font-black text-white">{user.victories + user.defeats}</p><p className="text-[8px] font-medium text-slate-300">Batalhas registradas</p></div></div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="rounded-[24px] border border-cyan-500/25 bg-gradient-to-br from-[#0b1520] to-[#090b12] p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-mono font-bold tracking-[.18em] text-cyan-400">JOGO 01</p><h2 className="mt-1 font-heading text-2xl font-black text-white">NEXA: RIFT BATTLE</h2></div><Swords className="w-7 h-7 text-cyan-400" /></div>
-          <p className="mt-3 text-sm text-slate-400">Monte seu esquadrão e enfrente combates PvE. Suas partidas geram NEX, XP e alimentam a progressão do mesmo Piloto.</p>
-          <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-mono"><span className="rounded-full border border-cyan-500/25 px-2.5 py-1 text-cyan-300">PvE</span><span className="rounded-full border border-white/10 px-2.5 py-1 text-slate-400">Esquadrão</span><span className="rounded-full border border-white/10 px-2.5 py-1 text-slate-400">Recompensas</span></div>
-          <button onClick={() => onNavigate('play')} className="mt-5 w-full rounded-xl bg-cyan-500 px-4 py-3 font-heading text-xs font-black uppercase text-slate-950">Jogar Rift Battle</button>
-        </section>
-        <section className="rounded-[24px] border border-purple-500/25 bg-gradient-to-br from-[#160e22] to-[#090b12] p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-mono font-bold tracking-[.18em] text-purple-400">JOGO 02</p><h2 className="mt-1 font-heading text-2xl font-black text-white">NEXA: NEXUS DUEL</h2></div><Trophy className="w-7 h-7 text-purple-400" /></div>
-          <p className="mt-3 text-sm text-slate-400">Duelo estratégico 4×4 com Nexos, habilidades e blefe. Use sua coleção nos modos PvE ou PvP.</p>
-          <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-mono"><span className="rounded-full border border-purple-500/25 px-2.5 py-1 text-purple-300">PvE + PvP</span><span className="rounded-full border border-white/10 px-2.5 py-1 text-slate-400">Deck 4×4</span><span className="rounded-full border border-white/10 px-2.5 py-1 text-slate-400">Nexos</span></div>
-          <button onClick={() => onNavigate('arena')} className="mt-5 w-full rounded-xl bg-purple-600 px-4 py-3 font-heading text-xs font-black uppercase text-white">Jogar Nexus Duel</button>
-        </section>
+      <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+        <button onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[178px] overflow-hidden rounded-[18px] border border-cyan-400/45 bg-[#06121c] p-4 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(34,211,238,.10)]">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <img src="/assets/rift-battle-card.png" alt="" aria-hidden="true" className="absolute inset-y-0 right-0 h-full w-[82%] object-cover object-right opacity-100 transition duration-500 group-hover:scale-[1.015]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#06121c] from-[0%] via-[#06121c]/98 via-[45%] to-[#06121c]/8 to-[80%]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#06121c]/45 via-transparent to-[#06121c]/10" />
+          </div>
+          <div className="relative z-10 flex h-full max-w-full flex-col justify-between pr-20 sm:max-w-[68%] sm:pr-0">
+            <div><div className="flex items-center gap-2"><span className="font-mono text-[10px] font-black uppercase tracking-[.16em] text-cyan-300">Jogo principal</span><span className="rounded-full border border-emerald-400/25 bg-emerald-400/[.07] px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-300">● Online</span></div><h2 className="mt-1.5 font-heading text-[20px] font-black leading-none text-white">RIFT BATTLE <span className="text-fuchsia-400 drop-shadow-[0_0_10px_rgba(232,121,249,.45)]">V2</span></h2><p className="mt-1.5 text-[12px] leading-[1.4] text-slate-300">Combate tático em equipe. Forme seu esquadrão, enfrente o Rift e conquiste recompensas.</p><div className="mt-2.5 flex flex-wrap gap-1.5">{['PvE','2×2','3×3','4×4','NEX + NXA + XP'].map(x=><span key={x} className="rounded-full border border-cyan-400/20 bg-black/20 px-2.5 py-1 text-[10px] font-bold text-slate-200">{x}</span>)}</div></div>
+            <span className="mt-2.5 inline-flex h-9 w-full sm:w-[78%] items-center justify-center gap-2 rounded-xl bg-cyan-300 font-heading text-[10px] font-black uppercase tracking-[.1em] text-slate-950">Jogar agora <ArrowRight className="h-4 w-4"/></span>
+          </div>
+        </button>
+
+        <button onClick={() => onNavigate('arena')} className="group relative min-h-[178px] overflow-hidden rounded-[18px] border border-fuchsia-400/45 bg-[#110918] p-4 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(217,70,239,.10)]">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <img src="/assets/nexus-duel-card.png" alt="" aria-hidden="true" className="absolute inset-y-0 right-0 h-full w-[82%] object-cover object-right opacity-100 transition duration-500 group-hover:scale-[1.015]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#110918] from-[0%] via-[#110918]/98 via-[45%] to-[#110918]/8 to-[80%]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#110918]/45 via-transparent to-[#110918]/10" />
+          </div>
+          <div className="relative z-10 flex h-full max-w-full flex-col justify-between pr-20 sm:max-w-[68%] sm:pr-0">
+            <div><div className="flex items-center gap-2"><span className="font-mono text-[10px] font-black uppercase tracking-[.16em] text-fuchsia-300">Duelo estratégico</span><span className="rounded-full border border-emerald-400/25 bg-emerald-400/[.07] px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-300">● Online</span></div><h2 className="mt-1.5 font-heading text-[20px] font-black leading-none text-white">NEXUS DUEL</h2><p className="mt-1.5 text-[12px] leading-[1.4] text-slate-300">Duelo individual 4×4. Use suas cartas, Nexos e habilidades em confrontos PvE ou PvP.</p><div className="mt-2.5 flex flex-wrap gap-1.5">{['PvE','PvP','Deck 4×4','Habilidades','XP compartilhado'].map(x=><span key={x} className="rounded-full border border-fuchsia-400/20 bg-black/20 px-2.5 py-1 text-[10px] font-bold text-slate-200">{x}</span>)}</div></div>
+            <span className="mt-2.5 inline-flex h-9 w-full sm:w-[78%] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 font-heading text-[10px] font-black uppercase tracking-[.1em] text-white">Jogar agora <ArrowRight className="h-4 w-4"/></span>
+          </div>
+        </button>
       </div>
 
       {/* If unopened recruit box exists: Callout Banner (Requirement 20) */}
@@ -164,337 +181,49 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Requirement 4: PROGRESSÃO & PRÓXIMO NÍVEL NO DASHBOARD */}
-      <div className="p-5 sm:p-6 rounded-[26px] bg-gradient-to-br from-[#0d0e1b] via-[#0b0b15] to-[#08090f] border border-cyan-500/20 shadow-[0_20px_60px_rgba(0,0,0,0.22)] relative overflow-hidden">
-        <div className="absolute top-0 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-center gap-5">
-          {/* Left: Level & XP Progress Bar */}
-          <div className="flex-1 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold uppercase tracking-wider">
-                <Award className="w-3.5 h-3.5" />
-                <span>PROGRESSÃO DO PILOTO</span>
-              </div>
-              <button
-                onClick={() => onNavigate('progression')}
-                className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
-              >
-                <span>Ver progressão completa</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex items-baseline gap-3">
-              <h2 className="font-heading text-3xl sm:text-4xl font-black text-white tracking-tight">
-                NÍVEL {currentLevel}
-              </h2>
-              <span className="text-sm font-mono text-cyan-400 font-bold">
-                {currentExp} / {maxExp} XP
-              </span>
-            </div>
-
-            {/* Glowing progress bar */}
-            <div className="space-y-1.5">
-              <div className="h-3.5 w-full bg-black/60 rounded-full overflow-hidden border border-white/10 p-0.5">
-                <div
-                  style={{ width: `${xpPercent}%` }}
-                  className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.5)] transition-all duration-700"
-                />
-              </div>
-              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                <span>Progresso para Nível {nextLevel} ({xpPercent}%)</span>
-                <span>Faltam {Math.max(0, maxExp - currentExp)} XP</span>
-              </div>
-            </div>
+      {/* Reference-style utility row using real NEXA systems */}
+      <div className="grid items-stretch gap-3 lg:grid-cols-[1.02fr_1.08fr_.98fr]">
+        <button onClick={()=>onNavigate('progression')} className="group h-[172px] rounded-[14px] border border-cyan-400/30 bg-[#06111b] p-3.5 text-left shadow-[0_0_24px_rgba(34,211,238,.06)] transition hover:border-cyan-300/50">
+          <div className="flex h-7 items-center justify-between"><div className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-cyan-300"/><h3 className="font-heading text-[11px] font-black uppercase tracking-[.11em] text-cyan-300">Próximo objetivo</h3></div><span className="text-[7px] font-mono text-cyan-400">NV. {isMaxLevel?MAX_GAME_LEVEL:nextLevel}</span></div>
+          <div className="mt-2 space-y-1.5">
+            <div className="grid grid-cols-[22px_1fr_auto] items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded border border-cyan-400/20 bg-cyan-400/[.07]"><Award className="h-3 w-3 text-cyan-300"/></span><span className="truncate text-[11px] font-bold text-slate-200">{isMaxLevel?'Progressão concluída':`Alcance o nível ${nextLevel}`}</span><span className="text-[7px] font-bold text-cyan-300">{currentLevel}/{isMaxLevel?MAX_GAME_LEVEL:nextLevel}</span></div>
+            <div className="grid grid-cols-[22px_1fr_auto] items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded border border-sky-400/20 bg-sky-400/[.07]"><Zap className="h-3 w-3 text-sky-300"/></span><div className="h-1.5 overflow-hidden rounded-full bg-white/[.08]"><div style={{width:`${xpPercent}%`}} className="h-full rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,.6)]"/></div><span className="text-[8px] text-slate-400">{currentExp}/{maxExp} XP</span></div>
+            <div className="grid grid-cols-[22px_1fr_auto] items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded border border-violet-400/20 bg-violet-400/[.07]"><Trophy className="h-3 w-3 text-violet-300"/></span><span className="truncate text-[10px] text-slate-400">XP para próximo nível</span><span className="text-[7px] font-bold text-violet-300">{Math.max(0,maxExp-currentExp)}</span></div>
           </div>
+          <div className="mt-2 flex items-center justify-between border-t border-white/[.06] pt-2 text-[7px] font-bold uppercase tracking-wider text-cyan-400"><span>Progressão do piloto</span><ChevronRight className="h-3 w-3"/></div>
+        </button>
 
-          {/* Right: Online progression objectives */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-4 rounded-2xl bg-[#0a0914] border border-cyan-500/30 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between text-[10px] font-mono uppercase text-cyan-400 font-bold mb-1">
-                  <span>PRÓXIMO OBJETIVO</span>
-                  <span className="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-500/40">
-                    {isMaxLevel ? `Nv. ${MAX_GAME_LEVEL}` : `Nv. ${nextLevel}`}
-                  </span>
-                </div>
-                <span className="text-xs text-slate-400 font-mono block">
-                  {isMaxLevel ? 'Progressão concluída' : 'Avance jogando os dois jogos'}
-                </span>
-                <div className="mt-2 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-cyan-400" />
-                  <h4 className="font-heading font-bold text-white text-xs">
-                    {isMaxLevel ? 'Nível máximo atingido' : `Alcançar o Nível ${nextLevel}`}
-                  </h4>
-                </div>
-              </div>
-              <div className="mt-3 pt-2 border-t border-white/10 text-[10px] font-mono text-slate-400">
-                {isMaxLevel ? 'Patente máxima do piloto.' : `Faltam ${Math.max(0, maxExp - currentExp)} XP`}
-              </div>
+        <button onClick={()=>onNavigate('collections')} className="group h-[172px] overflow-hidden rounded-[14px] border border-cyan-400/25 bg-[#070e17] p-3.5 text-left shadow-[0_0_24px_rgba(56,189,248,.06)] transition hover:border-fuchsia-300/45">
+          <div className="flex h-7 items-center justify-between"><div className="flex items-center gap-2"><Gift className="h-4 w-4 text-fuchsia-300"/><h3 className="font-heading text-[11px] font-black uppercase tracking-[.11em] text-fuchsia-300">Coleção & Caixas</h3></div><span className="text-[7px] text-fuchsia-400">Ver todas →</span></div>
+          <div className="relative mt-1.5 h-[52px] overflow-hidden rounded-lg border border-fuchsia-400/10 bg-black/15 px-2 [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+            <div className="flex h-full w-max items-center gap-1.5 animate-[nexaCardRail_12s_linear_infinite]">
+              {[...userItems.slice(0,4),...userItems.slice(0,4)].map((item,i)=><div key={`${item.id}-${i}`} className="relative h-[44px] w-[34px] shrink-0 overflow-hidden rounded border border-fuchsia-300/25 bg-black/40 shadow-[0_0_8px_rgba(217,70,239,.12)]"><CardImage asset={item} src={item.image} alt={item.name} className="h-full w-full object-cover"/></div>)}
             </div>
+            {userItems.length===0&&<span className="absolute inset-0 flex items-center justify-center text-[7px] text-slate-400">Sua coleção aparecerá aqui</span>}
+          </div>
+          <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+            <div className="flex items-center gap-1.5 rounded-md border border-fuchsia-400/10 bg-fuchsia-400/[.04] px-1.5 py-1"><Layers className="h-3 w-3 shrink-0 text-fuchsia-300"/><span className="truncate text-[7px] text-slate-300">{userCards.length} cartas</span></div>
+            <div className="flex items-center gap-1.5 rounded-md border border-violet-400/10 bg-violet-400/[.04] px-1.5 py-1"><Trophy className="h-3 w-3 shrink-0 text-violet-300"/><span className="truncate text-[7px] text-slate-300">{distinctGuardiansCards}/4 guardiões</span></div>
+            <div className="flex items-center gap-1.5 rounded-md border border-amber-400/10 bg-amber-400/[.04] px-1.5 py-1"><PackageOpen className="h-3 w-3 shrink-0 text-amber-300"/><span className="truncate text-[7px] text-slate-300">{myBoxes.length} caixas</span></div>
+          </div>
+          <div onClick={(e)=>{e.stopPropagation();onNavigate('boxes')}} className="mt-1.5 flex h-7 w-full items-center justify-center gap-2 rounded-md border border-fuchsia-400/35 bg-gradient-to-r from-fuchsia-500/[.12] to-violet-500/[.12] font-heading text-[8px] font-black uppercase tracking-[.08em] text-fuchsia-200 shadow-[0_0_14px_rgba(217,70,239,.10)] transition hover:from-fuchsia-500/[.20] hover:to-violet-500/[.20]"><PackageOpen className="h-3 w-3"/> Explorar caixas <ChevronRight className="h-3 w-3"/></div>
+        </button>
 
-            <div className="p-4 rounded-2xl bg-[#0d091a] border border-purple-500/30 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between text-[10px] font-mono uppercase text-purple-300 font-bold mb-1">
-                  <span>REDE NEXUS</span>
-                  <Shield className="w-4 h-4 text-purple-300" />
-                </div>
-                <span className="text-xs text-slate-400 font-mono block">Progressão compartilhada</span>
-                <div className="mt-2">
-                  <h4 className="font-heading font-bold text-white text-xs">
-                    Nível e XP compartilhados nos jogos
-                  </h4>
-                  <span className="text-[10px] font-mono text-purple-300">
-                    Rift Battle e Nexus Duel alimentam a mesma conta.
-                  </span>
-                </div>
-              </div>
-              <div className="mt-3 pt-2 border-t border-white/10 text-[10px] font-mono text-slate-400">
-                Nível concede progressão e recursos de conta, sem bônus direto de combate.
-              </div>
-            </div>
+        <div role="button" tabIndex={0} onClick={()=>onNavigate('history')} onKeyDown={(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onNavigate('history')}}} className="group h-[172px] cursor-pointer rounded-[14px] border border-sky-400/25 bg-[#070e17] p-3.5 shadow-[0_0_24px_rgba(56,189,248,.06)] transition hover:border-sky-300/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50">
+          <div className="flex h-7 items-center justify-between"><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-sky-300"/><h3 className="font-heading text-[11px] font-black uppercase tracking-[.11em] text-sky-300">Atividade recente</h3></div><span className="text-[7px] text-slate-400 transition group-hover:text-sky-300">Ver todas →</span></div>
+          <div className="mt-1.5 space-y-1">
+            {transactions.slice(0,3).map((tx,i)=><div key={tx.id} className="grid grid-cols-[22px_1fr_auto] items-center gap-2 border-b border-white/[.05] pb-1"><span className={`flex h-5 w-5 items-center justify-center rounded border ${i===0?'border-cyan-400/20 bg-cyan-400/[.07] text-cyan-300':i===1?'border-fuchsia-400/20 bg-fuchsia-400/[.07] text-fuchsia-300':'border-amber-400/20 bg-amber-400/[.07] text-amber-300'}`}>{i===0?<ArrowLeftRight className="h-3 w-3"/>:i===1?<Sparkles className="h-3 w-3"/>:<PackageOpen className="h-3 w-3"/>}</span><div className="min-w-0"><p className="truncate text-[10px] font-bold text-slate-200">{tx.itemSnapshot.name}</p><p className="truncate text-[8px] text-slate-400">{tx.buyerName} comprou de {tx.sellerName}</p></div><span className="text-[7px] font-bold text-cyan-300">+{formatEconomicValue(tx.amount)} NXA</span></div>)}
+            {transactions.length===0&&<p className="py-4 text-center text-[8px] text-slate-400">Nenhuma atividade recente.</p>}
           </div>
         </div>
       </div>
 
-      {/* Requirement 20: Cards for CAIXAS and COLEÇÕES */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Card 🎁 CAIXAS */}
-        <div className="p-6 rounded-3xl bg-gradient-to-br from-[#121024] to-[#0d0d1a] border border-cyan-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-[10px] font-mono font-bold uppercase tracking-wider">
-                <PackageOpen className="w-3.5 h-3.5" />
-                <span>CAIXAS</span>
-              </div>
-              <h3 className="font-heading text-xl sm:text-2xl font-black text-white mt-2">
-                Você possui {myBoxes.length} {myBoxes.length === 1 ? 'caixa' : 'caixas'}
-              </h3>
-              <p className="text-xs font-mono text-slate-400">
-                Adquira e abra caixas para expandir seu arsenal de cartas.
-              </p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
-              <PackageOpen className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400">
-              {myBoxes.filter((b) => b.boxType === 'RECRUIT').length > 0 ? 'Recruta disponível' : 'Básica, Guardiões ou Premium'}
-            </span>
-            <button
-              onClick={() => onNavigate('boxes')}
-              className="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] flex items-center gap-2 hover:scale-[1.02]"
-            >
-              <span>ABRIR CAIXAS</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+      <style>{`@keyframes nexaCardRail{from{transform:translateX(0)}to{transform:translateX(calc(-50% - .1875rem))}}`}</style>
 
-        {/* Card 🏆 COLEÇÕES */}
-        <div className="p-6 rounded-3xl bg-gradient-to-br from-[#1b102b] to-[#0f0d1a] border border-purple-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-purple-950/60 border border-purple-500/40 text-purple-300 text-[10px] font-mono font-bold uppercase tracking-wider">
-                <Trophy className="w-3.5 h-3.5" />
-                <span>COLEÇÕES</span>
-              </div>
-              <h3 className="font-heading text-xl sm:text-2xl font-black text-white mt-2">
-                {completedCollections}/{totalCollections} coleções completas
-              </h3>
-              <p className="text-xs font-mono text-slate-400">
-                Os Quatro Guardiões: {distinctGuardiansCards}/4 cartas desbloqueadas
-              </p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
-              <Trophy className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400">
-              Complete coleções e acompanhe seu progresso no álbum
-            </span>
-            <button
-              onClick={() => onNavigate('collections')}
-              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-heading font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(168,85,247,0.3)] flex items-center gap-2 hover:scale-[1.02]"
-            >
-              <span>VER COLEÇÕES</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Metric Cards Grid */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl bg-[#0a0b10] border border-white/[0.07] flex flex-col justify-between hover:border-white/10 transition-colors">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase">Poder do Arsenal</span>
-            <Zap className="w-4 h-4 text-cyan-400" />
-          </div>
-          <div className="mt-3">
-            <span className="font-heading text-3xl font-black text-cyan-300">
-              {totalPower === null ? 'Indisponível' : totalPower.toLocaleString('pt-BR')}
-            </span>
-            <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
-              {cardPowers.length} cartas no inventário
-            </span>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0a0b10] border border-white/[0.07] flex flex-col justify-between hover:border-white/10 transition-colors">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase">Taxa de Vitória</span>
-            <Shield className="w-4 h-4 text-emerald-400" />
-          </div>
-          <div className="mt-3">
-            <span className="font-heading text-3xl font-black text-emerald-400">
-              {winRate}%
-            </span>
-            <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
-              {user.victories}V / {user.defeats}D no Rift Battle
-            </span>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0a0b10] border border-white/[0.07] flex flex-col justify-between hover:border-white/10 transition-colors">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase">Raridade Alta</span>
-            <Sparkles className="w-4 h-4 text-purple-400" />
-          </div>
-          <div className="mt-3">
-            <span className="font-heading text-3xl font-black text-purple-400">
-              {rareCount}
-            </span>
-            <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
-              Épicos, Lendários e Míticos
-            </span>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0a0b10] border border-white/[0.07] flex flex-col justify-between hover:border-white/10 transition-colors">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase">Volume do Mercado</span>
-            <TrendingUp className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="mt-3">
-            <span className="font-heading text-3xl font-black text-amber-400">
-              {formatEconomicValue(marketStats.totalVolumeNXA)}
-            </span>
-            <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
-              NXA movimentados no mercado
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Two Column Section: Arsenal Quick Access & Recent Economic Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: My Quick Arsenal */}
-        <div className="lg:col-span-2 rounded-2xl bg-[#0b0b12] border border-white/10 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-heading text-xl font-bold text-white">
-                Arsenal Recente
-              </h3>
-              <p className="text-xs text-slate-400 font-mono">
-                Acesso rápido aos seus ativos mais recentes
-              </p>
-            </div>
-            <button
-              onClick={() => onNavigate('inventory')}
-              className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
-            >
-              <span>Ver inventário ({userItems.length})</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {userItems.slice(0, 6).map((item) => (
-              <div
-                key={item.id}
-                onClick={() => onNavigate('inventory')}
-                className="group p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-cyan-500/40 transition-all cursor-pointer flex flex-col justify-between gap-2"
-              >
-                <div className="aspect-square rounded-lg overflow-hidden bg-slate-950 relative">
-                  <CardImage asset={item}
-                    src={item.image}
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-1.5 left-1.5">
-                    <RarityBadge rarity={item.rarity} size="sm" showDot={false} />
-                  </div>
-                </div>
-                <div>
-                  <h5 className="font-heading font-bold text-xs text-slate-100 truncate group-hover:text-cyan-300">
-                    {item.name}
-                  </h5>
-                  <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-1">
-                    <span>{item.type}</span>
-                    <span className="text-cyan-400 font-bold">{item.type === 'Card' ? getCardPower(item)?.toLocaleString('pt-BR') ?? 'Indisponível' : item.power} PWR</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right 1 Col: Live Market Activity */}
-        <div className="rounded-2xl bg-[#0b0b12] border border-white/10 p-6 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-heading text-xl font-bold text-white flex items-center gap-2">
-                <Clock className="w-5 h-5 text-cyan-400" />
-                <span>Pulso do Mercado</span>
-              </h3>
-              <button
-                onClick={() => onNavigate('history')}
-                className="text-xs font-mono text-slate-400 hover:text-white"
-              >
-                Histórico
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {transactions.slice(0, 5).map((tx) => (
-                <div
-                  key={tx.id}
-                  className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between gap-3 text-xs font-mono"
-                >
-                  <div className="min-w-0">
-                    <span className="text-slate-200 font-bold block truncate">
-                      {tx.itemSnapshot.name}
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      {tx.buyerName} comprou de {tx.sellerName}
-                    </span>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="font-bold text-cyan-400 block">
-                      +{formatEconomicValue(tx.amount)} NXA
-                    </span>
-                    <span className="text-[9px] text-slate-500">
-                      Taxa: {formatEconomicValue(tx.fee)} NXA
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => onNavigate('marketplace')}
-            className="w-full mt-4 py-2.5 rounded-xl bg-white/5 hover:bg-cyan-950/40 border border-white/10 hover:border-cyan-500/30 text-xs font-mono font-bold text-cyan-300 transition-colors text-center"
-          >
-            Acessar Mercado
-          </button>
-        </div>
-      </div>
+      <footer className="flex min-h-[28px] items-center justify-between border-t border-cyan-400/10 px-2 font-mono text-[7px] font-semibold uppercase tracking-[.14em] text-slate-600">
+        <span>NEXA&nbsp; // &nbsp;JOGUE. COLECIONE. EVOLUA.</span>
+        <span className="flex items-center gap-2"><span>VERSÃO 0.3.1&nbsp; // &nbsp;REDE NEXUS ONLINE</span><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.9)]"/></span>
+      </footer>
 
       {/* Sell Modal */}
       <SellModal
