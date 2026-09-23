@@ -288,240 +288,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </button>
       </div>
 
-      {/* Requirement 20: Cards for CAIXAS and COLEÇÕES */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Card 🎁 CAIXAS */}
-        <div className="p-6 rounded-3xl bg-gradient-to-br from-[#121024] to-[#0d0d1a] border border-cyan-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-[10px] font-mono font-bold uppercase tracking-wider">
-                <PackageOpen className="w-3.5 h-3.5" />
-                <span>CAIXAS</span>
-              </div>
-              <h3 className="font-heading text-xl sm:text-2xl font-black text-white mt-2">
-                Você possui {myBoxes.length} {myBoxes.length === 1 ? 'caixa' : 'caixas'}
-              </h3>
-              <p className="text-xs font-mono text-slate-400">
-                Adquira e abra caixas para expandir seu arsenal de cartas.
-              </p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
-              <PackageOpen className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400">
-              {myBoxes.filter((b) => b.boxType === 'RECRUIT').length > 0 ? 'Recruta disponível' : 'Básica, Guardiões ou Premium'}
-            </span>
-            <button
-              onClick={() => onNavigate('boxes')}
-              className="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] flex items-center gap-2 hover:scale-[1.02]"
-            >
-              <span>ABRIR CAIXAS</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+      {/* Compact live dashboard — only existing NEXA data */}
+      <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1.15fr]">
+        <div className="rounded-[18px] border border-cyan-400/15 bg-[#07101a] p-4">
+          <div className="flex items-center justify-between"><h3 className="font-heading text-xs font-black uppercase tracking-[.1em] text-cyan-300">Arsenal</h3><button onClick={() => onNavigate('inventory')} className="text-[9px] font-mono text-slate-500 hover:text-cyan-300">Ver tudo →</button></div>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {userItems.slice(0,3).map(item=><button key={item.id} onClick={()=>onNavigate('inventory')} className="group min-w-0"><div className="aspect-[.82] overflow-hidden rounded-lg border border-white/[.07] bg-black/30"><CardImage asset={item} src={item.image} alt={item.name} className="h-full w-full object-cover transition group-hover:scale-105"/></div><p className="mt-1 truncate text-[9px] font-bold text-slate-300">{item.name}</p></button>)}
+            {userItems.length===0 && <p className="col-span-3 py-6 text-center text-[10px] text-slate-500">Nenhuma carta no inventário.</p>}
           </div>
         </div>
 
-        {/* Card 🏆 COLEÇÕES */}
-        <div className="p-6 rounded-3xl bg-gradient-to-br from-[#1b102b] to-[#0f0d1a] border border-purple-500/30 flex flex-col justify-between shadow-xl relative overflow-hidden">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-purple-950/60 border border-purple-500/40 text-purple-300 text-[10px] font-mono font-bold uppercase tracking-wider">
-                <Trophy className="w-3.5 h-3.5" />
-                <span>COLEÇÕES</span>
-              </div>
-              <h3 className="font-heading text-xl sm:text-2xl font-black text-white mt-2">
-                {completedCollections}/{totalCollections} coleções completas
-              </h3>
-              <p className="text-xs font-mono text-slate-400">
-                Os Quatro Guardiões: {distinctGuardiansCards}/4 cartas desbloqueadas
-              </p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
-              <Trophy className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400">
-              Complete coleções e acompanhe seu progresso no álbum
-            </span>
-            <button
-              onClick={() => onNavigate('collections')}
-              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-heading font-black text-xs uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(168,85,247,0.3)] flex items-center gap-2 hover:scale-[1.02]"
-            >
-              <span>VER COLEÇÕES</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Metric Cards Grid */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl bg-[#0a0b10] border border-white/[0.07] flex flex-col justify-between hover:border-white/10 transition-colors">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase">Poder do Arsenal</span>
-            <Zap className="w-4 h-4 text-cyan-400" />
-          </div>
-          <div className="mt-3">
-            <span className="font-heading text-3xl font-black text-cyan-300">
-              {totalPower === null ? 'Indisponível' : totalPower.toLocaleString('pt-BR')}
-            </span>
-            <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
-              {cardPowers.length} cartas no inventário
-            </span>
+        <div className="rounded-[18px] border border-violet-400/15 bg-[#0d0a15] p-4">
+          <div className="flex items-center justify-between"><h3 className="font-heading text-xs font-black uppercase tracking-[.1em] text-violet-300">Status da conta</h3><Shield className="h-4 w-4 text-violet-300"/></div>
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2"><span className="text-[9px] uppercase text-slate-500">Poder do arsenal</span><strong className="text-xs text-cyan-300">{totalPower===null?'—':totalPower.toLocaleString('pt-BR')}</strong></div>
+            <div className="flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2"><span className="text-[9px] uppercase text-slate-500">Cartas raras+</span><strong className="text-xs text-violet-300">{rareCount}</strong></div>
+            <div className="flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2"><span className="text-[9px] uppercase text-slate-500">Coleção Guardiões</span><strong className="text-xs text-white">{distinctGuardiansCards}/4</strong></div>
+            <div className="flex items-center justify-between rounded-xl bg-white/[.035] px-3 py-2"><span className="text-[9px] uppercase text-slate-500">Caixas</span><strong className="text-xs text-amber-300">{myBoxes.length}</strong></div>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#0a0b10] border border-white/[0.07] flex flex-col justify-between hover:border-white/10 transition-colors">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase">Taxa de Vitória</span>
-            <Shield className="w-4 h-4 text-emerald-400" />
+        <div className="rounded-[18px] border border-white/[.08] bg-[#090d14] p-4">
+          <div className="flex items-center justify-between"><h3 className="font-heading text-xs font-black uppercase tracking-[.1em] text-sky-300">Atividade do mercado</h3><button onClick={() => onNavigate('history')} className="text-[9px] font-mono text-slate-500 hover:text-sky-300">Histórico →</button></div>
+          <div className="mt-3 space-y-2">
+            {transactions.slice(0,4).map(tx=><div key={tx.id} className="flex items-center justify-between gap-3 border-b border-white/[.05] pb-2 text-[9px] last:border-0"><div className="min-w-0"><p className="truncate font-bold text-slate-300">{tx.itemSnapshot.name}</p><p className="truncate text-slate-600">{tx.buyerName} comprou de {tx.sellerName}</p></div><span className="shrink-0 font-bold text-cyan-300">{formatEconomicValue(tx.amount)} NXA</span></div>)}
+            {transactions.length===0 && <p className="py-6 text-center text-[10px] text-slate-500">Nenhuma atividade recente.</p>}
           </div>
-          <div className="mt-3">
-            <span className="font-heading text-3xl font-black text-emerald-400">
-              {winRate}%
-            </span>
-            <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
-              {user.victories}V / {user.defeats}D no Rift Battle
-            </span>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0a0b10] border border-white/[0.07] flex flex-col justify-between hover:border-white/10 transition-colors">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase">Raridade Alta</span>
-            <Sparkles className="w-4 h-4 text-purple-400" />
-          </div>
-          <div className="mt-3">
-            <span className="font-heading text-3xl font-black text-purple-400">
-              {rareCount}
-            </span>
-            <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
-              Épicos, Lendários e Míticos
-            </span>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0a0b10] border border-white/[0.07] flex flex-col justify-between hover:border-white/10 transition-colors">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono uppercase">Volume do Mercado</span>
-            <TrendingUp className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="mt-3">
-            <span className="font-heading text-3xl font-black text-amber-400">
-              {formatEconomicValue(marketStats.totalVolumeNXA)}
-            </span>
-            <span className="text-[11px] font-mono text-slate-500 block mt-0.5">
-              NXA movimentados no mercado
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Two Column Section: Arsenal Quick Access & Recent Economic Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: My Quick Arsenal */}
-        <div className="lg:col-span-2 rounded-2xl bg-[#0b0b12] border border-white/10 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-heading text-xl font-bold text-white">
-                Arsenal Recente
-              </h3>
-              <p className="text-xs text-slate-400 font-mono">
-                Acesso rápido aos seus ativos mais recentes
-              </p>
-            </div>
-            <button
-              onClick={() => onNavigate('inventory')}
-              className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
-            >
-              <span>Ver inventário ({userItems.length})</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {userItems.slice(0, 6).map((item) => (
-              <div
-                key={item.id}
-                onClick={() => onNavigate('inventory')}
-                className="group p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-cyan-500/40 transition-all cursor-pointer flex flex-col justify-between gap-2"
-              >
-                <div className="aspect-square rounded-lg overflow-hidden bg-slate-950 relative">
-                  <CardImage asset={item}
-                    src={item.image}
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-1.5 left-1.5">
-                    <RarityBadge rarity={item.rarity} size="sm" showDot={false} />
-                  </div>
-                </div>
-                <div>
-                  <h5 className="font-heading font-bold text-xs text-slate-100 truncate group-hover:text-cyan-300">
-                    {item.name}
-                  </h5>
-                  <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-1">
-                    <span>{item.type}</span>
-                    <span className="text-cyan-400 font-bold">{item.type === 'Card' ? getCardPower(item)?.toLocaleString('pt-BR') ?? 'Indisponível' : item.power} PWR</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right 1 Col: Live Market Activity */}
-        <div className="rounded-2xl bg-[#0b0b12] border border-white/10 p-6 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-heading text-xl font-bold text-white flex items-center gap-2">
-                <Clock className="w-5 h-5 text-cyan-400" />
-                <span>Pulso do Mercado</span>
-              </h3>
-              <button
-                onClick={() => onNavigate('history')}
-                className="text-xs font-mono text-slate-400 hover:text-white"
-              >
-                Histórico
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {transactions.slice(0, 5).map((tx) => (
-                <div
-                  key={tx.id}
-                  className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between gap-3 text-xs font-mono"
-                >
-                  <div className="min-w-0">
-                    <span className="text-slate-200 font-bold block truncate">
-                      {tx.itemSnapshot.name}
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      {tx.buyerName} comprou de {tx.sellerName}
-                    </span>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="font-bold text-cyan-400 block">
-                      +{formatEconomicValue(tx.amount)} NXA
-                    </span>
-                    <span className="text-[9px] text-slate-500">
-                      Taxa: {formatEconomicValue(tx.fee)} NXA
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => onNavigate('marketplace')}
-            className="w-full mt-4 py-2.5 rounded-xl bg-white/5 hover:bg-cyan-950/40 border border-white/10 hover:border-cyan-500/30 text-xs font-mono font-bold text-cyan-300 transition-colors text-center"
-          >
-            Acessar Mercado
-          </button>
+          <button onClick={()=>onNavigate('marketplace')} className="mt-3 w-full rounded-lg border border-cyan-400/15 bg-cyan-400/[.05] py-2 text-[9px] font-black uppercase tracking-[.1em] text-cyan-300 transition hover:bg-cyan-400/[.1]">Acessar marketplace</button>
         </div>
       </div>
 
