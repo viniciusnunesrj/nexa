@@ -122,7 +122,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             <div className="mt-7 grid max-w-xl grid-cols-3 gap-2 border-t border-white/[.07] pt-5">
               <div><p className="font-heading text-xl font-black text-white">{userCards.length}</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-500">Cartas no inventário</p></div>
               <div><p className="font-heading text-xl font-black text-cyan-300">{currentLevel}</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-500">Nível do piloto</p></div>
-              <div><p className="font-heading text-xl font-black text-violet-300">{Math.max(0, nextLevelXp - currentXp)}</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-500">XP até o próximo nível</p></div>
+              <div><p className="font-heading text-xl font-black text-violet-300">{Math.max(0, maxExp - currentExp)}</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-500">XP até o próximo nível</p></div>
             </div>
           </div>
 
