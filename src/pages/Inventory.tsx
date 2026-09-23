@@ -17,6 +17,7 @@ import { RarityBadge } from '../components/common/RarityBadge';
 import { FragmentDetailsModal } from '../components/modals/FragmentDetailsModal';
 import {
   Package,
+  Trash2,
   PackageOpen,
   Search,
   Repeat,
@@ -495,6 +496,30 @@ refreshFragmentMarketplace,
 
                       {asset.status === 'IDLE' && (
                         <>
+                          {asset.type === 'Card' && asset.isStarter ? (
+                            <>
+                              <span className="flex-1 py-1.5 rounded-lg bg-slate-900/80 text-slate-400 border border-slate-700/60 text-[10px] font-mono font-bold text-center">
+                                <Lock className="inline w-3 h-3 mr-1" /> Carta Inicial
+                              </span>
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const cardsLeft = myAssets.filter(a => a.type === 'Card').length - 1;
+                                  const warning = cardsLeft < 4
+                                    ? '\n\nATENÇÃO: você ficará com menos de 4 cartas e poderá ficar sem esquadrão suficiente para jogar.'
+                                    : '';
+                                  if (window.confirm('Destruir esta Carta Inicial permanentemente? Ela não poderá ser recuperada.' + warning)) {
+                                    await destroyStarterCard(asset.id);
+                                  }
+                                }}
+                                className="py-1.5 px-2.5 rounded-lg bg-red-950/60 hover:bg-red-500 hover:text-white text-red-300 border border-red-500/30 text-[11px] font-mono font-bold transition-colors"
+                                title="Destruir Carta Inicial"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                          <>
                           {(!isSupabaseConfigured() || canSellOnlineCard(asset)) && (
                           <button
                             onClick={(e) => {
@@ -515,6 +540,8 @@ refreshFragmentMarketplace,
                           >
                             Trocar
                           </button>
+                          </>
+                          )}
                         </>
                       )}
                     </div>
