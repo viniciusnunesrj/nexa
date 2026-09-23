@@ -2,11 +2,10 @@ import {
   calculateDamage,
   getMaxEnergyForTurn,
   getPriorityPlayerForTurn,
-  RIFTBATTLE_ACTIVE_SLOTS,
-  RIFTBATTLE_TEAM_SIZE,
-} from './rules';
+  } from './rules';
 import type {
   RiftBattleAction,
+  RiftBattleArenaConfig,
   RiftBattleCard,
   RiftBattleCardStateEntry,
   RiftBattleAbilityId,
@@ -15,6 +14,7 @@ import type {
   RiftBattleResult,
   RiftBattleState,
 } from './types';
+import { RIFTBATTLE_STANDARD_ARENA } from './arenaConfig';
 
 function assert(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -81,11 +81,15 @@ function createCardState(card: RiftBattleCard): RiftBattleCardStateEntry {
 export function initializeRiftBattle(
   playerOneCards: readonly RiftBattleCard[],
   playerTwoCards: readonly RiftBattleCard[],
+  arena: RiftBattleArenaConfig = RIFTBATTLE_STANDARD_ARENA,
 ): RiftBattleState {
-  assert(playerOneCards.length === RIFTBATTLE_TEAM_SIZE, 'Player One deve possuir exatamente 4 cartas.');
-  assert(playerTwoCards.length === RIFTBATTLE_TEAM_SIZE, 'Player Two deve possuir exatamente 4 cartas.');
+  assert(playerOneCards.length === arena.teamSize, `Player One deve possuir exatamente ${arena.teamSize} cartas.`);
+  assert(playerTwoCards.length === arena.teamSize, `Player Two deve possuir exatamente ${arena.teamSize} cartas.`);
+  assert(arena.activeSlots > 0 && arena.activeSlots <= arena.teamSize, 'Configuração de slots ativos inválida.');
+  assert(arena.energyByTurn.length > 0, 'A arena precisa definir uma curva de energia.');
 
   return {
+    arena: { ...arena, energyByTurn: [...arena.energyByTurn] },
     turn: 1,
     phase: 'PLAYER_TURN',
     currentPlayerId: 'PLAYER_ONE',
@@ -94,14 +98,14 @@ export function initializeRiftBattle(
       PLAYER_ONE: {
         id: 'PLAYER_ONE',
         cards: playerOneCards.map(createCardState),
-        currentEnergy: getMaxEnergyForTurn(1),
-        maxEnergy: getMaxEnergyForTurn(1),
+        currentEnergy: getMaxEnergyForTurn(1, arena),
+        maxEnergy: getMaxEnergyForTurn(1, arena),
       },
       PLAYER_TWO: {
         id: 'PLAYER_TWO',
         cards: playerTwoCards.map(createCardState),
-        currentEnergy: getMaxEnergyForTurn(1),
-        maxEnergy: getMaxEnergyForTurn(1),
+        currentEnergy: getMaxEnergyForTurn(1, arena),
+        maxEnergy: getMaxEnergyForTurn(1, arena),
       },
     },
   };
@@ -129,7 +133,7 @@ function deployCard(state: RiftBattleState, action: Extract<RiftBattleAction, { 
   const entry = getEntry(player, action.cardId);
   assert(entry.state === 'RESERVE', 'A carta não está disponível na reserva.');
   assert(
-    player.cards.filter((cardState) => cardState.state === 'ACTIVE').length < RIFTBATTLE_ACTIVE_SLOTS,
+    player.cards.filter((cardState) => cardState.state === 'ACTIVE').length < state.arena.activeSlots,
     'O jogador já possui o máximo de cartas ativas.',
   );
   assert(player.currentEnergy >= entry.card.deployCost, 'Energia insuficiente para colocar a carta.');
@@ -137,10 +141,13 @@ function deployCard(state: RiftBattleState, action: Extract<RiftBattleAction, { 
   entry.state = 'ACTIVE';
   entry.enteredThisTurn = true;
   entry.hasActedThisTurn = false;
-  entry.shieldAvailable = entry.card.ability?.id === 'ESCUDO';
-  entry.barrierActive = false;
+  entry.shieldAvailable = state.arena.abilitiesEnabled && entry.card.ability?.id === 'ESCUDO';
+  // Cartas de custo alto chegam tarde à partida e precisam sobreviver à janela
+  // de preparação. Custo 4–5 recebe estabilização de entrada: -2 no primeiro
+  // dano sofrido antes do próximo turno do dono, reutilizando BARREIRA.
+  entry.barrierActive = entry.card.deployCost >= 4;
   player.currentEnergy -= entry.card.deployCost;
-  if (entry.card.ability?.id === 'RECARGA' && !entry.rechargeUsed) {
+  if (state.arena.abilitiesEnabled && entry.card.ability?.id === 'RECARGA' && !entry.rechargeUsed) {
     entry.rechargeUsed = true;
     player.currentEnergy = Math.min(player.maxEnergy, player.currentEnergy + 1);
   }
@@ -148,12 +155,13 @@ function deployCard(state: RiftBattleState, action: Extract<RiftBattleAction, { 
 }
 
 function applyDamage(
+  state: RiftBattleState,
   targetOwner: RiftBattlePlayerState,
   target: RiftBattleCardStateEntry,
   baseDamage: number,
 ): void {
   let damage = baseDamage;
-  if (target.shieldAvailable) {
+  if (state.arena.abilitiesEnabled && target.shieldAvailable) {
     damage -= 1;
     target.shieldAvailable = false;
   }
@@ -161,7 +169,7 @@ function applyDamage(
     damage -= 2;
     target.barrierActive = false;
   }
-  const hasProtection = targetOwner.cards.some(
+  const hasProtection = state.arena.abilitiesEnabled && targetOwner.cards.some(
     (entry) =>
       entry.card.id !== target.card.id &&
       entry.state === 'ACTIVE' &&
@@ -170,7 +178,7 @@ function applyDamage(
   );
   if (hasProtection) damage -= 1;
   damage = Math.max(1, damage);
-  if (target.marked) {
+  if (state.arena.abilitiesEnabled && target.marked) {
     damage += 1;
     target.marked = false;
   }
@@ -188,7 +196,7 @@ function validateAttacker(
   assert(attacker.state === 'ACTIVE' && attacker.currentHp > 0, 'O atacante não está ativo e vivo.');
   assert(!attacker.hasActedThisTurn, 'A carta já agiu neste turno.');
   assert(
-    !attacker.enteredThisTurn || attacker.card.ability?.id === 'INVESTIDA',
+    !attacker.enteredThisTurn || (state.arena.abilitiesEnabled && attacker.card.ability?.id === 'INVESTIDA'),
     'A carta recém-colocada não pode agir sem INVESTIDA.',
   );
   if (state.priorityCardId === attacker.card.id) state.priorityCardId = undefined;
@@ -208,7 +216,7 @@ function finishAttack(
   target: RiftBattleCardStateEntry,
   baseDamage: number,
 ): RiftBattleState {
-  applyDamage(opponent, target, baseDamage);
+  applyDamage(state, opponent, target, baseDamage);
   attacker.hasActedThisTurn = true;
   if (target.currentHp === 0) {
     target.state = 'DEFEATED';
@@ -243,6 +251,7 @@ function useAbility(
   assert(state.phase !== 'FINISHED', 'A partida já terminou.');
   assert(action.playerId === state.currentPlayerId, 'Ação do jogador errado.');
   const { player, opponent, attacker } = validateAttacker(state, action.playerId, action.cardId);
+  assert(state.arena.abilitiesEnabled, 'Habilidades estão desativadas nesta arena.');
   assert(attacker.card.ability?.id === action.abilityId, 'A carta não possui essa habilidade.');
 
   if (action.abilityId === 'BARREIRA') {
@@ -311,7 +320,7 @@ function endTurn(state: RiftBattleState, action: Extract<RiftBattleAction, { typ
   const nextPlayerId = getOpponentId(state.currentPlayerId);
   const nextPlayer = getPlayer(state, nextPlayerId);
   const nextTurn = nextPlayerId === 'PLAYER_ONE' ? state.turn + 1 : state.turn;
-  const maxEnergy = getMaxEnergyForTurn(nextTurn);
+  const maxEnergy = getMaxEnergyForTurn(nextTurn, state.arena);
 
   nextPlayer.currentEnergy = maxEnergy;
   nextPlayer.maxEnergy = maxEnergy;

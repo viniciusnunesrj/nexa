@@ -2,6 +2,7 @@ import { Rarity, BaseAsset } from './assets';
 
 export type CardState = 'FREE' | 'ACTIVE' | 'EXHAUSTED';
 export type CardStatus = 'FREE' | 'ACTIVE' | 'EXHAUSTED' | 'SYNTHESIZING';
+export type StarLevel = 1 | 2 | 3 | 4 | 5;
 
 export type CardElement =
   | 'fire'
@@ -41,6 +42,8 @@ export interface Card extends BaseAsset {
   cardId?: string;        // ID da carta ou referência
   state?: CardState;      // FREE | ACTIVE | EXHAUSTED
   templateId: string;
+  /** Instâncias antigas sem este campo são tratadas visualmente como ★1. */
+  starLevel?: StarLevel;
   collectionId: string;
   collectionName: string;
   element: CardElement;

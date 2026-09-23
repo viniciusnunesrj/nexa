@@ -45,8 +45,13 @@ export const AssetCard: React.FC<AssetCardProps> = ({
   const isCharacter = asset.type === 'Character';
   const char = isCharacter ? (asset as Character) : null;
 
+  const isCard = asset.type === 'Card';
+  const starLevel = isCard ? Math.min(5, Math.max(1, Number(asset.starLevel ?? 1))) : 0;
+  const isFiveStar = isCard && starLevel === 5;
+  const isEpic = asset.rarity === 'Épico';
   const isLegendary = asset.rarity === 'Lendário';
   const isMythic = asset.rarity === 'Mítico';
+  const hasRarityEffect = isEpic || isLegendary || isMythic;
   const isPremium = isLegendary || isMythic;
 
   const formattedPower =
@@ -65,6 +70,10 @@ export const AssetCard: React.FC<AssetCardProps> = ({
         ${rarity.border}
         ${rarity.borderHover}
         ${rarity.shadow}
+        ${isFiveStar ? 'nexa-card-ascended' : ''}
+        ${isEpic ? 'nexa-card-epic' : ''}
+        ${isLegendary ? 'nexa-card-legendary' : ''}
+        ${isMythic ? 'nexa-card-mythic' : ''}
         ${
           selected
             ? 'ring-2 ring-cyan-400/90 scale-[1.02]'
@@ -83,14 +92,21 @@ export const AssetCard: React.FC<AssetCardProps> = ({
         style={{ backgroundColor: rarity.color }}
       />
 
-      {/* Premium top accent */}
-      {isPremium && (
+      {/* Restrained rarity accent: Epic, Legendary and Mythic only. */}
+      {hasRarityEffect && (
         <div
           className="pointer-events-none absolute left-0 right-0 top-0 z-30 h-[2px]"
           style={{
             background: `linear-gradient(90deg, transparent, ${rarity.color}, transparent)`,
             boxShadow: `0 0 16px ${rarity.color}`,
           }}
+        />
+      )}
+
+      {isFiveStar && (
+        <div
+          className="nexa-card-ascended-sheen pointer-events-none absolute inset-0 z-20 overflow-hidden rounded-2xl"
+          aria-hidden="true"
         />
       )}
 
@@ -190,12 +206,26 @@ export const AssetCard: React.FC<AssetCardProps> = ({
             }}
           />
 
-          <span
-            className="font-mono text-[9px] font-bold uppercase tracking-[0.18em]"
-            style={{ color: rarity.color }}
-          >
-            {rarity.label}
-          </span>
+          <div className="flex items-center gap-2">
+            {isCard && (
+              <span
+                className={`font-mono text-[10px] font-black tracking-[0.08em] ${
+                  isFiveStar ? 'text-amber-200' : 'text-slate-400'
+                }`}
+                title={`Ascensão ${starLevel} de 5`}
+                aria-label={`Ascensão ${starLevel} de 5 estrelas`}
+              >
+                {'★'.repeat(starLevel)}
+                <span className="text-slate-700">{'★'.repeat(5 - starLevel)}</span>
+              </span>
+            )}
+            <span
+              className="font-mono text-[9px] font-bold uppercase tracking-[0.18em]"
+              style={{ color: rarity.color }}
+            >
+              {rarity.label}
+            </span>
+          </div>
         </div>
 
         {/* Identity */}
@@ -337,8 +367,8 @@ export const AssetCard: React.FC<AssetCardProps> = ({
         )}
       </div>
 
-      {/* Mythic / legendary corner detail */}
-      {isPremium && (
+      {/* High-rarity corner detail */}
+      {hasRarityEffect && (
         <>
           <div
             className="pointer-events-none absolute left-0 top-0 z-30 h-10 w-px opacity-80"
@@ -355,6 +385,44 @@ export const AssetCard: React.FC<AssetCardProps> = ({
           />
         </>
       )}
+
+      <style>{`
+        @keyframes nexaAscendedSheen {
+          0%, 78%, 100% { transform: translateX(-160%) skewX(-18deg); opacity: 0; }
+          82% { opacity: .08; }
+          90% { transform: translateX(160%) skewX(-18deg); opacity: .18; }
+          94% { opacity: 0; }
+        }
+
+        .nexa-card-ascended-sheen::after {
+          content: '';
+          position: absolute;
+          top: -20%;
+          bottom: -20%;
+          left: 0;
+          width: 24%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,.72), transparent);
+          filter: blur(2px);
+          animation: nexaAscendedSheen 6.8s ease-in-out infinite;
+        }
+
+        .nexa-card-epic { box-shadow: inset 0 0 0 1px rgba(168,85,247,.05); }
+        .nexa-card-legendary { box-shadow: inset 0 0 18px rgba(245,158,11,.035); }
+        .nexa-card-mythic { box-shadow: inset 0 0 22px rgba(217,70,239,.045); }
+
+        @media (hover: none), (pointer: coarse) {
+          .nexa-card-epic:active,
+          .nexa-card-legendary:active,
+          .nexa-card-mythic:active,
+          .nexa-card-ascended:active {
+            transform: scale(.985);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .nexa-card-ascended-sheen::after { animation: none; opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GameStateProvider, useGameState } from './contexts/GameStateContext';
 import { AppLayout } from './layouts/AppLayout';
@@ -22,6 +22,7 @@ import { PublicProfile } from './pages/PublicProfile';
 import { Boxes } from './pages/Boxes';
 import { Collections } from './pages/Collections';
 import { Progression } from './pages/Progression';
+import { RiftBattleV2 } from './pages/RiftBattleV2';
 import { LevelUpModal } from './components/progression/LevelUpModal';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
@@ -42,18 +43,25 @@ const AppContent: React.FC = () => {
     if (path === 'play' || path === 'batalha') return 'play';
     if (path === 'games' || path === 'jogos') return 'games';
     if (path === 'arena') return 'arena';
+    if (path === 'riftbattle-v2') return 'riftbattle-v2';
     return 'dashboard';
   });
+  const initialPage = useRef(currentPage);
+  const pendingProtectedPage = useRef<string | null>(null);
 
   // Keep state in sync with authentication status
   useEffect(() => {
     if (!isAuthenticated) {
       setPublicProfileId(null);
       if (currentPage !== 'register' && currentPage !== 'login') {
+        pendingProtectedPage.current = currentPage;
         setCurrentPage('login');
       }
     } else {
-      if (currentPage === 'login' || currentPage === 'register') {
+      if (
+        (currentPage === 'login' || currentPage === 'register') &&
+        (initialPage.current === 'login' || initialPage.current === 'register')
+      ) {
         setCurrentPage('dashboard');
       }
     }
@@ -62,6 +70,12 @@ const AppContent: React.FC = () => {
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLoginSuccess = () => {
+    const pendingPage = pendingProtectedPage.current;
+    pendingProtectedPage.current = null;
+    handleNavigate(pendingPage || 'dashboard');
   };
 
   const openPublicProfile = (userId: string) => {
@@ -75,7 +89,7 @@ const AppContent: React.FC = () => {
     if (currentPage === 'register') {
       return <Register onNavigate={handleNavigate} />;
     }
-    return <Login onNavigate={handleNavigate} />;
+    return <Login onNavigate={handleNavigate} onSuccess={handleLoginSuccess} />;
   }
 
   // Authenticated screens protected by ProtectedRoute
@@ -90,6 +104,8 @@ const AppContent: React.FC = () => {
         return <Games onNavigate={handleNavigate} />;
       case 'arena':
         return <Arena onNavigate={handleNavigate} />;
+      case 'riftbattle-v2':
+        return <RiftBattleV2 />;
       case 'boxes':
       case 'caixas':
         return <Boxes onNavigate={handleNavigate} />;

@@ -1,6 +1,6 @@
 import { formatEconomicValue } from '../utils/formatEconomicValue';
 import { CardImage } from '../components/common/CardImage';
-import React, { useRef, useState } from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
 import { NexaAsset, Rarity } from '../types';
@@ -9,6 +9,8 @@ import { RARITY_CONFIG } from '../config/designTokens';
 import { RarityBadge } from '../components/common/RarityBadge';
 import { soundService } from '../services/soundService';
 import { FusionService } from '../services/fusionService';
+import { StarUpgradeService, StarUpgradeRejected } from '../services/starUpgradeService';
+import { isStarEligible, starRequirement } from '../features/star-system/rules';
 import confetti from 'canvas-confetti';
 import {
   Flame,
@@ -16,13 +18,81 @@ import {
   X,
   Sparkles,
   AlertTriangle,
+  Star,
 } from 'lucide-react';
+
+
+interface FusionInventoryCardProps {
+  item: NexaAsset;
+  selected: boolean;
+  disabled: boolean;
+  onToggle: (item: NexaAsset) => void;
+}
+
+const FusionInventoryCard = memo<FusionInventoryCardProps>(
+  ({ item, selected, disabled, onToggle }) => {
+    const handleClick = useCallback(() => {
+      if (!disabled) onToggle(item);
+    }, [disabled, item, onToggle]);
+
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={disabled}
+        className={`p-3 rounded-xl border cursor-pointer flex flex-col justify-between gap-2 text-left ${
+          selected
+            ? 'bg-purple-950/60 border-purple-500 ring-2 ring-purple-400'
+            : disabled
+            ? 'opacity-40 cursor-not-allowed bg-white/5 border-white/5'
+            : 'bg-white/5 border-white/5 hover:border-purple-400/50'
+        }`}
+      >
+        <div className="aspect-square rounded-lg overflow-hidden bg-slate-950 relative pointer-events-none">
+          <CardImage
+            asset={item}
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-1.5 left-1.5">
+            <RarityBadge rarity={item.rarity} size="sm" showDot={false} />
+          </div>
+        </div>
+
+        <div className="pointer-events-none">
+          <h5 className="font-heading font-bold text-xs text-white truncate">
+            {item.name}
+          </h5>
+          <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-1">
+            <span>{item.type}</span>
+            <span className="text-purple-400 font-bold">{item.power} PWR</span>
+          </div>
+        </div>
+      </button>
+    );
+  },
+  (prev, next) =>
+    prev.item === next.item &&
+    prev.selected === next.selected &&
+    prev.disabled === next.disabled &&
+    prev.onToggle === next.onToggle
+);
+
+FusionInventoryCard.displayName = 'FusionInventoryCard';
 
 export const Fusion: React.FC = () => {
   const { user } = useAuth();
-  const { assets, executeFusion } = useGameState();
+  const { assets, cardFragments, fragmentListings, executeFusion, executeStarUpgrade } = useGameState();
 
+  const [mode, setMode] = useState<'FUSION' | 'ASCENSION'>('FUSION');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [ascensionMainId, setAscensionMainId] = useState<string | null>(null);
+  const [starBusy, setStarBusy] = useState(false);
+  const [starMessage, setStarMessage] = useState('');
+  const starInFlight = useRef(false);
+  const starRequest = useRef<{ requestId: string; mainId: string } | null>(null);
+  const [starRetry, setStarRetry] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const pendingRequestId = useRef<string | null>(null);
   const [fusionResult, setFusionResult] = useState<{
@@ -35,36 +105,94 @@ export const Fusion: React.FC = () => {
   // Apenas cartas físicas reais e livres podem entrar na Fusão V2.
   // Isso exclui personagens, equipamentos e outros assets locais/legados
   // que também possam possuir status IDLE.
-  const availableItems = assets.filter(
-    (a) =>
-      a.ownerId === user.id &&
-      (a.type === 'Card' || (a as any).type === 'card') &&
-      (a as any).state === 'FREE'
+  const availableItems = useMemo(
+    () =>
+      assets.filter(
+        (a) =>
+          a.ownerId === user.id &&
+          (a.type === 'Card' || (a as any).type === 'card') &&
+          (a as any).state === 'FREE'
+      ),
+    [assets, user.id]
   );
 
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
   // A seleção também é resolvida exclusivamente dentro da lista validada.
-  const selectedItems = availableItems.filter((a) => selectedIds.includes(a.id));
+  const selectedItems = useMemo(
+    () => availableItems.filter((a) => selectedSet.has(a.id)),
+    [availableItems, selectedSet]
+  );
   const baseRarity: Rarity | null = selectedItems.length > 0 ? selectedItems[0].rarity : null;
   const targetRarity = baseRarity ? NEXT_RARITY_MAP[baseRarity] : null;
   const rule = baseRarity ? FUSION_RULES[baseRarity] : null;
+  const ascensionItems = useMemo(() => assets.filter(a => isStarEligible(a, user.id)), [assets, user.id]);
+  const ascensionMain = useMemo(
+    () => ascensionItems.find((item) => item.id === ascensionMainId) || null,
+    [ascensionItems, ascensionMainId]
+  );
+  const currentStars = ascensionMain?.type === 'Card'
+    ? Math.min(5, Math.max(1, Number(ascensionMain.starLevel ?? 1)))
+    : 1;
+  const nextStars = Math.min(5, currentStars + 1);
+  const ascensionRequirement = starRequirement(currentStars);
+  const availableFragments = ascensionMain?.type === 'Card'
+    ? Math.max(0, (cardFragments.find(f => f.ownerId === user.id && f.templateId === ascensionMain.templateId)?.amount ?? 0)
+      - fragmentListings.filter(l => l.sellerId === user.id && l.templateId === ascensionMain.templateId && l.status === 'ACTIVE')
+        .reduce((sum, l) => sum + l.quantity, 0))
+    : 0;
+  const canAscend = !!ascensionMain && !!ascensionRequirement && user.balanceNEX >= ascensionRequirement.nex
+    && availableFragments >= ascensionRequirement.fragments;
 
-  // Toggle item selection
-  const toggleItem = (asset: NexaAsset) => {
-    if (selectedIds.includes(asset.id)) {
-      setSelectedIds((prev) => prev.filter((id) => id !== asset.id));
-      return;
+  const handleStarUpgrade = async () => {
+    if (starInFlight.current || (!starRequest.current && !canAscend)) return;
+    starInFlight.current = true;
+    setStarBusy(true);
+    setStarMessage('');
+    try {
+      starRequest.current ??= { requestId: StarUpgradeService.createRequestId(), mainId: ascensionMain!.id };
+      const intent = starRequest.current;
+      const result = await executeStarUpgrade(intent.mainId, intent.requestId);
+      setStarMessage(`Ascensão confirmada: ★${result.card.starLevel}. Custo: ${result.costNEX} NEX.${result.refreshPending ? ' Atualização pendente; consulte novamente.' : ''}`);
+      if (!result.refreshPending) {
+        starRequest.current = null;
+        setStarRetry(false);
+      } else setStarRetry(true);
+    } catch (error) {
+      setStarMessage(error instanceof Error ? error.message : 'Não foi possível confirmar a Ascensão.');
+      if (error instanceof StarUpgradeRejected) {
+        starRequest.current = null;
+        setStarRetry(false);
+      } else setStarRetry(true);
+    } finally {
+      starInFlight.current = false;
+      setStarBusy(false);
     }
-
-    if (selectedIds.length >= 3) return;
-
-    if (selectedIds.length > 0 && asset.rarity !== baseRarity) {
-      // Must be same rarity
-      return;
-    }
-
-    soundService.playClick();
-    setSelectedIds((prev) => [...prev, asset.id]);
   };
+
+
+  // Seleção isolada: usa apenas o estado anterior e mantém o handler estável.
+  const toggleItem = useCallback(
+    (asset: NexaAsset) => {
+      if (isSynthesizing) return;
+
+      setSelectedIds((prev) => {
+        if (prev.includes(asset.id)) {
+          pendingRequestId.current = null;
+          return prev.filter((id) => id !== asset.id);
+        }
+
+        if (prev.length >= 3) return prev;
+
+        const firstSelected = availableItems.find((item) => item.id === prev[0]);
+        if (firstSelected && firstSelected.rarity !== asset.rarity) return prev;
+
+        pendingRequestId.current = null;
+        return [...prev, asset.id];
+      });
+    },
+    [availableItems, isSynthesizing]
+  );
 
   const handleStartFusion = async () => {
     if (selectedIds.length !== 3 || !rule || isSynthesizing) return;
@@ -133,61 +261,67 @@ export const Fusion: React.FC = () => {
         </div>
       </section>
 
+      <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/[0.08] bg-[#090a0f] p-1.5">
+        <button
+          type="button"
+          onClick={() => setMode('FUSION')}
+          className={`rounded-xl px-4 py-3 font-heading text-xs font-black uppercase tracking-[0.14em] transition-all ${
+            mode === 'FUSION'
+              ? 'border border-purple-400/35 bg-purple-500/15 text-purple-200'
+              : 'border border-transparent text-slate-500 hover:bg-white/[0.035] hover:text-slate-200'
+          }`}
+        >
+          Síntese
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('ASCENSION')}
+          className={`rounded-xl px-4 py-3 font-heading text-xs font-black uppercase tracking-[0.14em] transition-all ${
+            mode === 'ASCENSION'
+              ? 'border border-amber-300/35 bg-amber-400/[0.08] text-amber-200'
+              : 'border border-transparent text-slate-500 hover:bg-white/[0.035] hover:text-slate-200'
+          }`}
+        >
+          Ascensão ★
+        </button>
+      </div>
+
+      {mode === 'FUSION' ? (
+        <>
+
       {/* Fusion Chamber Reactor Stage */}
       <div className="relative rounded-2xl bg-gradient-to-b from-[#0d0b14] via-[#090a0f] to-[#07080b] border border-purple-500/20 p-5 sm:p-7 overflow-hidden text-center">
         {/* Glowing background reactor aura */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-purple-600/[0.08] rounded-full blur-3xl pointer-events-none" />
 
         {/* 3 Input Slots */}
-        <div className="relative z-10 max-w-2xl mx-auto">
-          <span className="text-[11px] font-mono text-purple-300 uppercase tracking-wider block mb-4 font-bold">
-            Matriz de Entrada // 3 Ativos Compatíveis
+<div className="relative z-10 max-w-2xl mx-auto">
+  <span className="text-[11px] font-mono text-purple-300 uppercase tracking-wider block mb-4 font-bold">
+    Matriz de Entrada // 3 Ativos Compatíveis
+  </span>
+
+  <div className="grid grid-cols-3 gap-3 mb-6">
+    {[0, 1, 2].map((slotIndex) => {
+      const item = selectedItems[slotIndex];
+
+      return (
+        <button
+          type="button"
+          key={slotIndex}
+          onClick={() => {
+            if (item) toggleItem(item);
+          }}
+          className="h-24 rounded-xl border border-white/10 bg-slate-950"
+        >
+          <span className="text-xs text-white font-mono">
+            {item?.name || `Slot ${slotIndex + 1}`}
           </span>
+        </button>
+      );
+    })}
+  </div>
 
-          <div className="grid grid-cols-3 gap-2.5 sm:gap-4 mb-6">
-            {[0, 1, 2].map((slotIndex) => {
-              const item = selectedItems[slotIndex];
-              return (
-                <div
-                  key={slotIndex}
-                  className={`aspect-[4/3] sm:aspect-[5/4] rounded-xl border flex flex-col items-center justify-center p-3 relative transition-all duration-300 ${
-                    item
-                      ? 'bg-purple-950/40 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.3)]'
-                      : 'bg-white/5 border-dashed border-white/20 hover:border-purple-400/50'
-                  } ${isSynthesizing ? 'animate-pulse scale-95' : ''}`}
-                >
-                  {item ? (
-                    <>
-                      <button
-                        onClick={() => toggleItem(item)}
-                        className="absolute top-2 right-2 p-1 rounded-full bg-black/70 text-slate-400 hover:text-white"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                      <CardImage asset={item}
-                        src={item.image}
-                        alt={item.name}
-                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover mb-2 border border-white/10"
-                      />
-                      <h5 className="font-heading font-bold text-xs text-white truncate w-full">
-                        {item.name}
-                      </h5>
-                      <span className="text-[10px] font-mono text-purple-300 mt-0.5">
-                        {item.power} PWR
-                      </span>
-                    </>
-                  ) : (
-                    <div className="text-slate-500 font-mono text-xs flex flex-col items-center gap-1">
-                      <Plus className="w-6 h-6 text-slate-500" />
-                      <span className="text-[10px] uppercase">Slot {slotIndex + 1}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Central Reactor Core Status */}
+  {/* Central Reactor Core Status */}
           <div className="grid grid-cols-1 sm:grid-cols-3 rounded-xl bg-black/30 border border-white/[0.07] text-xs font-mono mb-6 overflow-hidden">
             <div className="text-left p-3.5 sm:border-r sm:border-white/[0.06]">
               <span className="text-slate-500 block text-[9px] uppercase tracking-[0.14em]">Raridade Alvo</span>
@@ -259,50 +393,135 @@ export const Fusion: React.FC = () => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {availableItems.map((item) => {
-              const isSelected = selectedIds.includes(item.id);
+              const isSelected = selectedSet.has(item.id);
               const isDisabled =
                 selectedIds.length > 0 &&
-                !selectedIds.includes(item.id) &&
+                !isSelected &&
                 item.rarity !== baseRarity;
 
               return (
-                <div
+                <FusionInventoryCard
                   key={item.id}
-                  onClick={() => !isDisabled && toggleItem(item)}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2 ${
-                    isSelected
-                      ? 'bg-purple-950/60 border-purple-500 ring-2 ring-purple-400'
-                      : isDisabled
-                      ? 'opacity-40 cursor-not-allowed bg-white/5 border-white/5'
-                      : 'bg-white/5 border-white/5 hover:border-purple-400/50'
-                  }`}
-                >
-                  <div className="aspect-square rounded-lg overflow-hidden bg-slate-950 relative">
-                    <CardImage asset={item}
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-1.5 left-1.5">
-                      <RarityBadge rarity={item.rarity} size="sm" showDot={false} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <h5 className="font-heading font-bold text-xs text-white truncate">
-                      {item.name}
-                    </h5>
-                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-1">
-                      <span>{item.type}</span>
-                      <span className="text-purple-400 font-bold">{item.power} PWR</span>
-                    </div>
-                  </div>
-                </div>
+                  item={item}
+                  selected={isSelected}
+                  disabled={isDisabled}
+                  onToggle={toggleItem}
+                />
               );
             })}
           </div>
         )}
       </div>
+
+        </>
+      ) : (
+        <>
+          <div className="relative overflow-hidden rounded-2xl border border-amber-300/15 bg-gradient-to-b from-[#100d0a] via-[#0a0a0f] to-[#07080b] p-5 sm:p-7">
+            <div className="pointer-events-none absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-amber-300/[0.045] blur-3xl" />
+            <div className="relative mx-auto max-w-3xl">
+              <div className="mb-6 text-center">
+                <div className="mb-2 flex items-center justify-center gap-2 text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-amber-300">
+                  <Star className="h-4 w-4" /> Núcleo de Ascensão
+                </div>
+                <h2 className="font-heading text-2xl font-black text-white">Evolução de Instância</h2>
+                <p className="mx-auto mt-2 max-w-xl text-xs font-mono leading-relaxed text-slate-400">
+                  A carta principal permanece a mesma instância. Use fragmentos da mesma carta e NEX para elevar seu nível de estrelas.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
+                <div className="rounded-2xl border border-white/[0.08] bg-black/25 p-4">
+                  <span className="block text-[9px] font-mono font-bold uppercase tracking-[0.16em] text-slate-500">Carta principal</span>
+                  {ascensionMain ? (
+                    <div className="mt-3 flex items-center gap-3">
+                      <CardImage asset={ascensionMain} src={ascensionMain.image} alt={ascensionMain.name} className="h-20 w-20 rounded-xl object-cover" />
+                      <div className="min-w-0">
+                        <RarityBadge rarity={ascensionMain.rarity} size="sm" />
+                        <h3 className="mt-1 truncate font-heading text-sm font-black text-white">{ascensionMain.name}</h3>
+                        <div className="mt-1 font-mono text-sm tracking-wider text-amber-200">
+                          {'★'.repeat(currentStars)}<span className="text-slate-700">{'★'.repeat(5-currentStars)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex h-20 items-center justify-center rounded-xl border border-dashed border-white/10 text-xs font-mono text-slate-600">
+                      Selecione uma carta abaixo
+                    </div>
+                  )}
+                </div>
+
+                <div className="hidden text-2xl text-amber-300/70 md:block">→</div>
+
+                <div className="rounded-2xl border border-amber-300/15 bg-amber-300/[0.025] p-4">
+                  <span className="block text-[9px] font-mono font-bold uppercase tracking-[0.16em] text-slate-500">Próxima evolução</span>
+                  <div className="mt-3 flex h-20 flex-col justify-center">
+                    {ascensionMain ? (
+                      <>
+                        <div className="font-heading text-lg font-black text-white">
+                          {currentStars >= 5 ? 'Ascensão máxima' : `★${currentStars} → ★${nextStars}`}
+                        </div>
+                        <div className="mt-1 font-mono text-[10px] text-slate-400">
+                          {currentStars >= 5 ? 'Esta instância já atingiu o limite.' : 'A raridade original da carta não muda.'}
+                        </div>
+                      </>
+                    ) : <span className="font-mono text-xs text-slate-600">Aguardando carta principal</span>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-white/[0.07] bg-black/25 p-3">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500">Fragmentos necessários</span>
+                  <strong className="mt-1 block font-mono text-sm text-white">{ascensionRequirement?.fragments ?? '—'}</strong>
+                </div>
+                <div className="rounded-xl border border-white/[0.07] bg-black/25 p-3">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500">Fragmentos disponíveis</span>
+                  <strong className="mt-1 block font-mono text-sm text-cyan-300">{ascensionMain ? availableFragments : '—'}</strong>
+                </div>
+                <div className="rounded-xl border border-white/[0.07] bg-black/25 p-3">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500">Custo NEX</span>
+                  <strong className="mt-1 block font-mono text-sm text-amber-300">{ascensionRequirement ? `${ascensionRequirement.nex} NEX` : '—'}</strong>
+                </div>
+              </div>
+
+              <p className="mt-4 text-xs text-slate-300">Saldo: {formatEconomicValue(user.balanceNEX)} NEX</p>
+              <button type="button" onClick={handleStarUpgrade} disabled={starBusy || (!starRetry && !canAscend)} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300/30 bg-amber-300/10 px-5 py-3.5 font-heading text-xs font-black uppercase tracking-[0.14em] text-amber-200 disabled:cursor-not-allowed disabled:opacity-40">
+                <Star className="h-4 w-4" />
+                {starBusy ? 'Confirmando Ascensão...' : starRetry ? 'Consultar / repetir a mesma operação' : currentStars >= 5 ? 'Nível máximo ★5' : 'Confirmar Ascensão'}
+              </button>
+              {starMessage && <p role="status" className="mt-3 text-sm text-amber-100">{starMessage}</p>}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/[0.08] bg-[#090a0f] p-5">
+            <div className="mb-4">
+              <h3 className="font-heading text-xl font-bold text-white">Escolha a carta principal</h3>
+              <p className="mt-1 text-xs font-mono text-slate-500">Somente cartas livres disponíveis no Reator. A Ascensão utiliza somente fragmentos da mesma carta.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {ascensionItems.map((item) => {
+                const stars = item.type === 'Card' ? Math.min(5, Math.max(1, Number(item.starLevel ?? 1))) : 1;
+                const active = ascensionMainId === item.id;
+                return (
+                  <button key={item.id} type="button" disabled={starBusy || starRetry} onClick={() => {
+                    setAscensionMainId(active ? null : item.id); setStarMessage('');
+                  }}
+                    className={`rounded-xl border p-3 text-left transition-all ${active ? 'border-amber-300/60 bg-amber-300/[0.08] ring-1 ring-amber-300/30' : 'border-white/[0.07] bg-white/[0.025] hover:border-amber-300/25'}`}>
+                    <div className="relative aspect-square overflow-hidden rounded-lg bg-slate-950">
+                      <CardImage asset={item} src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                      <div className="absolute left-2 top-2"><RarityBadge rarity={item.rarity} size="sm" showDot={false} /></div>
+                    </div>
+                    <h4 className="mt-2 truncate font-heading text-xs font-bold text-white">{item.name}</h4>
+                    <div className="mt-1 font-mono text-[10px] tracking-wider text-amber-200">
+                      {'★'.repeat(stars)}<span className="text-slate-700">{'★'.repeat(5-stars)}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Fusion Result Modal */}
       {fusionResult && (

@@ -1,4 +1,4 @@
-import type { RiftBattlePlayerId } from './types';
+import type { RiftBattleArenaConfig, RiftBattlePlayerId } from './types';
 
 export const RIFTBATTLE_TEAM_SIZE = 4;
 export const RIFTBATTLE_ACTIVE_SLOTS = 2;
@@ -14,11 +14,13 @@ export const RIFTBATTLE_MAX_SPEED = 5;
 export const RIFTBATTLE_MIN_DEPLOY_COST = 1;
 export const RIFTBATTLE_MAX_DEPLOY_COST = 5;
 
-export function getMaxEnergyForTurn(turn: number): number {
-  if (turn <= 1) return 3;
-  if (turn === 2) return 4;
-  if (turn === 3) return 5;
-  return 6;
+export function getMaxEnergyForTurn(
+  turn: number,
+  arena?: Pick<RiftBattleArenaConfig, 'energyByTurn'>,
+): number {
+  const curve = arena?.energyByTurn ?? [3, 4, 5, 6];
+  const safeTurn = Math.max(1, Math.floor(turn));
+  return curve[Math.min(safeTurn - 1, curve.length - 1)] ?? 6;
 }
 
 export function calculateDamage(attack: number, defense: number): number {

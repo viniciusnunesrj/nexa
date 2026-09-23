@@ -36,6 +36,7 @@ import { TradeService } from '../services/tradeService';
 import { TradeOnlineService } from '../services/tradeOnlineService';
 import type { OnlineTradeInput, TradeOperation } from '../types/trades';
 import { FusionService, FusionExecutionResult } from '../services/fusionService';
+import { StarUpgradeService, StarUpgradeResult } from '../services/starUpgradeService';
 import { RewardService } from '../services/rewardService';
 import { LedgerService } from '../services/ledgerService';
 import { EconomyService } from '../services/economyService';
@@ -57,6 +58,7 @@ export interface ToastNotification {
 }
 
 interface GameStateContextType {
+  executeStarUpgrade: (mainId: string, requestId: string) => Promise<StarUpgradeResult>;
   assets: NexaAsset[];
   listings: Listing[];
   transactions: NexaTransaction[];
@@ -184,6 +186,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isStartingSynthesis, setIsStartingSynthesis] = useState(false);
   const synthesisPending = useRef(false);
   const fusionPending = useRef(false);
+  const starPending = useRef(false);
+  const starSessionOwner = useRef(currentUser?.id);
+  starSessionOwner.current = currentUser?.id;
   const [levelUpData, setLevelUpData] = useState<LevelUpResult | null>(null);
   const pendingBattles = useRef(new Set<string>());
   const [marketplaceBusy, setMarketplaceBusy] = useState(false);
@@ -1088,6 +1093,40 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const executeStarUpgrade = async (mainId: string, requestId: string): Promise<StarUpgradeResult> => {
+    if (!isAuthenticated || !currentUser) throw new Error('Entre na sua conta para realizar a Ascensão.');
+    if (starPending.current) throw new Error('Aguarde a Ascensão em andamento.');
+    starPending.current = true;
+    try {
+      const result = await StarUpgradeService.executeStarUpgrade(mainId, requestId);
+      if (starSessionOwner.current !== currentUser.id) throw new Error('A conta mudou. Consulte o inventário da conta original.');
+      // A replay contains a historical snapshot. Never restore that old balance/card.
+      if (!result.idempotent) {
+        setAssets(prev => prev.map(a => a.id === result.card.id ? result.card : a));
+      }
+      try {
+        const [cards, profile, fragments] = await Promise.all([
+          SupabaseService.fetchBoxInventoryCards(currentUser.id),
+          SupabaseService.fetchRemoteProfile(currentUser.id),
+          CardFragmentService.refreshOnline(currentUser.id),
+        ]);
+        if (starSessionOwner.current !== currentUser.id) return result;
+        setCardFragments(fragments);
+        setAssets(prev => [...prev.filter(a => a.type !== 'Card'), ...cards]);
+        if (!profile) throw new Error('Perfil indisponível');
+        SupabaseService.acceptConfirmedProfile(profile);
+        EconomyService.hydrateProfileFromSupabase(profile);
+        syncUser(profile);
+      } catch {
+        result.refreshPending = true;
+        notify('warning', 'Ascensão confirmada', 'Não foi possível atualizar todo o inventário/saldo. Consulte novamente a mesma operação.');
+      }
+      return result;
+    } finally {
+      starPending.current = false;
+    }
+  };
+
   // PROPOSE TRADE
   const proposeTrade = async (
     receiverId: string,
@@ -1604,6 +1643,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         equipCharacter,
         executeBattle,
         executeFusion,
+        executeStarUpgrade,
         proposeTrade,
         acceptTrade,
         rejectTrade,

@@ -1,3 +1,15 @@
+export type RiftBattleRuleset = 'STANDARD' | 'PURE';
+
+export interface RiftBattleArenaConfig {
+  id: string;
+  name: string;
+  teamSize: number;
+  activeSlots: number;
+  abilitiesEnabled: boolean;
+  energyByTurn: readonly number[];
+  ruleset: RiftBattleRuleset;
+}
+
 export type RiftBattleArchetype =
   | 'ASSAULT'
   | 'TANK'
@@ -32,7 +44,12 @@ export interface RiftBattleAbility {
 }
 
 export interface RiftBattleCard {
+  /** ID único usado dentro da partida. Para carta real, é o id da instância em user_cards. */
   id: string;
+  /** Template oficial NEXA que define imagem e atributos de combate do RiftBattle. */
+  templateId?: string;
+  /** Instância real do inventário; preservado para futura validação server-side. */
+  sourceInstanceId?: string;
   name: string;
   rarity: string;
   archetype: RiftBattleArchetype;
@@ -99,6 +116,7 @@ export type RiftBattleAction =
     };
 
 export interface RiftBattleState {
+  arena: RiftBattleArenaConfig;
   turn: number;
   phase: RiftBattlePhase;
   currentPlayerId: RiftBattlePlayerId;

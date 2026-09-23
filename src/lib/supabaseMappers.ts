@@ -76,6 +76,7 @@ export function mapRowToCard(row: any): Card {
   return {
     id: row.id,
     templateId: row.template_id,
+    starLevel: row.star_level ?? 1,
     name: row.name,
     type: 'Card',
     edition: row.edition || 'Gênese',
