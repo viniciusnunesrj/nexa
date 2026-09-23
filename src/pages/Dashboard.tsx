@@ -106,10 +106,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
             <p className="font-mono text-[11px] font-bold uppercase tracking-[.24em] text-slate-500">Central do Piloto · Nível {currentLevel}</p>
             <h1 className="mt-2 max-w-2xl font-heading text-4xl font-black leading-[.94] tracking-[-.035em] text-white sm:text-5xl lg:text-6xl">
-              ENTRE NO <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-400">NEXA</span>
+              PRONTO PARA A <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-400">PRÓXIMA BATALHA?</span>
             </h1>
             <p className="mt-5 max-w-xl text-sm leading-6 text-slate-400 sm:text-base">
-              Bem-vindo, <strong className="text-white">{user.username}</strong>. Sua coleção conecta dois estilos de batalha, uma economia e uma progressão permanente.
+              Bem-vindo, <strong className="text-white">{user.username}</strong>. Sua coleção, seu nível e suas recompensas avançam com você. Escolha seu próximo desafio na Rede Nexus.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <button onClick={() => onNavigate('riftbattle-v2')} className="group inline-flex items-center gap-3 rounded-xl bg-cyan-300 px-5 py-3.5 font-heading text-xs font-black uppercase tracking-[.12em] text-[#031017] shadow-[0_0_35px_rgba(34,211,238,.2)] transition hover:-translate-y-0.5 hover:bg-cyan-200">
@@ -120,9 +120,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               </button>
             </div>
             <div className="mt-7 grid max-w-xl grid-cols-3 gap-2 border-t border-white/[.07] pt-5">
-              <div><p className="font-heading text-xl font-black text-white">{userCards.length}</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-500">Cartas</p></div>
-              <div><p className="font-heading text-xl font-black text-cyan-300">{currentLevel}</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-500">Nível</p></div>
-              <div><p className="font-heading text-xl font-black text-violet-300">{winRate}%</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-500">Vitórias</p></div>
+              <div><p className="font-heading text-xl font-black text-white">{userCards.length}</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-500">Cartas no inventário</p></div>
+              <div><p className="font-heading text-xl font-black text-cyan-300">{currentLevel}</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-500">Nível do piloto</p></div>
+              <div><p className="font-heading text-xl font-black text-violet-300">{Math.max(0, nextLevelXp - currentXp)}</p><p className="text-[9px] uppercase tracking-[.14em] text-slate-500">XP até o próximo nível</p></div>
             </div>
           </div>
 
@@ -137,10 +137,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               <div className="py-7">
                 <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-300/30 bg-cyan-300/[.08] shadow-[0_0_40px_rgba(34,211,238,.12)]"><Swords className="h-8 w-8 text-cyan-300" /></div>
                 <h2 className="font-heading text-3xl font-black uppercase text-white">Rift Battle</h2>
-                <p className="mt-2 max-w-sm text-sm leading-6 text-slate-400">Combate tático PvE com esquadrões 2×2, 3×3 e 4×4. Monte sua formação, enfrente o Rift e conquiste recompensas.</p>
+                <p className="mt-2 max-w-sm text-sm leading-6 text-slate-400">Seu modo principal de combate PvE. Escolha entre arenas 2×2, 3×3 e 4×4 e avance com recompensas ligadas à sua conta.</p>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {['PvE tático', 'NEX + NXA', 'XP do Piloto'].map((label) => <div key={label} className="rounded-xl border border-white/[.07] bg-black/20 px-2 py-2.5 text-center text-[9px] font-bold uppercase tracking-wide text-slate-300">{label}</div>)}
+                {['2×2 · 3×3 · 4×4', 'NEX + NXA', 'XP compartilhado'].map((label) => <div key={label} className="rounded-xl border border-white/[.07] bg-black/20 px-2 py-2.5 text-center text-[9px] font-bold uppercase tracking-wide text-slate-300">{label}</div>)}
               </div>
             </div>
           </div>
