@@ -132,7 +132,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
         <button onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[178px] overflow-hidden rounded-[18px] border border-cyan-400/45 bg-[#06121c] p-4 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(34,211,238,.10)]">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <img src="/assets/rift-battle-card.png" alt="" aria-hidden="true" className="absolute inset-y-0 right-0 h-full w-[72%] object-cover object-center opacity-100 transition duration-500 group-hover:scale-[1.025]" />
+            <img src="/assets/rift-battle-card.png" alt="" aria-hidden="true" className="absolute inset-y-0 right-[4%] h-full w-[72%] object-cover object-center opacity-100 transition duration-500 group-hover:scale-[1.025]" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#06121c] from-[0%] via-[#06121c]/95 via-[42%] to-[#06121c]/5 to-[78%]" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#06121c]/45 via-transparent to-[#06121c]/10" />
           </div>
@@ -144,7 +144,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
         <button onClick={() => onNavigate('arena')} className="group relative min-h-[178px] overflow-hidden rounded-[18px] border border-fuchsia-400/45 bg-[#110918] p-4 text-left shadow-[0_22px_55px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.035)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-300/80 hover:shadow-[0_28px_65px_rgba(0,0,0,.38),0_0_35px_rgba(217,70,239,.10)]">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <img src="/assets/nexus-duel-card.png" alt="" aria-hidden="true" className="absolute inset-y-0 right-0 h-full w-[72%] object-cover object-center opacity-100 transition duration-500 group-hover:scale-[1.025]" />
+            <img src="/assets/nexus-duel-card.png" alt="" aria-hidden="true" className="absolute inset-y-0 right-[4%] h-full w-[72%] object-cover object-center opacity-100 transition duration-500 group-hover:scale-[1.025]" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#110918] from-[0%] via-[#110918]/95 via-[42%] to-[#110918]/5 to-[78%]" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#110918]/45 via-transparent to-[#110918]/10" />
           </div>
