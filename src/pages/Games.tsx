@@ -1,6 +1,5 @@
 import React from 'react';
-// Vercel production sync: Nexus portal
-import { ArrowRight, CheckCircle2, Swords, Zap, Users } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Swords, Zap, Users, Layers, Trophy } from 'lucide-react';
 
 interface GamesProps {
   onNavigate: (page: string) => void;
@@ -8,92 +7,78 @@ interface GamesProps {
 
 export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold">
-          <Swords className="w-3.5 h-3.5" />
-          CENTRAL DE JOGOS
-        </span>
-        <h1 className="font-heading text-3xl sm:text-4xl font-black text-white tracking-tight">
-          Jogos
-        </h1>
-        <p className="text-slate-400 text-sm max-w-2xl">
-          Dois jogos, uma coleção e uma progressão compartilhada. Escolha seu próximo desafio na Rede Nexus.
-        </p>
-        <div className="flex flex-wrap gap-2 pt-1 text-[10px] font-mono font-bold uppercase tracking-wider">
-          <span className="rounded-full border border-cyan-400/20 bg-cyan-400/[0.06] px-3 py-1.5 text-cyan-200">Mesma coleção</span>
-          <span className="rounded-full border border-purple-400/20 bg-purple-400/[0.06] px-3 py-1.5 text-purple-200">Mesmo nível e XP</span>
-          <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-slate-300">Históricos separados</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <section className="relative overflow-hidden rounded-[24px] border border-cyan-400/25 bg-gradient-to-br from-[#07151d] via-[#0a1019] to-[#090a10] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
-          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-cyan-400/[0.09] blur-3xl pointer-events-none" />
-          <div className="relative space-y-5">
-            <div className="flex items-start justify-between gap-4">
-              <div><p className="text-[10px] font-mono font-bold tracking-[0.16em] text-cyan-400">NEXA · RIFT V2</p><h2 className="mt-1 font-heading text-2xl font-black text-white">RIFT BATTLE</h2></div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-emerald-300"><CheckCircle2 className="h-3 w-3" />Disponível</span>
-            </div>
-            <p className="text-sm leading-relaxed text-slate-400">Combate tático PvE em arenas 2×2, 3×3 e 4×4. Monte seu esquadrão e conquiste NEX, NXA e XP.</p>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Swords className="mb-2 h-4 w-4 text-cyan-300" /><span className="block text-[10px] font-mono font-bold text-white">PvE</span><span className="text-[9px] text-slate-500">Tático</span></div>
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Zap className="mb-2 h-4 w-4 text-cyan-300" /><span className="block text-[10px] font-mono font-bold text-white">NEX + NXA</span><span className="text-[9px] text-slate-500">Recompensas</span></div>
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><span className="mb-2 block text-sm font-black text-cyan-300">4×4</span><span className="block text-[10px] font-mono font-bold text-white">Arenas</span><span className="text-[9px] text-slate-500">Até 4×4</span></div>
-            </div>
-            <button type="button" onClick={() => onNavigate('riftbattle-v2')} className="inline-flex items-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 font-heading text-xs font-black uppercase tracking-[0.12em] text-slate-950 transition-all hover:bg-cyan-200">Jogar Rift Battle <ArrowRight className="h-4 w-4" /></button>
-          </div>
-        </section>
-
-        <section className="relative overflow-hidden rounded-[24px] border border-purple-500/25 bg-gradient-to-br from-[#110c18] via-[#100d19] to-[#090a10] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
-          <div className="absolute -top-24 -right-24 w-56 h-56 rounded-full bg-purple-500/[0.08] blur-3xl pointer-events-none" />
-          <div className="relative space-y-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-mono font-bold tracking-[0.16em] text-purple-400">
-                  NEXA
-                </p>
-                <h2 className="mt-1 font-heading text-2xl font-black text-white">NEXUS DUEL</h2>
-              </div>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px] font-mono font-bold uppercase">
-                <CheckCircle2 className="w-3 h-3" />
-                Disponível
+    <div className="space-y-4">
+      <section className="relative isolate overflow-hidden rounded-[22px] border border-cyan-400/20 bg-[#040811] px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,.38)] sm:px-7">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(6,182,212,.10),transparent_45%,rgba(168,85,247,.10)),radial-gradient(circle_at_50%_0%,rgba(56,189,248,.10),transparent_48%)]" />
+        <div className="pointer-events-none absolute inset-x-[12%] top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/45 to-transparent" />
+        <div className="relative">
+          <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-cyan-400/[.06] px-3 py-1 text-[9px] font-mono font-black uppercase tracking-[.18em] text-cyan-300">
+                <Swords className="h-3.5 w-3.5" /> Central de Jogos
               </span>
+              <h1 className="mt-3 font-heading text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+                Escolha sua <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-fuchsia-400">próxima batalha</span>
+              </h1>
+              <p className="mt-2 max-w-2xl text-xs leading-relaxed text-slate-400 sm:text-sm">
+                Dois estilos de combate conectados pela mesma coleção e pela progressão permanente da sua conta NEXA.
+              </p>
             </div>
-            <p className="text-sm leading-relaxed text-slate-400">
-              Duelo estratégico 4×4 de cartas, Nexos e blefe. Monte seu deck e escolha entre PvE ou PvP.
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Swords className="mb-2 h-4 w-4 text-purple-300" /><span className="block text-[10px] font-mono font-bold text-white">PvE</span><span className="text-[9px] text-slate-500">Contra CPU</span></div>
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Users className="mb-2 h-4 w-4 text-purple-300" /><span className="block text-[10px] font-mono font-bold text-white">PvP</span><span className="text-[9px] text-slate-500">Duelo online</span></div>
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3"><Zap className="mb-2 h-4 w-4 text-purple-300" /><span className="block text-[10px] font-mono font-bold text-white">4×4</span><span className="text-[9px] text-slate-500">Deck + Nexos</span></div>
+            <div className="flex flex-wrap gap-2 text-[9px] font-mono font-bold uppercase tracking-wider">
+              <span className="rounded-full border border-cyan-400/20 bg-cyan-400/[.05] px-3 py-1.5 text-cyan-200">Coleção compartilhada</span>
+              <span className="rounded-full border border-violet-400/20 bg-violet-400/[.05] px-3 py-1.5 text-violet-200">Nível + XP</span>
             </div>
-            <button
-              type="button"
-              onClick={() => onNavigate('arena')}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/[0.04] hover:bg-purple-500/10 border border-purple-500/30 hover:border-purple-400/50 text-purple-200 font-heading font-black text-xs uppercase tracking-[0.12em] transition-all"
-            >
-              Entrar no Nexus Duel
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </section>
-      </div>
-
-      <section className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5 sm:p-6">
-        <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
-          <div>
-            <p className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-cyan-300">Rift Battle</p>
-            <p className="mt-1 text-xs text-slate-400">Combate PvE por esquadrão, com recompensas e progressão da conta.</p>
-          </div>
-          <div className="hidden md:flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/20 text-[10px] font-black text-slate-300">NEXA</div>
-          <div className="md:text-right">
-            <p className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-purple-300">Nexus Duel</p>
-            <p className="mt-1 text-xs text-slate-400">Duelo 4×4 estratégico em PvE ou PvP usando cartas da sua coleção.</p>
           </div>
         </div>
-        <div className="mt-4 border-t border-white/10 pt-4 text-center text-[11px] font-mono text-slate-500">
-          Jogar qualquer um dos modos contribui para a progressão permanente do seu Piloto.
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <button type="button" onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[310px] overflow-hidden rounded-[22px] border border-cyan-400/40 bg-[#06121c] p-5 text-left shadow-[0_24px_65px_rgba(0,0,0,.32)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/75 hover:shadow-[0_30px_75px_rgba(0,0,0,.42),0_0_38px_rgba(34,211,238,.09)] sm:p-6">
+          <div className="pointer-events-none absolute inset-0">
+            <img src="/assets/rift-battle-card.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-right opacity-100 transition duration-500 group-hover:scale-[1.02]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#06121c] from-[0%] via-[#06121c]/95 via-[48%] to-[#06121c]/18 to-[86%]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#06121c]/85 via-transparent to-[#06121c]/20" />
+          </div>
+          <div className="relative z-10 flex min-h-[270px] max-w-[78%] flex-col justify-between sm:max-w-[65%]">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-[10px] font-black uppercase tracking-[.16em] text-cyan-300">NEXA · RIFT V2</span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/[.07] px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-300"><CheckCircle2 className="h-3 w-3"/> Online</span>
+              </div>
+              <h2 className="mt-2 font-heading text-[27px] font-black uppercase leading-none text-white">Rift Battle <span className="text-fuchsia-400">V2</span></h2>
+              <p className="mt-3 text-[12px] leading-relaxed text-slate-300">Combate tático PvE em arenas 2×2, 3×3 e 4×4. Monte seu esquadrão e enfrente o Rift por NEX, NXA e XP.</p>
+              <div className="mt-4 flex flex-wrap gap-1.5">{['PvE','2×2','3×3','4×4','NEX + NXA + XP'].map(x => <span key={x} className="rounded-full border border-cyan-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">{x}</span>)}</div>
+            </div>
+            <span className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 font-heading text-[10px] font-black uppercase tracking-[.09em] text-slate-950 transition group-hover:bg-cyan-200 sm:w-[82%]">Jogar Rift Battle <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></span>
+          </div>
+        </button>
+
+        <button type="button" onClick={() => onNavigate('arena')} className="group relative min-h-[310px] overflow-hidden rounded-[22px] border border-fuchsia-400/35 bg-[#110918] p-5 text-left shadow-[0_24px_65px_rgba(0,0,0,.32)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-300/70 hover:shadow-[0_30px_75px_rgba(0,0,0,.42),0_0_38px_rgba(217,70,239,.09)] sm:p-6">
+          <div className="pointer-events-none absolute inset-0">
+            <img src="/assets/nexus-duel-card.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-right opacity-100 transition duration-500 group-hover:scale-[1.02]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#110918] from-[0%] via-[#110918]/96 via-[48%] to-[#110918]/16 to-[86%]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#110918]/88 via-transparent to-[#110918]/18" />
+          </div>
+          <div className="relative z-10 flex min-h-[270px] max-w-[78%] flex-col justify-between sm:max-w-[65%]">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-[10px] font-black uppercase tracking-[.16em] text-fuchsia-300">NEXA · DUEL</span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/[.07] px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-300"><CheckCircle2 className="h-3 w-3"/> Online</span>
+              </div>
+              <h2 className="mt-2 font-heading text-[27px] font-black uppercase leading-none text-white">Nexus Duel</h2>
+              <p className="mt-3 text-[12px] leading-relaxed text-slate-300">Duelo estratégico 4×4 de cartas, Nexos e blefe. Monte seu deck e escolha entre PvE contra CPU ou PvP online.</p>
+              <div className="mt-4 flex flex-wrap gap-1.5"><span className="rounded-full border border-fuchsia-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">PvE</span><span className="rounded-full border border-fuchsia-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">PvP</span><span className="rounded-full border border-fuchsia-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">4×4</span><span className="rounded-full border border-fuchsia-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">Deck + Nexos</span></div>
+            </div>
+            <span className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-fuchsia-400/45 bg-fuchsia-500/[.13] px-4 font-heading text-[10px] font-black uppercase tracking-[.09em] text-fuchsia-100 transition group-hover:bg-fuchsia-500/[.22] sm:w-[82%]">Jogar Nexus Duel <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></span>
+          </div>
+        </button>
+      </div>
+
+      <section className="overflow-hidden rounded-[18px] border border-white/[.08] bg-[#070e17]">
+        <div className="grid divide-y divide-white/[.07] md:grid-cols-3 md:divide-x md:divide-y-0">
+          <div className="flex items-center gap-3 px-4 py-3.5"><Layers className="h-4 w-4 text-cyan-300"/><div><p className="text-[10px] font-bold uppercase text-slate-200">Uma coleção</p><p className="mt-0.5 text-[10px] text-slate-400">Suas cartas conectam os modos.</p></div></div>
+          <div className="flex items-center gap-3 px-4 py-3.5"><Trophy className="h-4 w-4 text-amber-300"/><div><p className="text-[10px] font-bold uppercase text-slate-200">Progressão permanente</p><p className="mt-0.5 text-[10px] text-slate-400">Nível e XP acompanham sua conta.</p></div></div>
+          <div className="flex items-center gap-3 px-4 py-3.5"><Users className="h-4 w-4 text-fuchsia-300"/><div><p className="text-[10px] font-bold uppercase text-slate-200">Experiências diferentes</p><p className="mt-0.5 text-[10px] text-slate-400">Tática de equipe ou duelo e blefe.</p></div></div>
         </div>
       </section>
     </div>
