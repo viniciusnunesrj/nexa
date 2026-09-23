@@ -93,11 +93,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const isMaxLevel = currentLevel >= MAX_GAME_LEVEL;
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-4">
       {/* Cinematic portal shell — art slots receive final NEXA artwork later */}
       <section className="relative overflow-hidden rounded-[22px] border border-cyan-400/25 bg-[#050912] shadow-[0_24px_90px_rgba(0,0,0,.42)]">
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,182,212,.08),transparent_30%,transparent_70%,rgba(168,85,247,.09)),radial-gradient(circle_at_50%_0%,rgba(56,189,248,.10),transparent_38%)]" />
-        <div className="relative min-h-[300px] px-5 py-6 sm:px-8 lg:min-h-[330px]">
+        <div className="relative min-h-[320px] px-5 py-5 sm:px-8 lg:min-h-[350px]">
           <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-[28%] lg:block">
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/[.12] to-transparent" />
             <div className="absolute bottom-8 left-8 flex h-44 w-36 -rotate-6 items-center justify-center rounded-[28px] border border-cyan-300/20 bg-cyan-400/[.05] shadow-[0_0_60px_rgba(34,211,238,.12)]">
@@ -123,7 +123,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               <button onClick={() => onNavigate('arena')} className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-violet-400/50 bg-violet-500/[.13] px-4 font-heading text-[11px] font-black uppercase tracking-[.08em] text-violet-100 shadow-[0_0_28px_rgba(168,85,247,.12)] transition hover:-translate-y-0.5 hover:bg-violet-500/[.2]"><Zap className="h-4 w-4"/> Jogar Nexus Duel <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></button>
             </div>
           </div>
-          <div className="absolute inset-x-5 bottom-4 z-20 grid grid-cols-3 overflow-hidden rounded-2xl border border-white/[.08] bg-[#07101c]/90 backdrop-blur sm:inset-x-8 lg:grid-cols-4">
+          <div className="absolute inset-x-5 bottom-4 z-20 grid grid-cols-3 overflow-hidden rounded-xl border border-cyan-400/15 bg-[#06101b]/95 backdrop-blur-md sm:inset-x-8 lg:grid-cols-4">
             <div className="border-r border-white/[.07] px-4 py-3"><p className="font-heading text-lg font-black text-white">{userCards.length}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">Cartas no inventário</p></div>
             <div className="border-r border-white/[.07] px-4 py-3"><p className="font-heading text-lg font-black text-cyan-300">Nv. {currentLevel}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">Piloto</p></div>
             <div className="border-r border-white/[.07] px-4 py-3"><p className="font-heading text-lg font-black text-sky-300">{currentExp} / {maxExp}</p><p className="text-[8px] uppercase tracking-[.12em] text-slate-500">XP</p></div>
@@ -133,7 +133,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <button onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[220px] overflow-hidden rounded-[20px] border border-cyan-400/50 bg-[#07131d] p-5 text-left transition hover:-translate-y-0.5 hover:border-cyan-300">
+        <button onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[205px] overflow-hidden rounded-[18px] border border-cyan-400/50 bg-[#07131d] p-5 text-left transition hover:-translate-y-0.5 hover:border-cyan-300">
           <div className="absolute inset-y-0 right-0 w-[43%] bg-[radial-gradient(circle_at_center,rgba(34,211,238,.15),transparent_60%)]" />
           <div className="absolute right-5 top-5 flex h-28 w-28 items-center justify-center rounded-2xl border border-cyan-400/15 bg-cyan-400/[.04]"><Swords className="h-12 w-12 text-cyan-300/60"/></div>
           <div className="relative flex h-full max-w-[70%] flex-col justify-between">
@@ -142,7 +142,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </button>
 
-        <button onClick={() => onNavigate('arena')} className="group relative min-h-[220px] overflow-hidden rounded-[20px] border border-fuchsia-400/50 bg-[#120a19] p-5 text-left transition hover:-translate-y-0.5 hover:border-fuchsia-300">
+        <button onClick={() => onNavigate('arena')} className="group relative min-h-[205px] overflow-hidden rounded-[18px] border border-fuchsia-400/50 bg-[#120a19] p-5 text-left transition hover:-translate-y-0.5 hover:border-fuchsia-300">
           <div className="absolute inset-y-0 right-0 w-[43%] bg-[radial-gradient(circle_at_center,rgba(217,70,239,.15),transparent_60%)]" />
           <div className="absolute right-5 top-5 flex h-28 w-28 items-center justify-center rounded-2xl border border-fuchsia-400/15 bg-fuchsia-400/[.04]"><Layers className="h-12 w-12 text-fuchsia-300/60"/></div>
           <div className="relative flex h-full max-w-[70%] flex-col justify-between">
@@ -179,7 +179,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       )}
 
       {/* Requirement 4: PROGRESSÃO & PRÓXIMO NÍVEL NO DASHBOARD */}
-      <div className="p-5 sm:p-6 rounded-[26px] bg-gradient-to-br from-[#0d0e1b] via-[#0b0b15] to-[#08090f] border border-cyan-500/20 shadow-[0_20px_60px_rgba(0,0,0,0.22)] relative overflow-hidden">
+      <div className="p-4 sm:p-5 rounded-[18px] bg-gradient-to-br from-[#09111b] via-[#090b13] to-[#08090f] border border-cyan-500/20 shadow-[0_20px_60px_rgba(0,0,0,0.22)] relative overflow-hidden">
         <div className="absolute top-0 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -201,7 +201,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
 
             <div className="flex items-baseline gap-3">
-              <h2 className="font-heading text-3xl sm:text-4xl font-black text-white tracking-tight">
+              <h2 className="font-heading text-2xl sm:text-3xl font-black text-white tracking-tight">
                 NÍVEL {currentLevel}
               </h2>
               <span className="text-sm font-mono text-cyan-400 font-bold">
@@ -271,6 +271,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <button onClick={() => onNavigate('progression')} className="rounded-[18px] border border-cyan-400/20 bg-[#07111b] p-4 text-left transition hover:border-cyan-300/40">
+          <div className="flex items-center justify-between"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-cyan-300">Progressão</span><Award className="h-4 w-4 text-cyan-300"/></div>
+          <p className="mt-2 font-heading text-lg font-black text-white">Nível {currentLevel}</p><p className="mt-1 text-[10px] text-slate-500">{currentExp}/{maxExp} XP · {xpPercent}% concluído</p>
+        </button>
+        <button onClick={() => onNavigate('boxes')} className="rounded-[18px] border border-amber-400/20 bg-[#121009] p-4 text-left transition hover:border-amber-300/40">
+          <div className="flex items-center justify-between"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-amber-300">Caixas</span><PackageOpen className="h-4 w-4 text-amber-300"/></div>
+          <p className="mt-2 font-heading text-lg font-black text-white">{myBoxes.length} no inventário</p><p className="mt-1 text-[10px] text-slate-500">Abra caixas e expanda sua coleção.</p>
+        </button>
+        <button onClick={() => onNavigate('collections')} className="rounded-[18px] border border-violet-400/20 bg-[#100b18] p-4 text-left transition hover:border-violet-300/40">
+          <div className="flex items-center justify-between"><span className="font-mono text-[9px] font-black uppercase tracking-[.18em] text-violet-300">Coleções</span><Trophy className="h-4 w-4 text-violet-300"/></div>
+          <p className="mt-2 font-heading text-lg font-black text-white">{distinctGuardiansCards}/4 Guardiões</p><p className="mt-1 text-[10px] text-slate-500">Acompanhe as cartas da coleção.</p>
+        </button>
       </div>
 
       {/* Requirement 20: Cards for CAIXAS and COLEÇÕES */}
