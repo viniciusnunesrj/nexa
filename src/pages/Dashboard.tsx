@@ -102,11 +102,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className="absolute inset-0 opacity-[.13] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
         <div className="relative min-h-[390px] px-4 py-5 sm:min-h-[345px] sm:px-7 lg:min-h-[338px] lg:px-8">
           <div className="pointer-events-none absolute inset-0 hidden overflow-hidden lg:block">
-            <img src="/assets/nexa-rivals-hero.png" alt="" aria-hidden="true" className="absolute bottom-0 left-1/2 h-[104%] w-auto max-w-none -translate-x-1/2 object-contain opacity-100 drop-shadow-[0_0_30px_rgba(56,189,248,.16)]" />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,8,17,.02)_0%,rgba(4,8,17,.06)_27%,rgba(4,8,17,.60)_40%,rgba(4,8,17,.76)_50%,rgba(4,8,17,.60)_60%,rgba(4,8,17,.06)_73%,rgba(4,8,17,.02)_100%)]" />
-            <div className="absolute inset-y-0 left-0 w-[31%] bg-gradient-to-r from-cyan-500/[.06] to-transparent" />
-            <div className="absolute inset-y-0 right-0 w-[31%] bg-gradient-to-l from-fuchsia-500/[.07] to-transparent" />
+            <img src="/assets/nexa-rivals-hero.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-center opacity-100" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,8,18,.02)_0%,rgba(2,8,18,.08)_28%,rgba(2,8,18,.52)_41%,rgba(2,8,18,.68)_50%,rgba(2,8,18,.52)_59%,rgba(2,8,18,.08)_72%,rgba(2,8,18,.02)_100%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#050b14]/90 via-[#050b14]/35 to-transparent" />
           </div>
+          <div className="pointer-events-none absolute -bottom-16 left-[-3%] z-0 h-32 w-[42%] rounded-[50%] bg-cyan-400/[.13] blur-[55px] lg:block" />
+          <div className="pointer-events-none absolute -bottom-16 right-[-3%] z-0 h-32 w-[42%] rounded-[50%] bg-fuchsia-500/[.13] blur-[55px] lg:block" />
           <div className="relative z-10 mx-auto flex max-w-[590px] flex-col items-center pt-1 text-center lg:pt-2">
             <div className="mb-2.5 flex items-center gap-3 font-mono text-[8px] font-bold uppercase tracking-[.34em] text-slate-500"><span className="h-px w-10 bg-cyan-400/30" /> Rede Nexus <span className="h-px w-10 bg-violet-400/30" /></div>
             <h1 className="font-heading text-[28px] font-black uppercase leading-[.94] tracking-[.015em] text-white drop-shadow-[0_3px_18px_rgba(0,0,0,.7)] sm:text-4xl">
