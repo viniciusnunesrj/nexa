@@ -111,7 +111,8 @@ export const Fusion: React.FC = () => {
         (a) =>
           a.ownerId === user.id &&
           (a.type === 'Card' || (a as any).type === 'card') &&
-          (a as any).state === 'FREE'
+          (a as any).state === 'FREE' &&
+          (a as any).isStarter !== true
       ),
     [assets, user.id]
   );
