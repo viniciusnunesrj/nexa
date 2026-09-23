@@ -455,22 +455,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    'Deseja restaurar os dados de demonstração originais do NEXA?'
-                  )
-                ) {
-                  resetAllDemoData();
-                }
-              }}
-              className="mt-1.5 w-full flex items-center justify-center gap-1.5 py-1 text-[9px] font-mono text-slate-600 hover:text-cyan-300 transition-colors"
-            >
-              <RefreshCw className="w-3 h-3" />
-              Restaurar Dados Demo
-            </button>
+            <div className="mt-2 border-t border-white/[.05] pt-2 text-center font-mono text-[7px] font-semibold uppercase tracking-[.13em] text-slate-600">
+              NEXA&nbsp; // &nbsp;JOGUE. COLECIONE. EVOLUA.
+            </div>
           </div>
         </div>
 
