@@ -96,6 +96,7 @@ interface GameStateContextType {
   purchaseBox: (boxType: BoxType) => Promise<{ success: boolean; error?: string; box?: PlayerBox }>;
   unlockCharacterWithFragments: (fragmentId: string) => { success: boolean; error?: string; unlockedCharacter?: Character };
   refreshBoxes: () => void;
+  destroyStarterCard: (cardId: string) => Promise<boolean>;
   dismissNotification: (id: string) => void;
   notify: (type: ToastNotification['type'], title: string, message: string) => void;
   marketplaceBusy: boolean;
@@ -890,6 +891,19 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const destroyStarterCard = async (cardId: string): Promise<boolean> => {
+    try {
+      const result = await SupabaseService.destroyStarterCard(cardId);
+      const remoteCards = await SupabaseService.fetchBoxInventoryCards(user.id);
+      setAssets(prev => [...prev.filter(a => !(a.ownerId === user.id && (a.type === 'Card' || (a as any).type === 'card'))), ...remoteCards]);
+      notify('success', 'Carta destruída', `Carta Inicial removida permanentemente. ${result.remainingCards} carta(s) restante(s).`);
+      return true;
+    } catch (error) {
+      notify('error', 'Não foi possível destruir', error instanceof Error ? error.message : 'Tente novamente.');
+      return false;
+    }
+  };
+
   // OPEN BOX
   const openBox = async (boxId: string): Promise<BoxRewardSummary> => {
     try {
@@ -1628,6 +1642,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         purchaseBox,
         unlockCharacterWithFragments,
         refreshBoxes,
+        destroyStarterCard,
         dismissNotification,
         notify,
         marketplaceBusy,
