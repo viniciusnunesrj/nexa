@@ -633,6 +633,14 @@ class SupabaseServiceClass {
     };
   }
 
+  public async destroyStarterCard(cardId: string): Promise<{ remainingCards: number }> {
+    if (!isSupabaseConfigured()) throw new Error('Supabase não configurado');
+    const { data, error } = await supabase.rpc('destroy_starter_card_v1', { p_card_id: cardId });
+    if (error) throw new Error(error.message);
+    if (!data?.success || data.card_id !== cardId) throw new Error('Destruição não confirmada pelo servidor.');
+    return { remainingCards: Number(data.remaining_cards) || 0 };
+  }
+
   public async fetchBoxHistory(userId: string): Promise<BoxHistoryRecord[]> {
     const { data, error } = await supabase.from('box_operations_v1').select('request_id,result')
       .eq('owner_id', userId).eq('operation', 'OPEN').order('created_at', { ascending: false });
