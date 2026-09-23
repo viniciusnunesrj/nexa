@@ -536,6 +536,29 @@ export const BoxOpeningModal: React.FC<BoxOpeningModalProps> = ({
               </div>
             </div>
 
+            {summary.cards && summary.cards.length > 1 && (
+              <div className="mb-6 rounded-2xl bg-black/40 border border-emerald-500/20 p-4">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <span className="text-xs font-mono font-black uppercase text-emerald-300">Esquadrão inicial desbloqueado</span>
+                  <span className="text-[10px] font-mono text-slate-400">{summary.cards.length} cartas recebidas</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {summary.cards.map((card) => (
+                    <div key={card.id} className="rounded-xl overflow-hidden border border-white/10 bg-white/[0.03]">
+                      <CardImage asset={card} src={card.image} alt={card.name} className="w-full aspect-[4/5] object-cover" />
+                      <div className="p-2">
+                        <div className="text-[10px] font-heading font-bold text-white truncate">{card.name}</div>
+                        <div className="text-[9px] font-mono text-slate-400">★1 • Carta Inicial 🔒</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 text-[10px] font-mono text-slate-400">
+                  As 4 cartas são vinculadas à sua conta: podem batalhar normalmente, mas não podem ser vendidas, trocadas ou evoluídas acima de ★1.
+                </p>
+              </div>
+            )}
+
             {/* Additional Loot (NEX + other items if Recruit/Basic box) */}
             {(summary.nexGained > 0 || (summary.items && summary.items.length > 0)) && (
               <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-black/40 border border-white/10 mb-6 font-mono text-xs">
