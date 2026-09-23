@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { RotateCcw, Search, ScrollText, Swords, X, Zap } from 'lucide-react';
 import { RIFTBATTLE_V2_CARDS } from '../features/riftbattle-v2/cardCatalog';
 import { createOwnedRiftBattleCards } from '../features/riftbattle-v2/inventoryAdapter';
-import { validateRiftBattleV2Squad } from '../services/riftBattleV2Service';
+import { finishAuthoritativeRiftBattleV2, startAuthoritativeRiftBattleV2, type RiftBattleReward } from '../services/riftBattleV2Service';
+import { SupabaseService } from '../services/supabaseService';
 import { useAuth } from '../contexts/AuthContext';
 import { useGameState } from '../contexts/GameStateContext';
 import type { Card } from '../types/collections';
@@ -338,7 +339,7 @@ const CatalogCard: React.FC<{ card: RiftBattleCard; selected: boolean; onSelect:
 );
 
 export const RiftBattleV2: React.FC = () => {
-  const { user } = useAuth();
+  const { user, syncUser } = useAuth();
   const { assets } = useGameState();
   const ownedCards = useMemo(
     () => assets.filter((asset): asset is Card => asset.type === 'Card' && asset.ownerId === user.id),
@@ -391,6 +392,11 @@ export const RiftBattleV2: React.FC = () => {
   const aiActionsRef = useRef(0);
   const introTimerRef = useRef<number>();
   const previousTurnRef = useRef<{ playerId: RiftBattlePlayerId; turn: number }>();
+  const preparedStateRef = useRef<RiftBattleState>();
+  const runIdRef = useRef<string>();
+  const playerActionsRef = useRef<RiftBattleAction[]>([]);
+  const settlementBusyRef = useRef(false);
+  const [earnedReward, setEarnedReward] = useState<RiftBattleReward>();
 
   const currentPlayer = state.players[state.currentPlayerId];
   const opponentId: RiftBattlePlayerId = state.currentPlayerId === 'PLAYER_ONE' ? 'PLAYER_TWO' : 'PLAYER_ONE';
@@ -485,6 +491,24 @@ export const RiftBattleV2: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [state.result, combatAnimation?.token]);
 
+  useEffect(() => {
+    if (!state.result || !runIdRef.current || settlementBusyRef.current || earnedReward) return;
+    settlementBusyRef.current = true;
+    const runId = runIdRef.current;
+    const actions = [...playerActionsRef.current];
+    void (async () => {
+      try {
+        const settled = await finishAuthoritativeRiftBattleV2(runId, actions);
+        setEarnedReward(settled.reward);
+        const confirmed = await SupabaseService.fetchRemoteProfile(user.id);
+        if (confirmed) syncUser(confirmed);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : 'Falha ao confirmar a recompensa.');
+        settlementBusyRef.current = false;
+      }
+    })();
+  }, [state.result, earnedReward, user.id, syncUser]);
+
   const addLog = (text: string) => {
     setLogId((id) => {
       const nextId = id + 1;
@@ -537,6 +561,7 @@ export const RiftBattleV2: React.FC = () => {
       }
       setState(next);
       stateRef.current = next;
+      if (action.playerId === HUMAN_PLAYER_ID) playerActionsRef.current.push(action);
       setSelectedAction(undefined);
       setSelectedCardId(undefined);
       setMessage('');
@@ -699,8 +724,6 @@ export const RiftBattleV2: React.FC = () => {
       selectedArena,
     );
 
-  // Explicit opt-in after the NEW migration is tested in an isolated environment.
-  // Enabled validation fails closed: never silently starts local/legacy combat on error.
   const prepareMatch = async (): Promise<RiftBattleState | null> => {
     if (validationBusyRef.current) return null;
     const epoch = validationEpochRef.current;
@@ -708,26 +731,28 @@ export const RiftBattleV2: React.FC = () => {
     validationBusyRef.current = true;
     setValidating(true);
     setMessage('');
+    setEarnedReward(undefined);
     try {
-      const onlineValidation = (import.meta as unknown as { env?: Record<string, string> }).env
-        ?.VITE_RIFTBATTLE_V2_SERVER_VALIDATION === 'true';
-      if (!onlineValidation) return createOwnedMatchState(selectedSquad, opponentTeam);
-      const key = JSON.stringify([owner, selectedArena.id, selectedSquad]);
+      const key = JSON.stringify([owner, selectedArena.id, selectedSquad, difficulty]);
       if (validationRequestRef.current?.key !== key) {
         validationRequestRef.current = { key, requestId: crypto.randomUUID() };
       }
-      const receipt = await validateRiftBattleV2Squad({
+      const started = await startAuthoritativeRiftBattleV2({
         requestId: validationRequestRef.current.requestId,
         arenaId: selectedArena.id,
         instanceIds: selectedSquad,
+        difficulty,
       });
       if (epoch !== validationEpochRef.current || owner !== validationOwnerRef.current) return null;
-      const next = initializeRiftBattle(receipt.cards, opponentTeam.map(cardById), receipt.arena);
-      validationRequestRef.current = undefined;
+      const next = initializeRiftBattle(started.playerCards, started.opponentCards, started.arena);
+      runIdRef.current = started.runId;
+      playerActionsRef.current = [];
+      preparedStateRef.current = next;
+      setOpponentTeam(started.opponentCards.map((card) => card.id));
       return next;
     } catch (error) {
       if (epoch === validationEpochRef.current) {
-        setMessage(error instanceof Error ? error.message : 'Falha na validação do esquadrão.');
+        setMessage(error instanceof Error ? error.message : 'Falha ao iniciar a partida segura.');
       }
       return null;
     } finally {
@@ -752,12 +777,19 @@ export const RiftBattleV2: React.FC = () => {
     setFeedback(undefined);
     setCombatAnimation(undefined);
     setShowResultCinematic(false);
+    setEarnedReward(undefined);
+    settlementBusyRef.current = false;
+    validationRequestRef.current = undefined;
     setLogs([]);
   };
 
   const alterSquad = () => {
     if (validationBusyRef.current) return;
     validationRequestRef.current = undefined;
+    preparedStateRef.current = undefined;
+    runIdRef.current = undefined;
+    playerActionsRef.current = [];
+    setEarnedReward(undefined);
     if (aiTimerRef.current !== undefined) window.clearTimeout(aiTimerRef.current);
     aiRunningRef.current = false;
     setScreen('SETUP');
@@ -767,18 +799,19 @@ export const RiftBattleV2: React.FC = () => {
     setCostFilter(undefined);
   };
 
-  const continueToMatch = () => {
+  const continueToMatch = async () => {
     if (selectedSquad.length !== selectedArena.teamSize) return;
-    const selectedCards = selectedSquad.map(getOwnedBattleCard);
-    const nextOpponent = createOpponentTeam(selectedCards, matchCount, selectedArena.teamSize);
-    setOpponentTeam(nextOpponent);
+    validationRequestRef.current = undefined;
+    const next = await prepareMatch();
+    if (!next) return;
     setMatchCount((count) => count + 1);
     setScreen('VS');
   };
 
   const startBattle = async () => {
-    const next = await prepareMatch();
+    const next = preparedStateRef.current ?? await prepareMatch();
     if (!next) return;
+    preparedStateRef.current = undefined;
     stateRef.current = next;
     setState(next);
     setScreen('BATTLE');
@@ -3587,7 +3620,13 @@ export const RiftBattleV2: React.FC = () => {
                 <span>·</span>
                 <span>{state.arena.teamSize} CARTAS · {state.arena.activeSlots} ATIVAS</span>
               </div>
-              <p className="mt-2 text-[9px] uppercase tracking-[0.22em] text-slate-600">Recompensas desativadas no protótipo · economia preservada</p>
+              {earnedReward ? (
+                <div className="mt-3 rounded-xl border border-cyan-300/25 bg-cyan-400/[0.06] px-3 py-2 text-xs font-black text-cyan-100">
+                  +{earnedReward.nex_gained} NEX · +{earnedReward.nxa_gained} NXA · +{earnedReward.xp_gained} XP
+                </div>
+              ) : (
+                <p className="mt-2 text-[9px] uppercase tracking-[0.22em] text-slate-500">{message || 'CONFIRMANDO RECOMPENSA NO SERVIDOR...'}</p>
+              )}
               <div className="nexa-result-controls mt-5 flex flex-wrap justify-center gap-2"><button type="button" onClick={reset} className="rounded-xl bg-cyan-300 px-5 py-3 text-xs font-black text-slate-950 shadow-[0_0_24px_rgba(34,211,238,.35)]">JOGAR NOVAMENTE</button><button type="button" onClick={alterSquad} className="rounded-xl border border-white/15 px-5 py-3 text-xs font-black text-slate-300">ALTERAR ESQUADRÃO</button></div>
             </div>
           </div>
