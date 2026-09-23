@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Sparkles, PackageOpen, Coins, CheckCircle, Shield } from 'lucide-react';
+import { Sparkles, PackageOpen, Coins, CheckCircle, Shield, Lock } from 'lucide-react';
 
 interface FirstAccessModalProps {
   onNavigate: (page: string) => void;
@@ -41,26 +41,13 @@ export const FirstAccessModal: React.FC<FirstAccessModalProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <div className="p-4 rounded-2xl bg-white/[0.04] border border-cyan-500/30 flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-cyan-400/40">
-              <img
-                src="https://images.unsplash.com/photo-1511512578047-dfb367046420?w=200&auto=format&fit=crop&q=80"
-                alt="Recruta da Vanguarda"
-                className="w-full h-full object-cover"
-              />
-              <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] font-mono text-center text-cyan-300 py-0.5">
-                COMUM
-              </span>
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
+              <PackageOpen className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
-              <span className="text-[10px] font-mono text-cyan-400 font-bold block">
-                PERSONAGEM INICIAL
-              </span>
-              <h4 className="font-heading font-bold text-white text-sm">
-                Recruta da Vanguarda
-              </h4>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">
-                Classe: Guerreiro • 450 PWR
-              </p>
+              <span className="text-[10px] font-mono text-emerald-400 font-bold block">CAIXA RECRUTA GRÁTIS</span>
+              <h4 className="font-heading font-bold text-white text-sm">4 Cartas Iniciais</h4>
+              <p className="text-xs text-slate-400 font-mono mt-0.5">4 diferentes • ★1 • vinculadas à conta</p>
             </div>
           </div>
 
@@ -76,7 +63,7 @@ export const FirstAccessModal: React.FC<FirstAccessModalProps> = ({
                 +1.000 NEX
               </div>
               <p className="text-[11px] text-slate-400 font-mono">
-                Use para adquirir sua primeira Caixa Básica
+                Saldo livre para caixas e progressão
               </p>
             </div>
           </div>
@@ -102,7 +89,7 @@ export const FirstAccessModal: React.FC<FirstAccessModalProps> = ({
         <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-500/20 flex items-center gap-3 text-xs font-mono text-slate-300">
           <CheckCircle className="w-4 h-4 text-cyan-400 shrink-0" />
           <span>
-            <strong>Próximo passo:</strong> use seus 1.000 NEX para adquirir uma Caixa Básica, abra sua primeira carta e então entre na Arena.
+            <strong>Próximo passo:</strong> abra sua Caixa Recruta grátis. Ela entrega 4 cartas diferentes e forma seu primeiro esquadrão para os jogos.
           </span>
         </div>
 
@@ -112,7 +99,7 @@ export const FirstAccessModal: React.FC<FirstAccessModalProps> = ({
             className="flex-1 py-3.5 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-heading font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.4)]"
           >
             <PackageOpen className="w-4 h-4" />
-            <span>Adquirir Primeira Carta</span>
+            <span>Abrir Caixa Recruta</span>
           </button>
 
           <button
