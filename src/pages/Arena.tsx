@@ -695,6 +695,7 @@ const DuelView: React.FC<{
   const boardRef = useRef<HTMLDivElement>(null);
   const [gameFullscreen, setGameFullscreen] = useState(false);
   const [mobileGameMode, setMobileGameMode] = useState(false);
+  const [mobileViewport, setMobileViewport] = useState<{ width: number; height: number } | null>(null);
   const enterGameMode = async () => {
     const el = boardRef.current;
     if (!el) return;
@@ -714,6 +715,25 @@ const DuelView: React.FC<{
     const syncFullscreen = () => setGameFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', syncFullscreen);
     return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
+  useLayoutEffect(() => {
+    const syncMobileViewport = () => {
+      const viewport = window.visualViewport;
+      const width = Math.round(viewport?.width ?? window.innerWidth);
+      const height = Math.round(viewport?.height ?? window.innerHeight);
+      setMobileViewport({ width, height });
+    };
+    syncMobileViewport();
+    window.addEventListener('resize', syncMobileViewport);
+    window.addEventListener('orientationchange', syncMobileViewport);
+    window.visualViewport?.addEventListener('resize', syncMobileViewport);
+    window.visualViewport?.addEventListener('scroll', syncMobileViewport);
+    return () => {
+      window.removeEventListener('resize', syncMobileViewport);
+      window.removeEventListener('orientationchange', syncMobileViewport);
+      window.visualViewport?.removeEventListener('resize', syncMobileViewport);
+      window.visualViewport?.removeEventListener('scroll', syncMobileViewport);
+    };
   }, []);
   const cpuTarget = useRef<HTMLDivElement>(null);
   const playerTarget = useRef<HTMLDivElement>(null);
@@ -881,7 +901,7 @@ const DuelView: React.FC<{
           </div>
         </div>
       )}
-      <div ref={boardRef} className="duel-canvas" data-mobile-game={mobileGameMode ? 'true' : 'false'} data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase} data-winner={playerWonRound ? 'player' : cpuWonRound ? 'cpu' : 'draw'}>
+      <div ref={boardRef} className="duel-canvas" style={mobileViewport && mobileViewport.width > mobileViewport.height && mobileViewport.width <= 1100 ? ({ '--nexa-visual-width': `${mobileViewport.width}px`, '--nexa-visual-height': `${mobileViewport.height}px` } as React.CSSProperties) : undefined} data-mobile-game={mobileGameMode ? 'true' : 'false'} data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase} data-winner={playerWonRound ? 'player' : cpuWonRound ? 'cpu' : 'draw'}>
         <style>{`
       .duel-canvas { position: relative; width: min(100%, max(0px, calc((100dvh - var(--nexa-board-top, 160px) - 24px) * 16 / 9))); aspect-ratio: 16 / 9; margin-inline: auto; min-height: 0; box-sizing: border-box; overflow: hidden; isolation: isolate; container-type: inline-size; color: #eef6ff; border: 1px solid #22445a; border-radius: 1.4cqw; background: linear-gradient(145deg, #091726, #111529 60%, #0b1020); }
       .duel-layout { position: absolute; inset: 0; display: grid; grid-template-rows: 9% 38% 6% 38% 9%; min-height: 0; }
@@ -889,7 +909,7 @@ const DuelView: React.FC<{
       .duel-canvas:fullscreen { width:100vw!important; height:100vh!important; max-width:none!important; aspect-ratio:auto!important; border:0!important; border-radius:0!important; }
       .duel-canvas[data-mobile-game="true"] { position:fixed!important; z-index:2147483647!important; margin:0!important; border:0!important; border-radius:0!important; background:#07101e!important; }
       @media (orientation: landscape) and (max-width:1100px) {
-        .duel-canvas[data-mobile-game="true"] { width:min(100vw,calc(100dvh * 16 / 9))!important; height:min(100dvh,calc(100vw * 9 / 16))!important; max-width:100vw!important; max-height:100dvh!important; aspect-ratio:16/9!important; left:50%!important; top:50%!important; right:auto!important; bottom:auto!important; transform:translate(-50%,-50%)!important; padding:0!important; }
+        .duel-canvas[data-mobile-game="true"] { width:min(var(--nexa-visual-width,100vw),calc(var(--nexa-visual-height,100dvh) * 16 / 9))!important; height:min(var(--nexa-visual-height,100dvh),calc(var(--nexa-visual-width,100vw) * 9 / 16))!important; max-width:var(--nexa-visual-width,100vw)!important; max-height:var(--nexa-visual-height,100dvh)!important; aspect-ratio:16/9!important; left:50%!important; top:50%!important; right:auto!important; bottom:auto!important; transform:translate(-50%,-50%)!important; padding:0!important; }
         .duel-canvas[data-mobile-game="true"] .duel-layout { inset:0!important; }
         .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-layout { grid-template-rows:8% 34% 5% 45% 8%!important; }
         .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-row[aria-label="Cartas da CPU"] .duel-slot { height:88%!important; }
@@ -904,7 +924,7 @@ const DuelView: React.FC<{
         .duel-canvas::after { content:'GIRE O CELULAR PARA JOGAR'; position:absolute; inset:0; z-index:100; display:grid; place-items:center; padding:2rem; background:#030711f7; color:#67e8f9; font-size:clamp(18px,5vw,28px); font-weight:900; letter-spacing:.08em; text-align:center; }
       }
       @media (orientation: landscape) and (max-width: 1100px) {
-        .duel-canvas:not([data-mobile-game="true"]) { position:fixed!important; left:0!important; top:0!important; right:auto!important; bottom:auto!important; z-index:9999!important; width:100vw!important; height:100dvh!important; max-width:none!important; max-height:100dvh!important; aspect-ratio:auto!important; margin:0!important; border:0!important; border-radius:0!important; overflow:hidden!important; }
+        .duel-canvas:not([data-mobile-game="true"]) { position:fixed!important; left:0!important; top:0!important; right:auto!important; bottom:auto!important; z-index:9999!important; width:var(--nexa-visual-width,100vw)!important; height:var(--nexa-visual-height,100dvh)!important; max-width:var(--nexa-visual-width,100vw)!important; max-height:var(--nexa-visual-height,100dvh)!important; aspect-ratio:auto!important; margin:0!important; border:0!important; border-radius:0!important; overflow:hidden!important; }
         .duel-canvas:not([data-mobile-game="true"]) .duel-layout { position:absolute!important; top:env(safe-area-inset-top)!important; right:env(safe-area-inset-right)!important; bottom:env(safe-area-inset-bottom)!important; left:env(safe-area-inset-left)!important; grid-template-rows:9% 38% 6% 38% 9%; min-width:0!important; min-height:0!important; overflow:hidden!important; }
         .duel-canvas:not([data-mobile-game="true"]) .duel-row { height:100%!important; min-width:0!important; min-height:0!important; padding-inline:max(.6cqw,env(safe-area-inset-left)) max(.6cqw,env(safe-area-inset-right))!important; box-sizing:border-box!important; overflow:visible!important; }
         .duel-canvas:not([data-mobile-game="true"]) .duel-slot { height:min(90%,32dvh)!important; max-height:100%!important; min-width:0!important; flex-shrink:1!important; }
