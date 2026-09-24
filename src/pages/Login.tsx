@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { soundService } from '../services/soundService';
+import { supabase } from '../lib/supabase';
 import {
   ArrowRight,
   User,
@@ -24,6 +25,9 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onSuccess }) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,13 +184,33 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onSuccess }) => {
             </div>
 
             <p className="text-xs text-slate-300 font-mono leading-relaxed">
-              A recuperação de senha ainda não está disponível nesta tela. Entre em contato com o suporte do NEXA para recuperar sua conta.
+              Informe o e-mail cadastrado. Você receberá um link seguro para criar uma nova senha.
             </p>
-
+            <input
+              type="email"
+              value={recoveryEmail}
+              onChange={(e) => setRecoveryEmail(e.target.value)}
+              placeholder="seu@email.com"
+              disabled={recoveryLoading}
+              className="w-full bg-[#131422] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono"
+            />
+            {recoveryMessage && <p className="text-xs font-mono text-cyan-300">{recoveryMessage}</p>}
             <button
-              onClick={() => setShowForgotModal(false)}
-              className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-mono text-xs font-bold transition-colors"
+              disabled={recoveryLoading || !recoveryEmail.trim()}
+              onClick={async () => {
+                setRecoveryLoading(true);
+                setRecoveryMessage(null);
+                const { error } = await supabase.auth.resetPasswordForEmail(recoveryEmail.trim(), {
+                  redirectTo: `${window.location.origin}/reset-password`,
+                });
+                setRecoveryLoading(false);
+                setRecoveryMessage(error ? 'Não foi possível enviar o e-mail. Tente novamente.' : 'Se o e-mail estiver cadastrado, enviaremos as instruções de recuperação.');
+              }}
+              className="w-full py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-mono text-xs font-bold transition-colors"
             >
+              {recoveryLoading ? 'Enviando...' : 'Enviar link de recuperação'}
+            </button>
+            <button onClick={() => setShowForgotModal(false)} className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-mono text-xs font-bold transition-colors">
               Voltar ao Login
             </button>
           </div>
