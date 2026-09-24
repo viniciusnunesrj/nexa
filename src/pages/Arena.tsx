@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, Swords } from 'lucide-react';
 import { ARENA_CARDS, ARENA_ABILITY_DESCRIPTIONS, ARENA_RARITY_ROLES } from '../config/arenaCards';
 import type { ArenaCard } from '../config/arenaCards';
@@ -695,6 +696,7 @@ const DuelView: React.FC<{
   const boardRef = useRef<HTMLDivElement>(null);
   const [gameFullscreen, setGameFullscreen] = useState(false);
   const [mobileGameMode, setMobileGameMode] = useState(false);
+  const [mobileViewport, setMobileViewport] = useState<{ width: number; height: number; left: number; top: number } | null>(null);
   const enterGameMode = async () => {
     const el = boardRef.current;
     if (!el) return;
@@ -714,6 +716,25 @@ const DuelView: React.FC<{
     const syncFullscreen = () => setGameFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', syncFullscreen);
     return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
+  useLayoutEffect(() => {
+    const syncMobileViewport = () => {
+      const viewport = window.visualViewport;
+      const width = Math.round(viewport?.width ?? window.innerWidth);
+      const height = Math.round(viewport?.height ?? window.innerHeight);
+      setMobileViewport({ width, height, left: viewport?.offsetLeft ?? 0, top: viewport?.offsetTop ?? 0 });
+    };
+    syncMobileViewport();
+    window.addEventListener('resize', syncMobileViewport);
+    window.addEventListener('orientationchange', syncMobileViewport);
+    window.visualViewport?.addEventListener('resize', syncMobileViewport);
+    window.visualViewport?.addEventListener('scroll', syncMobileViewport);
+    return () => {
+      window.removeEventListener('resize', syncMobileViewport);
+      window.removeEventListener('orientationchange', syncMobileViewport);
+      window.visualViewport?.removeEventListener('resize', syncMobileViewport);
+      window.visualViewport?.removeEventListener('scroll', syncMobileViewport);
+    };
   }, []);
   const cpuTarget = useRef<HTMLDivElement>(null);
   const playerTarget = useRef<HTMLDivElement>(null);
@@ -867,47 +888,25 @@ const DuelView: React.FC<{
     NEXT: 'Preparando próxima rodada',
   };
   const phonePortrait = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px) and (orientation: portrait)').matches;
-  return (
-    <>
-      {phonePortrait && (
-        <div className="fixed inset-0 z-[10000] grid place-items-center bg-[#030711] p-8 text-center text-white">
-          <div>
-            <div className="mx-auto mb-6 text-6xl">↻</div>
-            <h2 className="text-2xl font-black text-cyan-300">GIRE O CELULAR</h2>
-            <p className="mt-3 text-sm text-slate-300">O Nexus Duel foi preparado para jogar com o celular deitado.</p>
-            <button type="button" onClick={enterGameMode} className="mt-6 rounded-xl bg-cyan-300 px-6 py-3 font-black text-slate-950">
-              TELA CHEIA E JOGAR
-            </button>
-          </div>
-        </div>
-      )}
-      <div ref={boardRef} className="duel-canvas" data-mobile-game={mobileGameMode ? 'true' : 'false'} data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase} data-winner={playerWonRound ? 'player' : cpuWonRound ? 'cpu' : 'draw'}>
+  const mobileLandscape = !!mobileViewport && mobileViewport.width > mobileViewport.height && mobileViewport.width <= 1100;
+  const board = (
+      <div ref={boardRef} className="duel-canvas" style={mobileLandscape && mobileViewport ? { left: mobileViewport.left, top: mobileViewport.top, width: mobileViewport.width, height: mobileViewport.height } : undefined} data-mobile-viewport={mobileLandscape} data-mobile-game={mobileGameMode ? 'true' : 'false'} data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase} data-winner={playerWonRound ? 'player' : cpuWonRound ? 'cpu' : 'draw'}>
         <style>{`
       .duel-canvas { position: relative; width: min(100%, max(0px, calc((100dvh - var(--nexa-board-top, 160px) - 24px) * 16 / 9))); aspect-ratio: 16 / 9; margin-inline: auto; min-height: 0; box-sizing: border-box; overflow: hidden; isolation: isolate; container-type: inline-size; color: #eef6ff; border: 1px solid #22445a; border-radius: 1.4cqw; background: linear-gradient(145deg, #091726, #111529 60%, #0b1020); }
       .duel-layout { position: absolute; inset: 0; display: grid; grid-template-rows: 9% 38% 6% 38% 9%; min-height: 0; }
       .duel-fullscreen-button { position:absolute; z-index:90; right:1.2%; bottom:1.2%; padding:.55cqw .9cqw; border:1px solid #67e8f966; border-radius:.55cqw; background:#071827e8; color:#67e8f9; font-size:.85cqw; font-weight:900; }
-      .duel-canvas:fullscreen { width:100vw!important; height:100vh!important; max-width:none!important; aspect-ratio:auto!important; border:0!important; border-radius:0!important; }
-      .duel-canvas[data-mobile-game="true"] { position:fixed!important; z-index:2147483647!important; margin:0!important; border:0!important; border-radius:0!important; background:#07101e!important; }
-      @media (orientation: landscape) and (max-width:1100px) {
-        .duel-canvas[data-mobile-game="true"] { width:min(100vw,calc(100dvh * 16 / 9))!important; height:min(100dvh,calc(100vw * 9 / 16))!important; max-width:100vw!important; max-height:100dvh!important; aspect-ratio:16/9!important; left:50%!important; top:50%!important; right:auto!important; bottom:auto!important; transform:translate(-50%,-50%)!important; padding:0!important; }
-        .duel-canvas[data-mobile-game="true"] .duel-layout { inset:0!important; }
-        .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-layout { grid-template-rows:8% 34% 5% 45% 8%!important; }
-        .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-row[aria-label="Cartas da CPU"] .duel-slot { height:88%!important; }
-        .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-row[aria-label="Suas cartas"] { padding-right:17%!important; box-sizing:border-box!important; }
-        .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-row[aria-label="Suas cartas"] .duel-slot { height:88%!important; }
-        .duel-canvas[data-mobile-game="true"][data-phase="SELECT"] .duel-invest { right:1.5%!important; top:45%!important; width:17%!important; transform:translateY(-50%)!important; }
-      }
-
-
+      .duel-canvas:fullscreen:not([data-mobile-viewport="true"]) { width:100vw!important; height:100vh!important; max-width:none!important; aspect-ratio:auto!important; border:0!important; border-radius:0!important; }
+      /* The landscape board is portaled to body, outside the page layout and its clipping ancestors.
+         Its box is the visual viewport; only the safe content area is used by the grid. */
+      .duel-canvas[data-mobile-viewport="true"] { position:fixed!important; z-index:2147483647!important; max-width:none!important; max-height:none!important; aspect-ratio:auto!important; margin:0!important; border:0!important; border-radius:0!important; transform:none!important; padding:0!important; background:#07101e!important; }
+      .duel-canvas[data-mobile-viewport="true"] .duel-layout { inset:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); grid-template-rows:minmax(0,9fr) minmax(0,37fr) minmax(0,7fr) minmax(0,37fr) minmax(0,10fr); min-width:0; min-height:0; }
+      .duel-canvas[data-mobile-viewport="true"] .duel-row { min-width:0; min-height:0; overflow:visible; padding-inline:.6cqw; box-sizing:border-box; }
+      .duel-canvas[data-mobile-viewport="true"] .duel-slot { height:88%; max-height:100%; min-width:0; flex-shrink:1; }
+      .duel-canvas[data-mobile-viewport="true"][data-phase="SELECT"] .duel-row[aria-label="Suas cartas"] { padding-right:17%; }
+      .duel-canvas[data-mobile-viewport="true"][data-phase="SELECT"] .duel-invest { right:1.5%; top:45%; width:17%; transform:translateY(-50%); }
       .duel-rotate-hint { display:none; }
-      @media (max-width: 639px) and (orientation: portrait) {
-        .duel-canvas::after { content:'GIRE O CELULAR PARA JOGAR'; position:absolute; inset:0; z-index:100; display:grid; place-items:center; padding:2rem; background:#030711f7; color:#67e8f9; font-size:clamp(18px,5vw,28px); font-weight:900; letter-spacing:.08em; text-align:center; }
-      }
-      @media (orientation: landscape) and (max-width: 1100px) {
-        .duel-canvas:not([data-mobile-game="true"]) { position:fixed!important; left:0!important; top:0!important; right:auto!important; bottom:auto!important; z-index:9999!important; width:100vw!important; height:100dvh!important; max-width:none!important; max-height:100dvh!important; aspect-ratio:auto!important; margin:0!important; border:0!important; border-radius:0!important; overflow:hidden!important; }
-        .duel-canvas:not([data-mobile-game="true"]) .duel-layout { position:absolute!important; top:env(safe-area-inset-top)!important; right:env(safe-area-inset-right)!important; bottom:env(safe-area-inset-bottom)!important; left:env(safe-area-inset-left)!important; grid-template-rows:9% 38% 6% 38% 9%; }
-        .duel-canvas:not([data-mobile-game="true"]) .duel-row { height:100%!important; }
-        .duel-canvas:not([data-mobile-game="true"]) .duel-slot { height:min(94%,34dvh)!important; }
+      @media (max-width:639px) and (orientation:portrait) {
+        .duel-canvas::after { content:'GIRE O CELULAR PARA JOGAR'; position:absolute; inset:0; z-index:100; display:grid; place-items:center; padding:2rem; background:#030711f7; color:#67e8f9; font-size:clamp(18px,5vw,28px); font-weight:900; text-align:center; }
       }
       .duel-hud { display: flex; align-items: center; justify-content: space-between; gap: 1cqw; padding: 0 2cqw; min-width: 0; overflow: hidden; font-size: 1.1cqw; }
       .duel-hud > div:first-child { flex-wrap: nowrap; gap: 1cqw; font-size: 1.2cqw; white-space: nowrap; }
@@ -1209,6 +1208,20 @@ const DuelView: React.FC<{
           </div>
         )}
       </div>
+  );
+  return (
+    <>
+      {phonePortrait && (
+        <div className="fixed inset-0 z-[10000] grid place-items-center bg-[#030711] p-8 text-center text-white">
+          <div>
+            <div className="mx-auto mb-6 text-6xl">↻</div>
+            <h2 className="text-2xl font-black text-cyan-300">GIRE O CELULAR</h2>
+            <p className="mt-3 text-sm text-slate-300">O Nexus Duel foi preparado para jogar com o celular deitado.</p>
+            <button type="button" onClick={enterGameMode} className="mt-6 rounded-xl bg-cyan-300 px-6 py-3 font-black text-slate-950">TELA CHEIA E JOGAR</button>
+          </div>
+        </div>
+      )}
+      {mobileLandscape ? createPortal(board, document.body) : board}
     </>
   );
 };
