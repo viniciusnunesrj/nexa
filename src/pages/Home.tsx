@@ -7,7 +7,7 @@ interface HomeProps {
 
 export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   return (
-    <div className="min-h-screen bg-[#03060b] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#02040a] text-white overflow-x-hidden">
       <header className="sticky top-0 z-30 border-b border-white/[.07] bg-[#03060b]/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <button type="button" onClick={() => onNavigate('home')} className="flex items-center gap-3">
@@ -27,13 +27,13 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
       <main>
         <section className="relative isolate overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_75%_25%,rgba(6,182,212,.14),transparent_34%),radial-gradient(circle_at_25%_55%,rgba(168,85,247,.12),transparent_32%)]" />
-          <div className="mx-auto grid min-h-[560px] max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:py-20">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_22%,rgba(6,182,212,.25),transparent_34%),radial-gradient(circle_at_35%_55%,rgba(217,70,239,.18),transparent_35%),linear-gradient(180deg,transparent,rgba(3,7,18,.65))]" />
+          <div className="mx-auto grid min-h-[650px] max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:py-20">
             <div className="relative z-10">
               <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-cyan-400/[.06] px-3 py-1.5 text-[10px] font-mono font-black uppercase tracking-[.18em] text-cyan-300">
                 <Sparkles className="h-3.5 w-3.5" /> Universo NEXA
               </span>
-              <h1 className="mt-5 font-heading text-5xl font-black uppercase leading-[.95] tracking-tight sm:text-6xl lg:text-7xl">
+              <h1 className="mt-5 font-heading text-5xl font-black uppercase leading-[.9] tracking-tight sm:text-7xl lg:text-[82px]">
                 Jogue.<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400">Colecione.</span><br/>Evolua.
               </h1>
               <p className="mt-6 max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
@@ -54,12 +54,12 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            <div className="relative min-h-[390px] lg:min-h-[470px]">
-              <div className="absolute left-0 top-4 w-[82%] overflow-hidden rounded-[24px] border border-cyan-400/30 bg-[#06121c] shadow-[0_30px_90px_rgba(0,0,0,.5),0_0_50px_rgba(34,211,238,.08)]">
+            <div className="relative min-h-[420px] lg:min-h-[520px]">
+              <div className="absolute left-0 top-0 w-[88%] overflow-hidden rounded-[24px] border border-cyan-400/30 bg-[#06121c] shadow-[0_35px_100px_rgba(0,0,0,.65),0_0_65px_rgba(34,211,238,.18)]">
                 <img src="/assets/rift-battle-card.png" alt="Rift Battle V2" className="aspect-[16/9] w-full object-cover"/>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#03060b]/80 via-transparent to-transparent"/>
               </div>
-              <div className="absolute bottom-0 right-0 w-[76%] overflow-hidden rounded-[24px] border border-fuchsia-400/30 bg-[#110918] shadow-[0_30px_90px_rgba(0,0,0,.55),0_0_50px_rgba(217,70,239,.08)]">
+              <div className="absolute bottom-0 right-0 w-[82%] overflow-hidden rounded-[24px] border border-fuchsia-400/30 bg-[#110918] shadow-[0_35px_100px_rgba(0,0,0,.7),0_0_65px_rgba(217,70,239,.18)]">
                 <img src="/assets/nexus-duel-card.png" alt="Nexus Duel" className="aspect-[16/9] w-full object-cover"/>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#03060b]/80 via-transparent to-transparent"/>
               </div>
