@@ -4,6 +4,7 @@ import { GameStateProvider, useGameState } from './contexts/GameStateContext';
 import { AppLayout } from './layouts/AppLayout';
 import { Chat } from './pages/Chat';
 
+import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ResetPassword } from './pages/ResetPassword';
@@ -33,8 +34,9 @@ const AppContent: React.FC = () => {
   const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState<string>(() => {
-    // Check initial window location if user typed /register, /login, /boxes, /collections, /progression, /ranking or /play
+    // Public landing page at /; explicit paths keep their existing behavior.
     const path = window.location.pathname.replace(/^\//, '').toLowerCase();
+    if (!path) return 'home';
     if (path === 'register') return 'register';
     if (path === 'login') return 'login';
     if (path === 'reset-password') return 'reset-password';
@@ -55,7 +57,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       setPublicProfileId(null);
-      if (currentPage !== 'register' && currentPage !== 'login' && currentPage !== 'reset-password') {
+      if (currentPage !== 'home' && currentPage !== 'register' && currentPage !== 'login' && currentPage !== 'reset-password') {
         pendingProtectedPage.current = currentPage;
         setCurrentPage('login');
       }
@@ -88,6 +90,9 @@ const AppContent: React.FC = () => {
 
   // Public unauthenticated screens
   if (!isAuthenticated) {
+    if (currentPage === 'home') {
+      return <Home onNavigate={handleNavigate} />;
+    }
     if (currentPage === 'register') {
       return <Register onNavigate={handleNavigate} />;
     }
