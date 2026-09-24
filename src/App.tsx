@@ -6,6 +6,7 @@ import { Chat } from './pages/Chat';
 
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import { ResetPassword } from './pages/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
 import { Play } from './pages/Play';
 import { Games } from './pages/Games';
@@ -36,6 +37,7 @@ const AppContent: React.FC = () => {
     const path = window.location.pathname.replace(/^\//, '').toLowerCase();
     if (path === 'register') return 'register';
     if (path === 'login') return 'login';
+    if (path === 'reset-password') return 'reset-password';
     if (path === 'boxes' || path === 'caixas') return 'boxes';
     if (path === 'collections' || path === 'colecoes') return 'collections';
     if (path === 'progression' || path === 'progressao') return 'progression';
@@ -53,7 +55,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       setPublicProfileId(null);
-      if (currentPage !== 'register' && currentPage !== 'login') {
+      if (currentPage !== 'register' && currentPage !== 'login' && currentPage !== 'reset-password') {
         pendingProtectedPage.current = currentPage;
         setCurrentPage('login');
       }
@@ -89,7 +91,14 @@ const AppContent: React.FC = () => {
     if (currentPage === 'register') {
       return <Register onNavigate={handleNavigate} />;
     }
+    if (currentPage === 'reset-password') {
+      return <ResetPassword onNavigate={handleNavigate} />;
+    }
     return <Login onNavigate={handleNavigate} onSuccess={handleLoginSuccess} />;
+  }
+
+  if (currentPage === 'reset-password') {
+    return <ResetPassword onNavigate={handleNavigate} />;
   }
 
   // Authenticated screens protected by ProtectedRoute
