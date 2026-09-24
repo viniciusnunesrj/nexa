@@ -226,8 +226,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <style>{`@keyframes nexaCardRail{from{transform:translateX(0)}to{transform:translateX(calc(-50% - .1875rem))}}`}</style>
 
       <footer className="flex min-h-[28px] items-center justify-between border-t border-cyan-400/10 px-2 font-mono text-[7px] font-semibold uppercase tracking-[.14em] text-slate-600">
-        <span>NEXA&nbsp; // &nbsp;JOGUE. COLECIONE. EVOLUA.</span>
-        <span className="flex items-center gap-2"><span>VERSÃO 0.3.1&nbsp; // &nbsp;REDE NEXUS ONLINE&nbsp; // &nbsp;© 2026 DESENVOLVIDO POR VINNY</span><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.9)]"/></span>
+        <span>© 2026 DESENVOLVIDO POR VINNY</span>
+        <span className="flex items-center gap-2"><span>VERSÃO 0.3.1&nbsp; // &nbsp;REDE NEXUS ONLINE</span><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.9)]"/></span>
       </footer>
 
       {/* Sell Modal */}

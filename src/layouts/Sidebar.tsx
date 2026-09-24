@@ -454,10 +454,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               </div>
             </div>
-
-            <div className="mt-2 border-t border-white/[.05] pt-2 text-center font-mono text-[7px] font-semibold uppercase tracking-[.13em] text-slate-600">
-              NEXA&nbsp; // &nbsp;JOGUE. COLECIONE. EVOLUA.
-            </div>
           </div>
         </div>
 
