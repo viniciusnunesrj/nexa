@@ -26,3 +26,6 @@ Verificação visual com o componente real e estado sintético injetado apenas n
 
 Essas verificações são emulação de viewport, não testes físicos em Android ou Safari/iPhone.
 O Preview deve ser testado nos aparelhos reais, incluindo notch, barra do navegador e gestos do sistema.
+
+Lint e build de produção passaram. A verificação do Preview identificou 404 no acesso direto
+a `/riftbattle-v2`; `vercel.json` contém somente a rewrite dessa rota para a SPA existente.
