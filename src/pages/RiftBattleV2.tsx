@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import './RiftBattleV2.mobile.css';
 import { RotateCcw, Search, ScrollText, Swords, X, Zap } from 'lucide-react';
 import { RIFTBATTLE_V2_CARDS } from '../features/riftbattle-v2/cardCatalog';
 import { createOwnedRiftBattleCards } from '../features/riftbattle-v2/inventoryAdapter';
@@ -367,6 +369,12 @@ export const RiftBattleV2: React.FC = () => {
   const [intro, setIntro] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string>();
   const [selectedAction, setSelectedAction] = useState<'ATTACK' | 'ABILITY'>();
+  const mobileControlsRef = useRef<HTMLElement>(null);
+  const humanFieldRef = useRef<HTMLDivElement>(null);
+  const enemyFieldRef = useRef<HTMLDivElement>(null);
+  const mobileReturnToField = useRef(true);
+  const previousMobileAction = useRef(selectedAction);
+  const [mobileControlsHeight, setMobileControlsHeight] = useState(0);
   const [message, setMessage] = useState('');
   const validationRequestRef = useRef<{ key: string; requestId: string }>();
   const validationBusyRef = useRef(false);
@@ -408,6 +416,73 @@ export const RiftBattleV2: React.FC = () => {
   const selectedAbility = selectedEntry?.card.ability?.id;
   const targetMode = Boolean(selectedAction);
   const targetPlayer = selectedAbility === 'IMPULSO' ? currentPlayer : opponent;
+  const mobileAllyTarget = selectedAction === 'ABILITY' && selectedAbility === 'IMPULSO';
+  useEffect(() => {
+    if (screen !== 'BATTLE') return;
+    const viewport = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+    if (!viewport) return;
+    const original = viewport.content;
+    viewport.content = `${original.replace(/,?\s*viewport-fit=[^,]+/, '')}, viewport-fit=cover`;
+    return () => { viewport.content = original; };
+  }, [screen]);
+  // Presentation only: measure the fixed dock so the last card/log can scroll clear of it.
+  useEffect(() => {
+    if (screen !== 'BATTLE' || state.result || !mobileControlsRef.current) {
+      setMobileControlsHeight(0);
+      return;
+    }
+    const dock = mobileControlsRef.current;
+    const measure = () => {
+      const height = Math.ceil(dock.getBoundingClientRect().height);
+      setMobileControlsHeight(height);
+      document.documentElement.style.setProperty('--rift-mobile-dock-height', `${height}px`);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(dock);
+    measure();
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--rift-mobile-dock-height');
+    };
+  }, [screen, state.result]);
+
+  useEffect(() => {
+    if (screen !== 'BATTLE') {
+      mobileReturnToField.current = true;
+      previousMobileAction.current = undefined;
+      return;
+    }
+    if (state.result || !window.matchMedia('(max-width: 1023px)').matches) return;
+    if (previousMobileAction.current && !selectedAction) mobileReturnToField.current = true;
+    previousMobileAction.current = selectedAction;
+    if (combatAnimation || abilityAnimation || deployAnimation) return;
+    const field = selectedAction
+      ? (mobileAllyTarget ? humanFieldRef.current : enemyFieldRef.current)
+      : mobileReturnToField.current ? humanFieldRef.current : null;
+    if (!field) return;
+    const frame = requestAnimationFrame(() => {
+      mobileReturnToField.current = false;
+      field.scrollIntoView({
+        block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [screen, state.result, selectedAction, mobileAllyTarget, combatAnimation, abilityAnimation, deployAnimation]);
+
+  useEffect(() => {
+    if (screen !== 'BATTLE' || state.result) return;
+    const orientation = window.matchMedia('(orientation: landscape)');
+    let frame = 0;
+    const keepFieldVisible = () => {
+      if (!window.matchMedia('(max-width: 1023px)').matches) return;
+      frame = requestAnimationFrame(() => {
+        const field = selectedAction && !mobileAllyTarget ? enemyFieldRef.current : humanFieldRef.current;
+        field?.scrollIntoView({ block: 'start', behavior: 'instant' });
+      });
+    };
+    orientation.addEventListener('change', keepFieldVisible);
+    return () => { orientation.removeEventListener('change', keepFieldVisible); cancelAnimationFrame(frame); };
+  }, [screen, state.result, selectedAction, mobileAllyTarget]);
   const activeCards = currentPlayer.cards.filter((entry) => entry.state === 'ACTIVE');
   const filteredCatalog = useMemo(
     () => ownedPlayableCards.filter((card) => card.name.toLowerCase().includes(search.toLowerCase()) && (!costFilter || card.deployCost === costFilter)),
@@ -840,7 +915,7 @@ export const RiftBattleV2: React.FC = () => {
         <div className={`relative mx-auto flex max-w-5xl flex-col items-center justify-center gap-1.5 ${isWarLayout ? 'lg:max-w-[650px]' : state.arena.activeSlots === 3 ? 'lg:max-w-[620px]' : 'lg:max-w-[560px]'}`}>
           {playerId === AI_PLAYER_ID && reserve.length > 0 && renderReserveRail(reserve)}
 
-          <div className={`relative w-full rounded-2xl border px-2 pb-2 pt-5 ${isWarLayout ? 'max-w-[560px]' : state.arena.activeSlots === 3 ? 'max-w-[500px]' : 'max-w-[420px]'} ${playerId === AI_PLAYER_ID ? 'border-fuchsia-300/15 bg-fuchsia-500/[0.025]' : 'border-cyan-300/15 bg-cyan-500/[0.025]'}`}>
+          <div ref={playerId === HUMAN_PLAYER_ID ? humanFieldRef : enemyFieldRef} data-mobile-target={targetMode && playerId === (mobileAllyTarget ? HUMAN_PLAYER_ID : AI_PLAYER_ID) ? 'true' : undefined} className={`rift-mobile-field relative w-full rounded-2xl border px-2 pb-2 pt-5 ${isWarLayout ? 'max-w-[560px]' : state.arena.activeSlots === 3 ? 'max-w-[500px]' : 'max-w-[420px]'} ${playerId === AI_PLAYER_ID ? 'border-fuchsia-300/15 bg-fuchsia-500/[0.025]' : 'border-cyan-300/15 bg-cyan-500/[0.025]'}`}>
             <span className={`pointer-events-none absolute left-3 top-1 text-[8px] font-black uppercase tracking-[0.28em] ${playerId === AI_PLAYER_ID ? 'text-fuchsia-100/65' : 'text-cyan-100/65'}`}>{playerId === AI_PLAYER_ID ? 'CAMPO INIMIGO' : 'SEU CAMPO'}</span>
             <div
               className={`grid min-w-0 flex-1 ${isWarLayout ? 'gap-2' : 'gap-1.5 sm:gap-2 lg:gap-3'}`}
@@ -3094,7 +3169,7 @@ export const RiftBattleV2: React.FC = () => {
       </style>
       
 
-    <div className="relative mx-auto min-h-0 max-w-6xl overflow-visible pb-2 text-slate-100 lg:flex lg:h-[calc(100dvh-7rem)] lg:overflow-hidden lg:flex-col">
+    <div style={{ '--rift-mobile-dock-height': `${mobileControlsHeight}px` } as React.CSSProperties} className="rift-battle-mobile-root relative mx-auto min-h-0 max-w-6xl overflow-visible pb-2 text-slate-100 lg:flex lg:h-[calc(100dvh-7rem)] lg:overflow-hidden lg:flex-col">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(45,20,80,0.38),transparent_62%),radial-gradient(ellipse_at_20%_55%,rgba(34,211,238,0.12),transparent_34%),radial-gradient(ellipse_at_80%_45%,rgba(217,70,239,0.13),transparent_34%)]" />
       <div className="pointer-events-none absolute inset-x-[-15%] top-1/2 -z-10 h-[46%] -translate-y-1/2 skew-y-[-4deg] opacity-30 [background-image:linear-gradient(rgba(103,232,249,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(217,70,239,0.12)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,transparent,black_28%,black_72%,transparent)]" />
       <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-32 w-2/3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-500/10 blur-3xl" />
@@ -3533,9 +3608,9 @@ export const RiftBattleV2: React.FC = () => {
       </aside>
       </div>
 
-      <section className="relative z-30 shrink-0 border-t border-cyan-400/20 bg-[#07101b]/95 px-3 py-1.5 shadow-[0_-12px_35px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:sticky sm:bottom-0 sm:mt-1 sm:rounded-2xl sm:border lg:hidden">
+      {!state.result && createPortal(<section ref={mobileControlsRef} aria-label="Controles de combate" data-target-mode={targetMode} className="rift-mobile-controls border-t border-cyan-400/30 bg-[#07101b]/95 shadow-[0_-12px_35px_rgba(0,0,0,0.45)] backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2">
-          <div className="mr-auto min-w-[150px] max-w-[280px]"><p className="text-[10px] uppercase tracking-widest text-slate-500">{targetMode ? 'Aguardando alvo' : selectedEntry ? 'Carta selecionada' : 'Próxima ação'}</p><p className="truncate text-sm font-bold text-slate-100">{targetMode ? 'SELECIONE UM ALVO' : selectedEntry?.card.name ?? 'Selecione uma carta'}</p><p className="mt-0.5 truncate text-[9px] text-slate-500">{actionHint}</p>{state.currentPlayerId === HUMAN_PLAYER_ID && <p className={`mt-0.5 text-[9px] font-black uppercase tracking-wider ${hasUsefulTurnOption ? 'text-amber-200/80' : 'text-cyan-200/70'}`}>{readyActionCount > 0 ? `${readyActionCount} ${readyActionCount === 1 ? 'ação pronta' : 'ações prontas'}` : hasOpenActiveSlot && affordableReserveCount > 0 ? `${affordableReserveCount} deploy disponível` : 'turno pode ser encerrado'}</p>}</div>
+          <div className="rift-mobile-action-status w-full" role="status" aria-live="polite" aria-atomic="true"><p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">{targetMode ? `${selectedAction === 'ATTACK' ? 'Ataque' : 'Habilidade'} · escolha o alvo` : `Turno ${state.turn} · ⚡ ${humanPlayer.currentEnergy}/${humanPlayer.maxEnergy}`}</p><p className="text-sm font-bold text-slate-100">{targetMode ? (mobileAllyTarget ? 'Toque em uma carta aliada destacada' : 'Toque em uma carta adversária destacada') : state.currentPlayerId !== HUMAN_PLAYER_ID ? 'Aguarde o adversário' : selectedEntry?.card.name ?? 'Selecione uma carta'}</p><p className="mt-0.5 text-xs text-slate-300">{targetMode ? `${selectedEntry?.card.name ?? ''} · cancelar não gasta a ação.` : state.currentPlayerId === HUMAN_PLAYER_ID ? actionHint : 'As ações aparecem no seu turno.'}</p>{message && <p className="mt-1 text-xs text-amber-200">{message}</p>}</div>
           {targetMode && <button type="button" onClick={() => setSelectedAction(undefined)} className="rounded-xl border border-white/15 px-3 py-2 text-xs font-bold text-slate-300">CANCELAR</button>}
           {!targetMode && state.currentPlayerId === HUMAN_PLAYER_ID && selectedEntry?.state === 'RESERVE' && <button type="button" onClick={() => perform({ type: 'DEPLOY_CARD', playerId: HUMAN_PLAYER_ID, cardId: selectedEntry.card.id }, 'Carta colocada em campo.')} className="rounded-xl bg-cyan-400 px-3 py-2 text-xs font-black text-slate-950">COLOCAR EM CAMPO</button>}
           {!targetMode && canAct && <button type="button" onClick={() => setSelectedAction('ATTACK')} className="inline-flex items-center gap-1 rounded-xl border border-cyan-300/50 px-3 py-2 text-xs font-black text-cyan-100"><Swords size={14} /> ATACAR</button>}
@@ -3543,7 +3618,7 @@ export const RiftBattleV2: React.FC = () => {
           {!targetMode && canAct && availableAbility && PASSIVE_ABILITIES.has(availableAbility) && <span className="rounded-xl border border-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Passiva · {availableAbility}</span>}
           {state.currentPlayerId === HUMAN_PLAYER_ID ? <button type="button" onClick={() => perform({ type: 'END_TURN', playerId: HUMAN_PLAYER_ID }, 'Turno encerrado.')} className={`rounded-xl border px-3 py-2 text-xs font-black transition-colors ${!targetMode && !hasUsefulTurnOption ? 'border-cyan-300/35 bg-cyan-400/[0.06] text-cyan-100' : hasUsefulTurnOption ? 'border-amber-300/35 bg-amber-400/[0.06] text-amber-100' : 'border-white/20 text-slate-100'}`}>{endTurnLabel}</button> : <span className="rounded-xl border border-fuchsia-300/20 px-3 py-2 text-xs font-black text-fuchsia-200">ADVERSÁRIO JOGANDO...</span>}
         </div>
-      </section>
+      </section>, document.body)}
 
       <div className="relative mt-2 flex items-center justify-between">
         <button type="button" aria-expanded={showLog} onClick={() => setShowLog((open) => !open)} className="inline-flex items-center gap-2 text-xs text-slate-500 hover:text-slate-300"><ScrollText size={14} /> Registro de combate {showLog ? '▲' : '▼'}</button>

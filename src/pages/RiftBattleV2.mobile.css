@@ -1,0 +1,54 @@
+/* Only RiftBattle V2's in-match mobile UI. Desktop and other games are unchanged. */
+@media (max-width: 1023px) {
+  .rift-battle-mobile-root {
+    padding-bottom: calc(var(--rift-mobile-dock-height, 0px) + 20px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .rift-mobile-controls {
+    position: fixed;
+    z-index: 45;
+    inset: auto 0 0;
+    padding: 10px max(12px, env(safe-area-inset-right, 0px))
+      max(10px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+    max-height: 48vh;
+    max-height: 48dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .rift-mobile-controls button {
+    min-height: 44px;
+    flex: 1 1 auto;
+    touch-action: manipulation;
+  }
+  .rift-mobile-controls[data-target-mode="true"] {
+    border-color: #67e8f9;
+    background: #08202e;
+  }
+  .rift-mobile-field {
+    scroll-margin-top: calc(88px + env(safe-area-inset-top, 0px));
+    scroll-margin-bottom: calc(var(--rift-mobile-dock-height, 0px) + 16px);
+  }
+  .rift-mobile-field[data-mobile-target="true"] {
+    outline: 2px solid #67e8f9;
+    outline-offset: 3px;
+    box-shadow: 0 0 24px #22d3ee40;
+  }
+  /* Keep the global chat launcher clear of combat controls only while this dock exists. */
+  body:has(.rift-mobile-controls) button[title="Abrir Chat Global"] {
+    bottom: calc(var(--rift-mobile-dock-height, 0px) + 12px);
+  }
+}
+
+@media (max-width: 1023px) and (max-height: 500px) {
+  .rift-mobile-controls .rift-mobile-action-status {
+    width: auto;
+    flex: 1 1 36%;
+  }
+  .rift-mobile-controls { padding-top: 6px; }
+  .rift-mobile-field { scroll-margin-top: calc(72px + env(safe-area-inset-top, 0px)); }
+  .rift-mobile-field button { padding: 6px; }
+  .rift-mobile-field button > img {
+    height: clamp(24px, calc(100dvh - 336px - env(safe-area-inset-bottom, 0px)), 64px);
+  }
+}
