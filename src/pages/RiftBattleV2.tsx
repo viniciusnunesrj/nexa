@@ -3618,6 +3618,19 @@ export const RiftBattleV2: React.FC = () => {
       </aside>
       </div>
 
+      <style>{`
+        @media (max-width: 1023px) {
+          .rift-mobile-controls { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
+          .rift-mobile-controls button { min-height: 44px; touch-action: manipulation; }
+          .rift-mobile-field { scroll-margin-top: max(5rem, env(safe-area-inset-top)); scroll-margin-bottom: 8rem; }
+        }
+        @media (max-width: 1023px) and (max-height: 500px) and (orientation: landscape) {
+          .rift-mobile-controls { padding-top: 0.25rem; padding-bottom: max(0.25rem, env(safe-area-inset-bottom)); }
+          .rift-mobile-controls button { min-height: 40px; padding-top: 0.4rem; padding-bottom: 0.4rem; }
+          .rift-mobile-field button > img { height: clamp(32px, 13vh, 58px); }
+        }
+      `}</style>
+
       <section className="rift-mobile-controls sticky bottom-0 z-30 shrink-0 border-t border-cyan-400/20 bg-[#07101b]/95 px-3 py-2 shadow-[0_-12px_35px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:mt-1 sm:rounded-2xl sm:border lg:hidden">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2">
           <div className="mr-auto min-w-[150px] max-w-[280px]"><p className="text-[10px] uppercase tracking-widest text-slate-500">{targetMode ? 'Aguardando alvo' : selectedEntry ? 'Carta selecionada' : 'Próxima ação'}</p><p className="truncate text-sm font-bold text-slate-100">{targetMode ? 'SELECIONE UM ALVO' : selectedEntry?.card.name ?? 'Selecione uma carta'}</p><p className="mt-0.5 truncate text-[9px] text-slate-500">{actionHint}</p>{state.currentPlayerId === HUMAN_PLAYER_ID && <p className={`mt-0.5 text-[9px] font-black uppercase tracking-wider ${hasUsefulTurnOption ? 'text-amber-200/80' : 'text-cyan-200/70'}`}>{readyActionCount > 0 ? `${readyActionCount} ${readyActionCount === 1 ? 'ação pronta' : 'ações prontas'}` : hasOpenActiveSlot && affordableReserveCount > 0 ? `${affordableReserveCount} deploy disponível` : 'turno pode ser encerrado'}</p>}</div>
