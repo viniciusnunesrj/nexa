@@ -20,7 +20,7 @@ export const BoxRewardsModal: React.FC<BoxRewardsModalProps> = ({ boxType, isOpe
 
   const def = BOX_DEFINITIONS[boxType];
   const config = BOX_CONFIG[boxType];
-  const dropRates = config?.rates || {
+  const dropRates = def?.dropRates || {
     Comum: 0,
     Incomum: 0,
     Raro: 0,
