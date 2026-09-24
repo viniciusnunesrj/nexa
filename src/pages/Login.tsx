@@ -59,113 +59,30 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#070709] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
-      {/* Dynamic Background Gradients */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="relative w-full max-w-md rounded-3xl bg-[#0b0c14]/95 border border-white/10 p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
-        {/* Logo & Brand Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-600 via-cyan-400 to-indigo-600 text-slate-950 font-brand font-black text-2xl shadow-[0_0_25px_rgba(6,182,212,0.4)] mb-3">
-            N
+    <div className="min-h-screen bg-[#02040a] text-white relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_70%,rgba(6,182,212,.18),transparent_32%),radial-gradient(circle_at_85%_20%,rgba(168,85,247,.16),transparent_30%)]" />
+      <div className="relative mx-auto grid min-h-screen max-w-7xl lg:grid-cols-[1.05fr_.95fr]">
+        <section className="relative hidden overflow-hidden border-r border-white/[.07] lg:flex lg:flex-col lg:justify-between lg:p-12">
+          <img src="/assets/rift-battle-card.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-60"/>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#02040a]/55 via-[#02040a]/68 to-[#02040a]"/>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#02040a] via-transparent to-[#02040a]/60"/>
+          <button type="button" onClick={()=>onNavigate('home')} className="relative z-10 flex w-fit items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 via-cyan-300 to-indigo-500 font-brand text-xl font-black text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.35)]">N</span><span className="font-brand text-2xl font-black tracking-[.18em]">NEXA</span></button>
+          <div className="relative z-10 max-w-lg pb-8"><span className="font-mono text-[10px] font-black uppercase tracking-[.22em] text-cyan-300">Continue sua jornada</span><h1 className="mt-4 font-heading text-5xl font-black uppercase leading-[.92]">Sua coleção.<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-fuchsia-400">Suas batalhas.</span></h1><p className="mt-5 max-w-md text-sm leading-7 text-slate-300">Entre na sua conta para voltar ao Rift Battle, Nexus Duel, coleção e progressão.</p></div>
+        </section>
+        <section className="flex items-center justify-center p-4 sm:p-8 lg:p-12">
+          <div className="w-full max-w-md">
+            <button type="button" onClick={()=>onNavigate('home')} className="mb-8 flex items-center gap-3 lg:hidden"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 via-cyan-300 to-indigo-500 font-brand text-lg font-black text-slate-950">N</span><span className="font-brand text-xl font-black tracking-[.16em]">NEXA</span></button>
+            <div className="mb-8"><span className="font-mono text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">Acessar conta</span><h2 className="mt-2 font-heading text-3xl font-black uppercase sm:text-4xl">Bem-vindo de volta</h2><p className="mt-2 text-sm text-slate-400">Entre para continuar de onde parou.</p></div>
+            {(error || authError) && <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/40 bg-red-950/40 p-3.5 text-xs text-red-300"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0"/><span role="alert">{error || authError}</span></div>}
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div><label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><User className="h-3.5 w-3.5 text-cyan-400"/>Usuário ou e-mail</label><input type="text" value={identifier} onChange={(e)=>setIdentifier(e.target.value)} placeholder="Digite seu usuário ou e-mail" disabled={isLoading} className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/></div>
+              <div><div className="mb-1.5 flex items-center justify-between"><label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Lock className="h-3.5 w-3.5 text-cyan-400"/>Senha</label><button type="button" onClick={()=>setShowForgotModal(true)} className="text-[11px] font-bold text-cyan-300 hover:text-cyan-200">Esqueci minha senha</button></div><input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Sua senha" disabled={isLoading} className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/></div>
+              <button type="submit" disabled={isLoading} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-cyan-400 py-4 font-heading text-xs font-black uppercase tracking-[.12em] text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.18)] transition hover:brightness-110 disabled:opacity-50">{isLoading ? <><Loader2 className="h-4 w-4 animate-spin"/>Entrando...</> : <>Entrar no NEXA <ArrowRight className="h-4 w-4"/></>}</button>
+            </form>
+            <div className="mt-6 border-t border-white/[.08] pt-5 text-center text-xs text-slate-400">Novo no NEXA? <button type="button" onClick={()=>onNavigate('register')} className="font-bold text-cyan-300 hover:text-cyan-200">Criar conta grátis</button></div>
           </div>
-          <h1 className="font-brand text-3xl font-black tracking-wider text-white">
-            NEXA
-          </h1>
-          <p className="text-sm font-heading font-medium text-cyan-400 tracking-wide mt-1">
-            Jogue. Evolua. Negocie.
-          </p>
-        </div>
-
-        {/* Error Feedback Message */}
-        {(error || authError) && (
-          <div className="mb-5 p-3.5 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-xs font-mono flex items-start gap-2.5 animate-fadeIn">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-            <span role="alert">{error || authError}</span>
-          </div>
-        )}
-
-        {/* Login Form */}
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-xs font-mono text-slate-300 uppercase mb-1.5 flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Username ou E-mail</span>
-            </label>
-            <input
-              type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="Digite seu username ou e-mail"
-              disabled={isLoading}
-              className="w-full bg-[#131422] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono transition-colors"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-mono text-slate-300 uppercase flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Senha</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowForgotModal(true)}
-                className="text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors"
-              >
-                Esqueci minha senha
-              </button>
-            </div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••••••"
-              disabled={isLoading}
-              className="w-full bg-[#131422] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono transition-colors"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full mt-2 py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-heading font-black text-sm uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
-                <span>Autenticando...</span>
-              </>
-            ) : (
-              <>
-                <span>ENTRAR</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Link to Register */}
-        <div className="mt-6 pt-4 border-t border-white/10 text-center">
-          <p className="text-xs font-mono text-slate-400">
-            Não tem uma conta de piloto?{' '}
-            <button
-              type="button"
-              onClick={() => onNavigate('register')}
-              className="text-cyan-400 hover:text-cyan-300 font-bold underline transition-colors"
-            >
-              Criar conta
-            </button>
-          </p>
-        </div>
-
-        {/* Development Mode Notice */}
-        <div className="mt-5 text-center text-[10px] font-mono text-slate-500">
-          Acesso online pelo Supabase. Contas locais antigas permanecem preservadas neste navegador.
-        </div>
+        </section>
       </div>
-
       {/* Forgot Password Modal */}
       {showForgotModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
