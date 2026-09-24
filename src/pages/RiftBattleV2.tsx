@@ -1095,6 +1095,18 @@ export const RiftBattleV2: React.FC = () => {
   const hasOpenActiveSlot = humanPlayer.cards.filter((entry) => entry.state === 'ACTIVE').length < state.arena.activeSlots;
   const hasUsefulTurnOption = state.currentPlayerId === HUMAN_PLAYER_ID
     && (readyActionCount > 0 || (hasOpenActiveSlot && affordableReserveCount > 0));
+  useEffect(() => {
+    if (screen !== 'BATTLE' || state.phase === 'FINISHED' || state.result
+      || state.currentPlayerId !== HUMAN_PLAYER_ID || hasUsefulTurnOption
+      || combatAnimation || abilityAnimation || deployAnimation || selectedAction) return;
+    const pendingState = state;
+    const timer = window.setTimeout(() => {
+      // Recheck the exact state before using the same validated action path as the manual button.
+      if (stateRef.current !== pendingState || validationBusyRef.current) return;
+      perform({ type: 'END_TURN', playerId: HUMAN_PLAYER_ID }, 'Turno encerrado automaticamente.');
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [screen, state, hasUsefulTurnOption, combatAnimation, abilityAnimation, deployAnimation, selectedAction]);
   const endTurnLabel = readyActionCount > 0
     ? `ENCERRAR · ${readyActionCount} ${readyActionCount === 1 ? 'AÇÃO RESTANTE' : 'AÇÕES RESTANTES'}`
     : hasOpenActiveSlot && affordableReserveCount > 0
