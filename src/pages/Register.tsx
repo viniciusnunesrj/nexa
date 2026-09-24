@@ -6,13 +6,8 @@ import {
   Mail,
   Lock,
   ArrowRight,
-  Sparkles,
   AlertCircle,
   Loader2,
-  CheckCircle2,
-  Coins,
-  Shield,
-  Gift,
 } from 'lucide-react';
 
 interface RegisterProps {
@@ -99,158 +94,54 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate, onSuccess }) => 
   };
 
   return (
-    <div className="min-h-screen bg-[#070709] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
-      {/* Dynamic Background Gradients */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-cyan-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="relative w-full max-w-lg rounded-3xl bg-[#0b0c14]/95 border border-white/10 p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
-        {/* Logo & Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-600 via-cyan-400 to-indigo-600 text-slate-950 font-brand font-black text-2xl shadow-[0_0_25px_rgba(6,182,212,0.4)] mb-3">
-            N
-          </div>
-          <h1 className="font-brand text-3xl font-black tracking-wider text-white">
-            NEXA
-          </h1>
-          <p className="text-sm font-heading font-medium text-cyan-400 tracking-wide mt-1">
-            Jogue. Evolua. Negocie.
-          </p>
-        </div>
-
-        {/* Starter Pack Incentive Banner */}
-        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-indigo-950/30 to-purple-950/40 border border-cyan-500/30">
-          <div className="flex items-center gap-2 text-cyan-300 text-xs font-mono font-bold mb-2">
-            <Gift className="w-4 h-4 text-cyan-400" />
-            <span>KIT INICIAL DE BOAS-VINDAS GARANTIDO</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-center text-[11px] font-mono text-slate-300">
-            <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-              <span className="block text-cyan-400 font-bold">+1.000 NEX</span>
-              <span className="text-[10px] text-slate-400">Para sua primeira caixa</span>
-            </div>
-            <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-              <span className="block text-emerald-400 font-bold">1 Herói</span>
-              <span className="text-[10px] text-slate-400">Recruta Inicial</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Error Feedback Message */}
-        {(error || authError) && (
-          <div className="mb-5 p-3.5 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-xs font-mono flex items-start gap-2.5 animate-fadeIn">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-            <span role="alert">{error || authError}</span>
-          </div>
-        )}
-
-        {message && (
-          <div role="status" className="mb-5 p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/40 text-cyan-200 text-sm">
-            {message}
-          </div>
-        )}
-
-        {/* Registration Form */}
-        <form onSubmit={handleSubmit} className="space-y-3.5">
-          <div>
-            <label className="block text-xs font-mono text-slate-300 uppercase mb-1 flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Username</span>
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ex: Piloto_Kaelen (mínimo 3 caracteres)"
-              disabled={isLoading}
-              className="w-full bg-[#131422] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono transition-colors"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-mono text-slate-300 uppercase mb-1 flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-cyan-400" />
-              <span>E-mail</span>
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu.email@exemplo.com"
-              disabled={isLoading}
-              className="w-full bg-[#131422] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono transition-colors"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-mono text-slate-300 uppercase mb-1 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Senha</span>
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                disabled={isLoading}
-                className="w-full bg-[#131422] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono transition-colors"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono text-slate-300 uppercase mb-1 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Confirmar Senha</span>
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Repita sua senha"
-                disabled={isLoading}
-                className="w-full bg-[#131422] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 font-mono transition-colors"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full mt-3 py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-heading font-black text-sm uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
-                <span>Criando sua Conta...</span>
-              </>
-            ) : (
-              <>
-                <span>CADASTRAR E RECEBER KIT</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
+    <div className="min-h-screen bg-[#02040a] text-white relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(217,70,239,.18),transparent_30%),radial-gradient(circle_at_80%_70%,rgba(6,182,212,.16),transparent_34%)]" />
+      <div className="relative mx-auto grid min-h-screen max-w-7xl lg:grid-cols-[1.05fr_.95fr]">
+        <section className="relative hidden overflow-hidden border-r border-white/[.07] lg:flex lg:flex-col lg:justify-between lg:p-12">
+          <img src="/assets/nexus-duel-card.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#02040a]/60 via-[#02040a]/70 to-[#02040a]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#02040a] via-transparent to-[#02040a]/60" />
+          <button type="button" onClick={() => onNavigate('home')} className="relative z-10 flex w-fit items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 via-cyan-300 to-indigo-500 font-brand text-xl font-black text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.35)]">N</span>
+            <span className="font-brand text-2xl font-black tracking-[.18em]">NEXA</span>
           </button>
-        </form>
+          <div className="relative z-10 max-w-lg pb-8">
+            <span className="font-mono text-[10px] font-black uppercase tracking-[.22em] text-fuchsia-300">Sua jornada começa aqui</span>
+            <h1 className="mt-4 font-heading text-5xl font-black uppercase leading-[.92]">Entre no<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-fuchsia-400">universo NEXA.</span></h1>
+            <p className="mt-5 max-w-md text-sm leading-7 text-slate-300">Batalhe, construa sua coleção e avance em experiências conectadas pela mesma conta.</p>
+            <div className="mt-7 inline-flex rounded-xl border border-cyan-400/25 bg-black/35 px-4 py-3 backdrop-blur-md">
+              <div><span className="block font-heading text-lg font-black text-cyan-300">1.000 NEX</span><span className="text-[10px] uppercase tracking-wider text-slate-400">saldo inicial da nova conta</span></div>
+            </div>
+          </div>
+        </section>
 
-        {/* Link back to Login */}
-        <div className="mt-6 pt-4 border-t border-white/10 text-center">
-          <p className="text-xs font-mono text-slate-400">
-            Já possui uma credencial de piloto?{' '}
-            <button
-              type="button"
-              onClick={() => onNavigate('login')}
-              className="text-cyan-400 hover:text-cyan-300 font-bold underline transition-colors"
-            >
-              Fazer login
+        <section className="flex items-center justify-center p-4 sm:p-8 lg:p-12">
+          <div className="w-full max-w-lg">
+            <button type="button" onClick={() => onNavigate('home')} className="mb-8 flex items-center gap-3 lg:hidden">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 via-cyan-300 to-indigo-500 font-brand text-lg font-black text-slate-950">N</span>
+              <span className="font-brand text-xl font-black tracking-[.16em]">NEXA</span>
             </button>
-          </p>
-        </div>
+            <div className="mb-7">
+              <span className="font-mono text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">Criar conta</span>
+              <h2 className="mt-2 font-heading text-3xl font-black uppercase sm:text-4xl">Comece a jogar</h2>
+              <p className="mt-2 text-sm text-slate-400">Crie sua conta gratuita e receba 1.000 NEX para começar.</p>
+            </div>
 
-        {/* Development Mode Notice */}
-        <div className="mt-4 text-center text-[10px] font-mono text-slate-500">
-          Cadastro online pelo Supabase. Seu progresso local anterior será preservado.
-        </div>
+            {(error || authError) && <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/40 bg-red-950/40 p-3.5 text-xs text-red-300"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0"/><span role="alert">{error || authError}</span></div>}
+            {message && <div role="status" className="mb-5 rounded-xl border border-cyan-500/40 bg-cyan-950/40 p-3.5 text-sm text-cyan-200">{message}</div>}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div><label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><User className="h-3.5 w-3.5 text-cyan-400"/>Nome de usuário</label><input type="text" value={username} onChange={(e)=>setUsername(e.target.value)} placeholder="Como você quer ser chamado no NEXA" disabled={isLoading} className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/></div>
+              <div><label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Mail className="h-3.5 w-3.5 text-cyan-400"/>E-mail</label><input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="seu@email.com" disabled={isLoading} className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/></div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div><label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Lock className="h-3.5 w-3.5 text-cyan-400"/>Senha</label><input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" disabled={isLoading} className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/></div>
+                <div><label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Lock className="h-3.5 w-3.5 text-cyan-400"/>Confirmar senha</label><input type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} placeholder="Repita sua senha" disabled={isLoading} className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/></div>
+              </div>
+              <button type="submit" disabled={isLoading} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-cyan-400 py-4 font-heading text-xs font-black uppercase tracking-[.12em] text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.18)] transition hover:brightness-110 disabled:opacity-50">{isLoading ? <><Loader2 className="h-4 w-4 animate-spin"/>Criando conta...</> : <>Criar minha conta <ArrowRight className="h-4 w-4"/></>}</button>
+            </form>
+            <div className="mt-6 border-t border-white/[.08] pt-5 text-center text-xs text-slate-400">Já tem uma conta? <button type="button" onClick={()=>onNavigate('login')} className="font-bold text-cyan-300 hover:text-cyan-200">Entrar no NEXA</button></div>
+          </div>
+        </section>
       </div>
     </div>
   );
