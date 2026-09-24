@@ -367,6 +367,8 @@ export const RiftBattleV2: React.FC = () => {
   const [intro, setIntro] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string>();
   const [selectedAction, setSelectedAction] = useState<'ATTACK' | 'ABILITY'>();
+  const humanFieldRef = useRef<HTMLDivElement>(null);
+  const enemyFieldRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState('');
   const validationRequestRef = useRef<{ key: string; requestId: string }>();
   const validationBusyRef = useRef(false);
@@ -414,6 +416,14 @@ export const RiftBattleV2: React.FC = () => {
   const selectedAbility = selectedEntry?.card.ability?.id;
   const targetMode = Boolean(selectedAction);
   const targetPlayer = selectedAbility === 'IMPULSO' ? currentPlayer : opponent;
+  const mobileAllyTarget = selectedAction === 'ABILITY' && selectedAbility === 'IMPULSO';
+
+  useEffect(() => {
+    if (screen !== 'BATTLE' || state.result || !selectedAction || !window.matchMedia('(max-width: 1023px)').matches) return;
+    const field = mobileAllyTarget ? humanFieldRef.current : enemyFieldRef.current;
+    const frame = window.requestAnimationFrame(() => field?.scrollIntoView({ block: 'center', behavior: 'smooth' }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [screen, state.result, selectedAction, mobileAllyTarget]);
   const activeCards = currentPlayer.cards.filter((entry) => entry.state === 'ACTIVE');
   const filteredCatalog = useMemo(
     () => ownedPlayableCards.filter((card) => card.name.toLowerCase().includes(search.toLowerCase()) && (!costFilter || card.deployCost === costFilter)),
@@ -906,7 +916,7 @@ export const RiftBattleV2: React.FC = () => {
         <div className={`relative mx-auto flex max-w-5xl flex-col items-center justify-center gap-1.5 ${isWarLayout ? 'lg:max-w-[650px]' : state.arena.activeSlots === 3 ? 'lg:max-w-[620px]' : 'lg:max-w-[560px]'}`}>
           {playerId === AI_PLAYER_ID && reserve.length > 0 && renderReserveRail(reserve)}
 
-          <div className={`relative w-full rounded-2xl border px-2 pb-2 pt-5 ${isWarLayout ? 'max-w-[560px]' : state.arena.activeSlots === 3 ? 'max-w-[500px]' : 'max-w-[420px]'} ${playerId === AI_PLAYER_ID ? 'border-fuchsia-300/15 bg-fuchsia-500/[0.025]' : 'border-cyan-300/15 bg-cyan-500/[0.025]'}`}>
+          <div ref={playerId === HUMAN_PLAYER_ID ? humanFieldRef : enemyFieldRef} className={`rift-mobile-field relative w-full rounded-2xl border px-2 pb-2 pt-5 ${isWarLayout ? 'max-w-[560px]' : state.arena.activeSlots === 3 ? 'max-w-[500px]' : 'max-w-[420px]'} ${playerId === AI_PLAYER_ID ? 'border-fuchsia-300/15 bg-fuchsia-500/[0.025]' : 'border-cyan-300/15 bg-cyan-500/[0.025]'}`}>
             <span className={`pointer-events-none absolute left-3 top-1 text-[8px] font-black uppercase tracking-[0.28em] ${playerId === AI_PLAYER_ID ? 'text-fuchsia-100/65' : 'text-cyan-100/65'}`}>{playerId === AI_PLAYER_ID ? 'CAMPO INIMIGO' : 'SEU CAMPO'}</span>
             <div
               className={`grid min-w-0 flex-1 ${isWarLayout ? 'gap-2' : 'gap-1.5 sm:gap-2 lg:gap-3'}`}
@@ -3608,7 +3618,7 @@ export const RiftBattleV2: React.FC = () => {
       </aside>
       </div>
 
-      <section className="relative z-30 shrink-0 border-t border-cyan-400/20 bg-[#07101b]/95 px-3 py-1.5 shadow-[0_-12px_35px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:sticky sm:bottom-0 sm:mt-1 sm:rounded-2xl sm:border lg:hidden">
+      <section className="rift-mobile-controls sticky bottom-0 z-30 shrink-0 border-t border-cyan-400/20 bg-[#07101b]/95 px-3 py-2 shadow-[0_-12px_35px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:mt-1 sm:rounded-2xl sm:border lg:hidden">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2">
           <div className="mr-auto min-w-[150px] max-w-[280px]"><p className="text-[10px] uppercase tracking-widest text-slate-500">{targetMode ? 'Aguardando alvo' : selectedEntry ? 'Carta selecionada' : 'Próxima ação'}</p><p className="truncate text-sm font-bold text-slate-100">{targetMode ? 'SELECIONE UM ALVO' : selectedEntry?.card.name ?? 'Selecione uma carta'}</p><p className="mt-0.5 truncate text-[9px] text-slate-500">{actionHint}</p>{state.currentPlayerId === HUMAN_PLAYER_ID && <p className={`mt-0.5 text-[9px] font-black uppercase tracking-wider ${hasUsefulTurnOption ? 'text-amber-200/80' : 'text-cyan-200/70'}`}>{readyActionCount > 0 ? `${readyActionCount} ${readyActionCount === 1 ? 'ação pronta' : 'ações prontas'}` : hasOpenActiveSlot && affordableReserveCount > 0 ? `${affordableReserveCount} deploy disponível` : 'turno pode ser encerrado'}</p>}</div>
           {targetMode && <button type="button" onClick={() => setSelectedAction(undefined)} className="rounded-xl border border-white/15 px-3 py-2 text-xs font-bold text-slate-300">CANCELAR</button>}
