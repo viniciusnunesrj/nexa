@@ -34,7 +34,7 @@ Uma única preferência: `localStorage.nexa_sound_enabled_v1`. O Topbar acompanh
 
 ## Origem e licença
 
-Nenhum arquivo MP3/WAV/OGG foi adicionado. Os dez efeitos são síntese procedural original em `src/services/sfxPalette.ts`, seguindo a arquitetura Web Audio que o projeto já utilizava. Não há gravações, samples de terceiros, URLs externas, música contínua ou dependência nova. Não há licença externa de asset a obter; o código integra o próprio projeto. Buffers são gerados e armazenados uma vez por contexto de áudio.
+Os dez SFX permanecem como síntese procedural original em `src/services/sfxPalette.ts`, sem alterações. O complemento ambiente acrescenta somente `Urgent.mp3` (Rift V2) e `Pulse.mp3` (Duel), do Dark Sci-Fi Audio Pack de SRG774, CC0 1.0. Origem, licença e reprodução estão documentadas em [public/audio/ambient/LICENSE.md](../public/audio/ambient/LICENSE.md). Os arquivos são locais, sem URLs externas em produção ou dependência nova. O ambiente usa o mesmo AudioContext e mute, ganho de 20%, cache e um único buffer em loop com emenda de 250 ms; não reinicia por turno/render e pausa/retoma na posição anterior ao mutar. Sai junto com a partida.
 
 ## Validação
 

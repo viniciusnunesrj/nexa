@@ -1,4 +1,5 @@
 import { SFX_PALETTE, synthesizeSfx, type SfxName } from './sfxPalette';
+import { AmbientAudio, type AmbientTrack } from './ambientAudio';
 
 export const SOUND_PREFERENCE_KEY = 'nexa_sound_enabled_v1';
 
@@ -11,6 +12,8 @@ export class SoundService {
   private voices = new Map<AudioBufferSourceNode, number>();
   private events = new Set<string>();
   private lastPlayed = new Map<SfxName, number>();
+  private ambient = new AmbientAudio(() => this.enabled);
+  public acquireAmbient(track: AmbientTrack) { return this.ambient.acquire(track); }
 
   private readPreference() {
     try { return localStorage.getItem(SOUND_PREFERENCE_KEY) !== 'false'; } catch { return true; }
@@ -28,6 +31,7 @@ export class SoundService {
     return () => { this.listeners.delete(listener); };
   };
   private applyMute() {
+    this.ambient.sync();
     if (this.master && this.ctx) this.master.gain.setValueAtTime(this.enabled ? 1 : 0, this.ctx.currentTime);
     if (!this.enabled) {
       for (const voice of this.voices.keys()) { try { voice.stop(); } catch { /* Already ended. */ } }
@@ -58,6 +62,7 @@ export class SoundService {
     if (!this.enabled) return;
     try {
       this.initCtx();
+      if (this.ctx && this.master) this.ambient.unlock(this.ctx, this.master);
       // Cache once, outside the interaction handler; never wait for sound to advance the game.
       if (this.buffers.size === Object.keys(SFX_PALETTE).length) return;
       queueMicrotask(() => {

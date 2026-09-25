@@ -1,4 +1,5 @@
 import { CombatAudioSlot } from '../components/common/CombatAudioSlot';
+import { useAmbientAudio } from '../hooks/useAmbientAudio';
 import { useSfxCue } from '../hooks/useSfxCue';
 import { duelCombatCue } from '../services/combatSfx';
 import { soundService } from '../services/soundService';
@@ -615,6 +616,7 @@ const DuelView: React.FC<{
   onGames: () => void;
   onAgain: () => Promise<void>;
 }> = ({ duel, setDuel, onBack, onGames, onAgain }) => {
+  useAmbientAudio('duel', !duel.result);
   useSfxCue(!duel.result ? duelCombatCue(duel.phase, duel.serverRound?.damage ?? duel.roundDamage) : undefined, 'duel:' + duel.matchId + ':' + duel.round + ':' + duel.phase);
   useSfxCue(duel.result && duel.matchSummary ? (duel.result === 'VICTORY' ? 'victory' : duel.result === 'DEFEAT' ? 'defeat' : 'resolve') : undefined, 'duel:' + duel.matchId + ':result');
   const selectedCard = duel.playerCards.find((card) => card.id === duel.selectedId) || null;

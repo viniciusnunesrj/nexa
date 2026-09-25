@@ -1,4 +1,5 @@
 import { MobileCombatDock } from '../components/common/MobileCombatDock';
+import { useAmbientAudio } from '../hooks/useAmbientAudio';
 import { useSfxCue } from '../hooks/useSfxCue';
 import { riftCombatCue } from '../services/combatSfx';
 import { soundService } from '../services/soundService';
@@ -360,6 +361,7 @@ export const RiftBattleV2: React.FC = () => {
 
   const [state, setState] = useState<RiftBattleState>(() => createInitialState());
   const [screen, setScreen] = useState<'SETUP' | 'VS' | 'BATTLE'>('SETUP');
+  useAmbientAudio('rift', screen === 'BATTLE' && !state.result);
   const [selectedSquad, setSelectedSquad] = useState<string[]>([]);
   const [selectedArenaId, setSelectedArenaId] = useState(RIFTBATTLE_STANDARD_ARENA.id);
   const selectedArena = getRiftBattleArena(selectedArenaId);

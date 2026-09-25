@@ -1,4 +1,5 @@
 import { soundService } from '../../services/soundService';
+import { useAmbientAudio } from '../../hooks/useAmbientAudio';
 import React, { useEffect, useRef, useState } from 'react';
 import { ARENA_CARDS } from '../../config/arenaCards';
 import { supabase } from '../../lib/supabase';
@@ -21,6 +22,7 @@ function PvpCard({ id }: { id: string }) {
 export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: () => void }> = ({ roomId, userId, onExit }) => {
   const { updateUserBalance, addXP } = useAuth();
   const [snapshot, setSnapshot] = useState<PvpSnapshot | null>(null);
+  useAmbientAudio('duel', snapshot?.room.status === 'READY' || snapshot?.room.status === 'PLAYING');
   const [choice, setChoice] = useState<{ round: number; card: string | null; nexos: number }>({ round: 0, card: null, nexos: 0 });
   const [busy, setBusy] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(30);
