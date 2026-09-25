@@ -1,3 +1,7 @@
+import { CombatAudioSlot } from '../components/common/CombatAudioSlot';
+import { useSfxCue } from '../hooks/useSfxCue';
+import { duelCombatCue } from '../services/combatSfx';
+import { soundService } from '../services/soundService';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, Swords } from 'lucide-react';
@@ -611,6 +615,8 @@ const DuelView: React.FC<{
   onGames: () => void;
   onAgain: () => Promise<void>;
 }> = ({ duel, setDuel, onBack, onGames, onAgain }) => {
+  useSfxCue(!duel.result ? duelCombatCue(duel.phase, duel.serverRound?.damage ?? duel.roundDamage) : undefined, 'duel:' + duel.matchId + ':' + duel.round + ':' + duel.phase);
+  useSfxCue(duel.result && duel.matchSummary ? (duel.result === 'VICTORY' ? 'victory' : duel.result === 'DEFEAT' ? 'defeat' : 'resolve') : undefined, 'duel:' + duel.matchId + ':result');
   const selectedCard = duel.playerCards.find((card) => card.id === duel.selectedId) || null;
   const { currentUser, syncUser } = useAuth();
   const [rewardStatus, setRewardStatus] = useState<RewardStatus>({
@@ -861,7 +867,10 @@ const DuelView: React.FC<{
     );
     return () => window.clearTimeout(timer);
   }, [duel.phase, duel.calcStep, duel.result, setDuel]);
-  const chooseCard = (id: string) => setDuel((current) => (current && current.phase === 'SELECT' && !current.result && !current.matchSummary && !current.usedPlayer.includes(id) && current.playerCards.some((card) => card.id === id) ? { ...current, selectedId: id, investment: 0 } : current));
+  const chooseCard = (id: string) => {
+    if (duel.phase === 'SELECT' && !duel.result && !duel.matchSummary && !duel.usedPlayer.includes(id) && duel.playerCards.some(card => card.id === id)) soundService.playSfx('select');
+    setDuel((current) => (current && current.phase === 'SELECT' && !current.result && !current.matchSummary && !current.usedPlayer.includes(id) && current.playerCards.some((card) => card.id === id) ? { ...current, selectedId: id, investment: 0 } : current));
+  };
   const confirm = () => {
     void submitMove(false);
   };
@@ -891,6 +900,7 @@ const DuelView: React.FC<{
   const mobileLandscape = !!mobileViewport && mobileViewport.width > mobileViewport.height && mobileViewport.width <= 1100;
   const board = (
       <div ref={boardRef} className="duel-canvas" style={mobileLandscape && mobileViewport ? { left: mobileViewport.left, top: mobileViewport.top, width: mobileViewport.width, height: mobileViewport.height } : undefined} data-mobile-viewport={mobileLandscape} data-mobile-game={mobileGameMode ? 'true' : 'false'} data-confrontation={advancing} data-showdown={showdown} data-nexos={nexosActive} data-phase={duel.phase} data-winner={playerWonRound ? 'player' : cpuWonRound ? 'cpu' : 'draw'}>
+        {mobileLandscape && <CombatAudioSlot />}
         <style>{`
       .duel-canvas { position: relative; width: min(100%, max(0px, calc((100dvh - var(--nexa-board-top, 160px) - 24px) * 16 / 9))); aspect-ratio: 16 / 9; margin-inline: auto; min-height: 0; box-sizing: border-box; overflow: hidden; isolation: isolate; container-type: inline-size; color: #eef6ff; border: 1px solid #22445a; border-radius: 1.4cqw; background: linear-gradient(145deg, #091726, #111529 60%, #0b1020); }
       .duel-layout { position: absolute; inset: 0; display: grid; grid-template-rows: 9% 38% 6% 38% 9%; min-height: 0; }
@@ -1340,7 +1350,7 @@ const InvestPanel: React.FC<{
     </p>
     <p>◆ {duel.playerNexos} Nexos disponíveis</p>
     <div className="duel-invest-controls">
-      <button type="button" aria-label="Diminuir Nexos" disabled={duel.phase !== 'SELECT' || duel.investment <= 0} onClick={() => setDuel((current) => (current?.phase === 'SELECT' ? { ...current, investment: Math.max(0, current.investment - 1) } : current))}>
+      <button type="button" aria-label="Diminuir Nexos" disabled={duel.phase !== 'SELECT' || duel.investment <= 0} onClick={() => { soundService.playSfx('invest'); setDuel((current) => (current?.phase === 'SELECT' ? { ...current, investment: Math.max(0, current.investment - 1) } : current)); }}>
         −
       </button>
       <strong>{duel.investment}</strong>
@@ -1348,7 +1358,8 @@ const InvestPanel: React.FC<{
         type="button"
         aria-label="Aumentar Nexos"
         disabled={duel.phase !== 'SELECT' || duel.investment >= duel.playerNexos}
-        onClick={() =>
+        onClick={() => {
+          soundService.playSfx('invest');
           setDuel((current) =>
             current?.phase === 'SELECT'
               ? {
@@ -1356,8 +1367,8 @@ const InvestPanel: React.FC<{
                   investment: Math.min(current.playerNexos, current.investment + 1),
                 }
               : current,
-          )
-        }
+          );
+        }}
       >
         +
       </button>

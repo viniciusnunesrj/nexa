@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { combatAudioHost } from '../components/common/CombatAudioSlot';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import {
   Menu,
   Volume2,
@@ -25,9 +27,9 @@ export const Topbar: React.FC<TopbarProps> = ({
 }) => {
   const { user, logout } = useAuth();
 
-  const [soundEnabled, setSoundEnabled] = useState(
-    soundService.enabled !== false
-  );
+  const audioHost = useSyncExternalStore(combatAudioHost.subscribe, combatAudioHost.getSnapshot, () => null);
+  const soundEnabled = useSyncExternalStore(soundService.subscribe, soundService.getSnapshot, () => true);
+  useEffect(soundService.listenForUnlock, []);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const maxExp = user.maxExperience || 500;
@@ -41,13 +43,50 @@ export const Topbar: React.FC<TopbarProps> = ({
   const toggleSound = () => {
     const next = !soundEnabled;
 
-    setSoundEnabled(next);
     soundService.enabled = next;
 
     if (next) {
+      soundService.unlock();
       soundService.playClick();
     }
   };
+
+  const audioButton = (
+          <button
+            type="button"
+            onClick={toggleSound}
+            aria-pressed={soundEnabled}
+            title={
+              soundEnabled
+                ? 'Desativar efeitos sonoros'
+                : 'Ativar efeitos sonoros'
+            }
+            aria-label={
+              soundEnabled
+                ? 'Desativar efeitos sonoros'
+                : 'Ativar efeitos sonoros'
+            }
+            className="
+              flex
+              w-11 h-11 sm:w-9 sm:h-9 shrink-0
+              rounded-xl
+              border border-white/[0.08]
+              bg-white/[0.025]
+              items-center justify-center
+              text-slate-500
+              hover:text-cyan-300
+              hover:border-cyan-500/25
+              hover:bg-cyan-500/[0.04]
+              transition-all
+            "
+          >
+            {soundEnabled ? (
+              <Volume2 className="w-4 h-4 text-purple-400 drop-shadow-[0_0_7px_rgba(192,132,252,.45)]" />
+            ) : (
+              <VolumeX className="w-4 h-4 text-purple-400/70" />
+            )}
+          </button>
+  );
 
   const navigateFromMenu = (page: string) => {
     soundService.playClick();
@@ -200,39 +239,7 @@ export const Topbar: React.FC<TopbarProps> = ({
           <div className="hidden sm:block w-px h-6 bg-white/[0.08] mx-0.5" />
 
           {/* Audio */}
-          <button
-            type="button"
-            onClick={toggleSound}
-            title={
-              soundEnabled
-                ? 'Desativar efeitos sonoros'
-                : 'Ativar efeitos sonoros'
-            }
-            aria-label={
-              soundEnabled
-                ? 'Desativar efeitos sonoros'
-                : 'Ativar efeitos sonoros'
-            }
-            className="
-              hidden sm:flex
-              w-9 h-9 shrink-0
-              rounded-xl
-              border border-white/[0.08]
-              bg-white/[0.025]
-              items-center justify-center
-              text-slate-500
-              hover:text-cyan-300
-              hover:border-cyan-500/25
-              hover:bg-cyan-500/[0.04]
-              transition-all
-            "
-          >
-            {soundEnabled ? (
-              <Volume2 className="w-4 h-4 text-purple-400 drop-shadow-[0_0_7px_rgba(192,132,252,.45)]" />
-            ) : (
-              <VolumeX className="w-4 h-4 text-purple-400/70" />
-            )}
-          </button>
+          {audioHost ? createPortal(audioButton, audioHost) : audioButton}
 
           {/* Pilot */}
           <div className="relative">

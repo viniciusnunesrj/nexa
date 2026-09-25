@@ -1,3 +1,5 @@
+import { useSfxCue } from '../../hooks/useSfxCue';
+import { pvpCombatCue } from '../../services/combatSfx';
 import React, { useEffect, useRef, useState } from 'react';
 import { ARENA_CARDS } from '../../config/arenaCards';
 import { CardImage } from '../common/CardImage';
@@ -35,6 +37,11 @@ export const PvpRoundReveal: React.FC<{ snapshot: PvpSnapshot | null; userId: st
     return () => timers.forEach(clearTimeout);
   }, [presentation]);
 
+  useSfxCue(presentation ? pvpCombatCue(step, presentation.result.damage) : undefined,
+    'pvp:' + presentation?.after.room.id + ':' + presentation?.result.round + ':step:' + step);
+  useSfxCue(snapshot?.room.status === 'FINISHED' && (!presentation || step === 7)
+    ? (snapshot.room.winnerId === userId ? 'victory' : snapshot.room.winnerId ? 'defeat' : 'resolve') : undefined,
+    'pvp:' + snapshot?.room.id + ':result');
   if (!presentation) return null;
   const { result: round, before, after } = presentation;
   const host = after.room.hostId === userId;
