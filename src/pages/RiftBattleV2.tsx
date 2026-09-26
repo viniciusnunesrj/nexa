@@ -1,4 +1,5 @@
 import { MobileCombatDock } from '../components/common/MobileCombatDock';
+import { isCardPreparing } from './riftBattleCardPresentation';
 import { useAmbientAudio } from '../hooks/useAmbientAudio';
 import { useSfxCue } from '../hooks/useSfxCue';
 import { riftCombatCue } from '../services/combatSfx';
@@ -98,6 +99,7 @@ type LogEntry = { id: number; text: string };
 
 interface BattleCardProps {
   entry: RiftBattleCardStateEntry;
+  abilitiesEnabled: boolean;
   compact?: boolean;
   enemy?: boolean;
   selected?: boolean;
@@ -112,6 +114,7 @@ interface BattleCardProps {
 
 const BattleCard: React.FC<BattleCardProps> = ({
   entry,
+  abilitiesEnabled,
   compact = false,
   enemy = false,
   selected = false,
@@ -128,7 +131,7 @@ const BattleCard: React.FC<BattleCardProps> = ({
     : combatAnimation.previousHp!;
   const hpPercent = Math.max(0, Math.min(100, (displayedHp / entry.card.stats.hp) * 100));
   const isDefeated = entry.state === 'DEFEATED';
-  const isPreparing = entry.state === 'ACTIVE' && entry.enteredThisTurn;
+  const isPreparing = isCardPreparing(entry, abilitiesEnabled);
   const used = entry.state === 'ACTIVE' && entry.hasActedThisTurn;
   const isAttacking = combatAnimation?.attackerId === entry.card.id;
   const isImpacted = combatAnimation?.targetId === entry.card.id;
@@ -918,7 +921,7 @@ export const RiftBattleV2: React.FC = () => {
           {active.length < state.arena.activeSlots && reserve.length > 0 && isCurrent && !combatAnimation && <span className="nexa-reserve-ready" aria-hidden="true" />}
           {entries.map((entry) => (
             <div key={entry.card.id} className={`${reserveCardWidth} shrink-0 opacity-75 transition-all hover:opacity-100`}>
-              <BattleCard entry={entry} compact enemy={playerId === AI_PLAYER_ID} canDeploy={isCurrent && !targetMode} selected={selectedCardId === entry.card.id} dimmed={targetMode} combatAnimation={combatAnimation} onSelect={() => selectCard(playerId, entry)} />
+              <BattleCard entry={entry} abilitiesEnabled={state.arena.abilitiesEnabled} compact enemy={playerId === AI_PLAYER_ID} canDeploy={isCurrent && !targetMode} selected={selectedCardId === entry.card.id} dimmed={targetMode} combatAnimation={combatAnimation} onSelect={() => selectCard(playerId, entry)} />
             </div>
           ))}
         </div>
@@ -953,7 +956,7 @@ export const RiftBattleV2: React.FC = () => {
                   <div key={entry.card.id} className={`relative rounded-[1.35rem] ${isWarLayout ? 'p-0.5' : 'p-1.5'} ${playerId === AI_PLAYER_ID ? 'bg-[radial-gradient(ellipse_at_center_bottom,rgba(217,70,239,0.3),transparent_68%)]' : 'bg-[radial-gradient(ellipse_at_center_bottom,rgba(34,211,238,0.3),transparent_68%)]'} ${selectedCardId === entry.card.id ? 'scale-[1.025] drop-shadow-[0_0_18px_rgba(103,232,249,0.38)]' : ''}`}>
                     <div className={`pointer-events-none absolute bottom-0 left-1/2 h-5 w-[86%] -translate-x-1/2 rounded-[50%] border ${playerId === AI_PLAYER_ID ? 'border-fuchsia-300/35 bg-fuchsia-400/35 shadow-[0_0_22px_rgba(217,70,239,0.6)]' : 'border-cyan-300/35 bg-cyan-300/35 shadow-[0_0_22px_rgba(34,211,238,0.6)]'} blur-[3px]`} />
                     <span className={`pointer-events-none absolute bottom-1 left-1/2 h-px w-[68%] -translate-x-1/2 ${playerId === AI_PLAYER_ID ? 'bg-fuchsia-100/50' : 'bg-cyan-100/50'}`} />
-                    <BattleCard entry={entry} enemy={playerId === AI_PLAYER_ID} selected={selectedCardId === entry.card.id} dimmed={targetMode && (mobileAllyTarget ? playerId !== HUMAN_PLAYER_ID : isCurrent)} targetable={targetMode && playerId === (mobileAllyTarget ? HUMAN_PLAYER_ID : opponentId) && entry.state === 'ACTIVE' && entry.currentHp > 0} feedback={feedback?.id === entry.card.id ? feedback : undefined} combatAnimation={combatAnimation} lastSurvivor={aliveCount === 1 && entry.state !== 'DEFEATED'} onSelect={() => selectCard(playerId, entry)} />
+                    <BattleCard entry={entry} abilitiesEnabled={state.arena.abilitiesEnabled} enemy={playerId === AI_PLAYER_ID} selected={selectedCardId === entry.card.id} dimmed={targetMode && (mobileAllyTarget ? playerId !== HUMAN_PLAYER_ID : isCurrent)} targetable={targetMode && playerId === (mobileAllyTarget ? HUMAN_PLAYER_ID : opponentId) && entry.state === 'ACTIVE' && entry.currentHp > 0} feedback={feedback?.id === entry.card.id ? feedback : undefined} combatAnimation={combatAnimation} lastSurvivor={aliveCount === 1 && entry.state !== 'DEFEATED'} onSelect={() => selectCard(playerId, entry)} />
                   </div>
                 ) : (
                   <div key={index} className={`nexa-empty-active-slot relative flex ${isWarLayout ? 'aspect-[5/6]' : 'aspect-[4/5]'} min-h-0 flex-col items-center justify-center rounded-[1.35rem] border ${playerId === AI_PLAYER_ID ? 'border-fuchsia-300/25 bg-fuchsia-500/[0.025] shadow-[inset_0_0_24px_rgba(217,70,239,0.08)]' : 'border-cyan-300/25 bg-cyan-500/[0.025] shadow-[inset_0_0_24px_rgba(34,211,238,0.08)]'} text-center text-xs text-slate-500`}>
@@ -1092,9 +1095,7 @@ export const RiftBattleV2: React.FC = () => {
   const canAct = selectedEntry?.state === 'ACTIVE'
     && !selectedEntry.hasActedThisTurn
     && (!selectedEntry.enteredThisTurn || (state.arena.abilitiesEnabled && selectedEntry.card.ability?.id === 'INVESTIDA'));
-  const selectedIsPreparing = selectedEntry?.state === 'ACTIVE'
-    && selectedEntry.enteredThisTurn
-    && (!state.arena.abilitiesEnabled || selectedEntry.card.ability?.id !== 'INVESTIDA');
+  const selectedIsPreparing = selectedEntry && isCardPreparing(selectedEntry, state.arena.abilitiesEnabled);
   const selectedHasInvestidaReady = selectedEntry?.state === 'ACTIVE'
     && selectedEntry.enteredThisTurn
     && state.arena.abilitiesEnabled
