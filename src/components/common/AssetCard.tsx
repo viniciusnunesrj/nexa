@@ -1,3 +1,4 @@
+import { CardStars } from './CardStars';
 import React from 'react';
 import {
   CheckCircle2,
@@ -208,16 +209,7 @@ export const AssetCard: React.FC<AssetCardProps> = ({
 
           <div className="flex items-center gap-2">
             {isCard && (
-              <span
-                className={`font-mono text-[10px] font-black tracking-[0.08em] ${
-                  isFiveStar ? 'text-amber-200' : 'text-slate-400'
-                }`}
-                title={`Ascensão ${starLevel} de 5`}
-                aria-label={`Ascensão ${starLevel} de 5 estrelas`}
-              >
-                {'★'.repeat(starLevel)}
-                <span className="text-slate-700">{'★'.repeat(5 - starLevel)}</span>
-              </span>
+              <CardStars level={starLevel} showEmpty />
             )}
             <span
               className="font-mono text-[9px] font-bold uppercase tracking-[0.18em]"

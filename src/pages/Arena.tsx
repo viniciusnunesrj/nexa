@@ -1,3 +1,4 @@
+import { OwnedCardStars } from '../components/common/OwnedCardStars';
 import { CombatAudioSlot } from '../components/common/CombatAudioSlot';
 import { useAmbientAudio } from '../hooks/useAmbientAudio';
 import { useSfxCue } from '../hooks/useSfxCue';
@@ -1134,7 +1135,7 @@ const DuelView: React.FC<{
                 >
                   <button type="button" aria-label={`${card.name}${used ? ', usada' : ''}`} aria-pressed={duel.selectedId === card.id} disabled={used || playing} onClick={() => chooseCard(card.id)} className="duel-mover" style={movingStyle('player:' + card.id, active && advancing)}>
                     <div className={`duel-motion-content ${active && duel.phase === 'DAMAGE' && duel.playerAttack! < duel.cpuAttack! ? 'nexa-impact nexa-defeated' : active && duel.phase === 'IMPACT' ? 'nexa-clash' : ''}`}>
-                      <DuelPortrait card={card} selected={duel.selectedId === card.id} used={used && !active} details={active && calculationStep > 0 ? <AttackBreakdown card={card} nexos={duel.investment} attack={duel.playerAttack!} step={calculationStep} /> : undefined} />
+                      <DuelPortrait owned card={card} selected={duel.selectedId === card.id} used={used && !active} details={active && calculationStep > 0 ? <AttackBreakdown card={card} nexos={duel.investment} attack={duel.playerAttack!} step={calculationStep} /> : undefined} />
                     </div>
                   </button>
                 </div>
@@ -1241,11 +1242,12 @@ const DuelView: React.FC<{
 // Battle-only presentation: deck selection keeps its existing BattleCard markup.
 const DuelPortrait: React.FC<{
   card: ArenaCard;
+  owned?: boolean;
   selected?: boolean;
   used?: boolean;
   hidden?: boolean;
   details?: React.ReactNode;
-}> = ({ card, selected = false, used = false, hidden = false, details }) =>
+}> = ({ card, owned = false, selected = false, used = false, hidden = false, details }) =>
   hidden ? (
     <div className="duel-portrait duel-back">
       <strong>NEXA</strong>
@@ -1260,8 +1262,9 @@ const DuelPortrait: React.FC<{
         </span>
         <span>{used ? 'USADA' : 'NEXA'}</span>
       </div>
-      <p className="duel-name" title={card.name}>
-        {card.name}
+      <p className="duel-name flex items-center justify-center gap-1" title={card.name}>
+        <span className="min-w-0 truncate">{card.name}</span>
+        {owned && <span className="shrink-0"><OwnedCardStars templateId={card.id} /></span>}
       </p>
       <div className="duel-art">{details || <CardImage templateId={card.id} alt={card.name} className="h-full w-full object-cover" loading="lazy" />}</div>
       <div className="duel-card-stats">
@@ -1527,6 +1530,7 @@ const BattleCard: React.FC<{
       <div className={`relative z-10 my-1.5 flex items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-black/20 ${battle ? 'h-[132px]' : 'aspect-[3/4]'}`}>
         <CardImage templateId={card.id} alt={card.name} className="absolute inset-0 h-full w-full object-cover object-top" loading="lazy" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10" />
+        <span className="absolute top-1 left-1 rounded bg-slate-950/90 px-1"><OwnedCardStars templateId={card.id} /></span>
         <span className="absolute bottom-1 right-1 rounded bg-black/65 px-1.5 py-0.5 text-[7px] font-bold uppercase text-slate-100">
           {ELEMENT_ICONS[card.element] || '✦'} {card.element}
         </span>

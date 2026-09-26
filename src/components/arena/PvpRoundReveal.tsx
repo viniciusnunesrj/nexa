@@ -1,3 +1,4 @@
+import { OwnedCardStars } from '../common/OwnedCardStars';
 import { useSfxCue } from '../../hooks/useSfxCue';
 import { pvpCombatCue } from '../../services/combatSfx';
 import React, { useEffect, useRef, useState } from 'react';
@@ -74,6 +75,7 @@ export const PvpRoundReveal: React.FC<{ snapshot: PvpSnapshot | null; userId: st
             {index === 1 && <strong className="pvp-reveal-vs">VS</strong>}
             <div className={`pvp-reveal-fighter ${index === 0 ? 'pvp-reveal-mine' : 'pvp-reveal-rival'} ${won ? 'pvp-reveal-winner' : lost ? 'pvp-reveal-loser' : ''}`}>
               <p className="mb-2 text-center text-[10px] font-bold tracking-wider text-cyan-200">{index === 0 ? 'VOCÊ' : 'ADVERSÁRIO'}</p>
+              {index === 0 && <OwnedCardStars templateId={id} />}
               <div className="pvp-reveal-art"><CardImage templateId={id} alt={card?.name || id} className="h-full w-full rounded-xl object-contain" /></div>
               <p className="mt-2 min-h-8 text-center text-xs font-bold text-white">{card?.name || id}</p>
               <div className="pvp-reveal-values">

@@ -1,3 +1,4 @@
+import { OwnedCardStars } from '../common/OwnedCardStars';
 import { soundService } from '../../services/soundService';
 import { useAmbientAudio } from '../../hooks/useAmbientAudio';
 import React, { useEffect, useRef, useState } from 'react';
@@ -13,6 +14,7 @@ import { useAuth } from '../../contexts/AuthContext';
 function PvpCard({ id }: { id: string }) {
   const card = ARENA_CARDS.find(item => item.id === id);
   return <div className="min-w-0 space-y-1">
+    <OwnedCardStars templateId={id} />
     <CardImage templateId={id} alt={card?.name || 'Carta da partida'} className="pvp-card-image aspect-[3/4] w-full rounded-xl object-contain" />
     <p className="break-words text-base font-bold text-white sm:text-xs">{card?.name || id}</p>
     {card && <p className="text-sm text-slate-300 sm:text-[10px]">PODER {card.power} · DANO {card.damage}<br />{card.ability}</p>}
@@ -260,7 +262,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
                 const id = isHost ? result.hostCard : result.guestCard;
                 return <div key={isMine ? 'mine' : 'rival'} className="flex min-w-0 items-center gap-2 rounded-lg bg-white/[0.03] p-2">
                   <CardImage templateId={id} alt="" className="h-12 w-9 shrink-0 rounded object-cover" />
-                  <div className="min-w-0 text-xs"><p className="text-[10px] text-slate-400">{isMine ? 'VOCÊ' : 'ADVERSÁRIO'}</p><p className="break-words font-bold">{ARENA_CARDS.find(card => card.id === id)?.name || id}</p><p className="mt-1 text-cyan-200">{isHost ? result.hostNexosSpent : result.guestNexosSpent} Nexos · Ataque {isHost ? result.hostAttack : result.guestAttack}</p></div>
+                  <div className="min-w-0 text-xs"><p className="text-[10px] text-slate-400">{isMine ? 'VOCÊ' : 'ADVERSÁRIO'}</p><p className="break-words font-bold">{ARENA_CARDS.find(card => card.id === id)?.name || id}</p>{isMine && <OwnedCardStars templateId={id} />}<p className="mt-1 text-cyan-200">{isHost ? result.hostNexosSpent : result.guestNexosSpent} Nexos · Ataque {isHost ? result.hostAttack : result.guestAttack}</p></div>
                 </div>;
               })}
             </div>

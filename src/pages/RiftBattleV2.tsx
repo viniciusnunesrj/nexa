@@ -1,3 +1,4 @@
+import { OwnedCardStars } from '../components/common/OwnedCardStars';
 import { MobileCombatDock } from '../components/common/MobileCombatDock';
 import { isCardPreparing } from './riftBattleCardPresentation';
 import { useAmbientAudio } from '../hooks/useAmbientAudio';
@@ -278,6 +279,7 @@ const BattleCard: React.FC<BattleCardProps> = ({
       />
       <div className={compact ? 'px-0.5 pt-1' : 'pt-2'}>
         <strong className="block truncate text-xs font-bold text-slate-100 sm:text-sm">{entry.card.name}</strong>
+        {!enemy && <OwnedCardStars instanceId={entry.card.sourceInstanceId ?? entry.card.id} />}
         <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-300">
           <span className="font-bold">HP {displayedHp}/{entry.card.stats.hp}</span>
           {!compact && <span className="text-slate-500">·</span>}
@@ -339,6 +341,7 @@ const CatalogCard: React.FC<{ card: RiftBattleCard; selected: boolean; onSelect:
     {selected && <span className="absolute right-2 top-2 z-10 rounded bg-cyan-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">SELECIONADA</span>}
     <img src={getBattleCardImage(card)} alt="" className="h-28 w-full rounded-xl object-cover sm:h-36" />
     <strong className="mt-2 block truncate text-xs text-slate-100">{card.name}</strong>
+    <OwnedCardStars instanceId={card.sourceInstanceId ?? card.id} />
     <div className="mt-1 grid grid-cols-3 text-[10px] font-bold text-slate-400"><span>HP {card.stats.hp}</span><span>⚔ {card.stats.attack}</span><span>◆ {card.stats.defense}</span></div>
     <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400"><span>SPD {card.stats.speed}</span><span>⚡ {card.deployCost}</span></div>
     <span className="mt-1 block truncate text-[10px] font-bold text-cyan-200">{card.ability ? `${PASSIVE_ABILITIES.has(card.ability.id) ? 'PASSIVA' : 'ATIVA'} · ${card.ability.id}` : 'Sem habilidade'} · {card.archetype}</span>
@@ -1023,7 +1026,7 @@ export const RiftBattleV2: React.FC = () => {
               return card ? (
                 <div key={id} className="flex h-[58px] items-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-400/[0.07] p-1.5">
                   <img src={getBattleCardImage(card)} alt="" className="h-full w-12 rounded-lg object-cover" />
-                  <div className="min-w-0"><span className="text-[8px] font-black text-cyan-300">SLOT {index + 1} · {index < selectedArena.activeSlots ? 'ATIVA' : 'RESERVA'}</span><p className="mt-0.5 truncate text-[10px] font-bold text-slate-100">{card.name}</p></div>
+                  <div className="min-w-0"><span className="text-[8px] font-black text-cyan-300">SLOT {index + 1} · {index < selectedArena.activeSlots ? 'ATIVA' : 'RESERVA'}</span><p className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-slate-100"><span className="min-w-0 truncate">{card.name}</span><OwnedCardStars instanceId={card.sourceInstanceId ?? card.id} /></p></div>
                 </div>
               ) : <div key={`empty-${index}`} className="flex h-[58px] items-center justify-center rounded-xl border border-dashed border-white/10 text-[9px] uppercase tracking-widest text-slate-600">Slot {index + 1} · {index < selectedArena.activeSlots ? 'Ativa' : 'Reserva'}</div>;
             })}
@@ -1154,6 +1157,7 @@ export const RiftBattleV2: React.FC = () => {
         <div className="min-w-0">
           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">{label}</p>
           <p className="truncate text-xs font-black text-slate-100">{card.name}</p>
+          {card.sourceInstanceId && <OwnedCardStars instanceId={card.sourceInstanceId} />}
           <p className="mt-1 text-[10px] text-slate-300">HP {selectedEntry?.currentHp ?? card.stats.hp}/{card.stats.hp} · ⚡ {card.deployCost}</p>
         </div>
       </div>
