@@ -1,3 +1,5 @@
+import { soundService } from '../../services/soundService';
+import { useAmbientAudio } from '../../hooks/useAmbientAudio';
 import React, { useEffect, useRef, useState } from 'react';
 import { ARENA_CARDS } from '../../config/arenaCards';
 import { supabase } from '../../lib/supabase';
@@ -20,6 +22,7 @@ function PvpCard({ id }: { id: string }) {
 export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: () => void }> = ({ roomId, userId, onExit }) => {
   const { updateUserBalance, addXP } = useAuth();
   const [snapshot, setSnapshot] = useState<PvpSnapshot | null>(null);
+  useAmbientAudio('duel', snapshot?.room.status === 'READY' || snapshot?.room.status === 'PLAYING');
   const [choice, setChoice] = useState<{ round: number; card: string | null; nexos: number }>({ round: 0, card: null, nexos: 0 });
   const [busy, setBusy] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(30);
@@ -139,6 +142,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
       }).abortSignal(signal);
       if (rpcError) throw new Error('Não foi possível confirmar o envio. Sincronizando com o servidor...');
       if (!signal.aborted) {
+        soundService.playSfx('confirm', `pvp:${roomId}:${round}:confirm`);
         setSnapshot({ ...current, submitted: true });
         setChoice({ round: 0, card: null, nexos: 0 });
       }
@@ -224,7 +228,7 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
       <p className="flex flex-wrap justify-between gap-2 text-sm text-cyan-200"><strong>Você · PV {perspective.hp}</strong><span>{perspective.nexos} Nexos</span></p>
       <div className="pvp-selection-grid -mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0">{snapshot.deck.map(id => {
         const used = perspective.used.has(id);
-        return <button key={id} type="button" disabled={locked || used} aria-pressed={selected === id} onClick={() => setChoice({ round: room.round, card: id, nexos })} className={`w-[86vw] max-w-[340px] shrink-0 snap-center rounded-xl border p-3 text-left disabled:cursor-not-allowed sm:w-auto sm:max-w-none sm:min-w-0 sm:p-2 ${used ? 'border-white/10 opacity-40' : selected === id ? 'border-cyan-300 bg-cyan-400/15 ring-2 ring-cyan-300/40 shadow-[0_0_24px_#22d3ee30]' : 'border-white/20'}`}><PvpCard id={id} /><span className="mt-2 block text-center text-sm font-bold text-cyan-200 sm:text-[10px]">{used ? 'USADA' : selected === id ? `${nexos} NEXOS INVESTIDOS` : 'DISPONÍVEL'}</span></button>;
+        return <button key={id} type="button" disabled={locked || used} aria-pressed={selected === id} onClick={() => { soundService.playSfx('select'); setChoice({ round: room.round, card: id, nexos }); }} className={`w-[86vw] max-w-[340px] shrink-0 snap-center rounded-xl border p-3 text-left disabled:cursor-not-allowed sm:w-auto sm:max-w-none sm:min-w-0 sm:p-2 ${used ? 'border-white/10 opacity-40' : selected === id ? 'border-cyan-300 bg-cyan-400/15 ring-2 ring-cyan-300/40 shadow-[0_0_24px_#22d3ee30]' : 'border-white/20'}`}><PvpCard id={id} /><span className="mt-2 block text-center text-sm font-bold text-cyan-200 sm:text-[10px]">{used ? 'USADA' : selected === id ? `${nexos} NEXOS INVESTIDOS` : 'DISPONÍVEL'}</span></button>;
       })}</div>
       {!finished && <div className="sticky bottom-0 z-20 -mx-3 space-y-3 rounded-t-2xl border border-cyan-400/30 bg-[#081a2a]/95 bg-gradient-to-r from-cyan-400/10 to-blue-500/5 p-3 shadow-2xl backdrop-blur sm:static sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -232,12 +236,12 @@ export const PvpBattleBoard: React.FC<{ roomId: string; userId: string; onExit: 
           <strong className="text-2xl font-black text-cyan-300">{nexos}<span className="ml-1 text-[10px]">NEXOS</span></strong>
         </div>
         <div className="flex items-center gap-3">
-          <button type="button" aria-label="Diminuir Nexos" disabled={locked || !selected || nexos === 0} onClick={() => setChoice({ round: room.round, card: selected, nexos: Math.max(0, nexos - 1) })} className="h-12 w-12 shrink-0 rounded-lg border border-cyan-300/30 text-2xl text-cyan-200 disabled:opacity-30">−</button>
-          <input id="pvp-investment" type="range" min={0} max={perspective.nexos} value={nexos} disabled={locked || !selected} onChange={event => setChoice({ round: room.round, card: selected, nexos: Number(event.target.value) })} className="h-8 min-w-0 flex-1 accent-cyan-400" />
-          <button type="button" aria-label="Aumentar Nexos" disabled={locked || !selected || nexos >= perspective.nexos} onClick={() => setChoice({ round: room.round, card: selected, nexos: Math.min(perspective.nexos, nexos + 1) })} className="h-11 w-11 shrink-0 rounded-lg border border-cyan-300/30 text-xl text-cyan-200 disabled:opacity-30">+</button>
+          <button type="button" aria-label="Diminuir Nexos" disabled={locked || !selected || nexos === 0} onClick={() => { soundService.playSfx('invest'); setChoice({ round: room.round, card: selected, nexos: Math.max(0, nexos - 1) }); }} className="h-12 w-12 shrink-0 rounded-lg border border-cyan-300/30 text-2xl text-cyan-200 disabled:opacity-30">−</button>
+          <input id="pvp-investment" type="range" min={0} max={perspective.nexos} value={nexos} disabled={locked || !selected} onChange={event => { soundService.playSfx('invest'); setChoice({ round: room.round, card: selected, nexos: Number(event.target.value) }); }} className="h-8 min-w-0 flex-1 accent-cyan-400" />
+          <button type="button" aria-label="Aumentar Nexos" disabled={locked || !selected || nexos >= perspective.nexos} onClick={() => { soundService.playSfx('invest'); setChoice({ round: room.round, card: selected, nexos: Math.min(perspective.nexos, nexos + 1) }); }} className="h-11 w-11 shrink-0 rounded-lg border border-cyan-300/30 text-xl text-cyan-200 disabled:opacity-30">+</button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {[0, perspective.nexos].filter((value, index, values) => values.indexOf(value) === index).map(value => <button key={value} type="button" disabled={locked || !selected} onClick={() => setChoice({ round: room.round, card: selected, nexos: value })} className="rounded-lg border border-white/15 px-3 py-2 text-xs text-slate-300 disabled:opacity-30">{value === 0 ? 'ZERAR' : 'MÁXIMO'}</button>)}
+          {[0, perspective.nexos].filter((value, index, values) => values.indexOf(value) === index).map(value => <button key={value} type="button" disabled={locked || !selected} onClick={() => { soundService.playSfx('invest'); setChoice({ round: room.round, card: selected, nexos: value }); }} className="rounded-lg border border-white/15 px-3 py-2 text-xs text-slate-300 disabled:opacity-30">{value === 0 ? 'ZERAR' : 'MÁXIMO'}</button>)}
           <button onClick={submit} disabled={locked || !selected} className="min-w-0 flex-1 rounded-lg bg-cyan-400 px-5 py-3.5 text-sm font-black text-slate-950 disabled:opacity-40">{busy ? 'ENVIANDO...' : 'CONFIRMAR'}</button>
         </div>
       </div>}
