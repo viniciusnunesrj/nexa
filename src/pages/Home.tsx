@@ -67,27 +67,27 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               <span className="flex flex-col items-center gap-1 text-center"><Swords className="h-3.5 w-3.5 text-fuchsia-400"/>Rift Battle<br/>+ Nexus Duel</span>
             </div>
 
-            <button type="button" onClick={goRegister} className="mt-1.5 inline-flex h-[40px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-cyan-400 px-4 font-heading text-[9px] font-black uppercase tracking-[.1em] text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.2)]">
+            <button type="button" onClick={goRegister} className="mt-1.5 inline-flex h-[40px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-cyan-400 px-4 font-heading text-[11px] font-black uppercase tracking-[.08em] text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.2)]">
               Jogar agora — grátis <ArrowRight className="h-3.5 w-3.5"/>
             </button>
-            <button type="button" onClick={() => onNavigate('login')} className="mt-1 inline-flex h-[30px] w-full items-center justify-center rounded-xl border border-white/15 bg-black/20 px-4 font-heading text-[8px] font-black uppercase tracking-[.09em] text-white">
+            <button type="button" onClick={() => onNavigate('login')} className="mt-1 inline-flex h-[30px] w-full items-center justify-center rounded-xl border border-white/15 bg-black/20 px-4 font-heading text-[10px] font-black uppercase tracking-[.07em] text-white">
               Já tenho conta
             </button>
 
             <div className="mt-2 text-center">
-              <span className="font-mono text-[6.5px] font-black uppercase tracking-[.16em] text-cyan-300">Dois modos de jogo</span>
-              <h2 className="mt-0.5 font-heading text-[15px] font-black uppercase leading-tight">Escolha seu estilo</h2>
+              <span className="font-mono text-[7.5px] font-black uppercase tracking-[.14em] text-cyan-300">Dois modos de jogo</span>
+              <h2 className="mt-0.5 font-heading text-[17px] font-black uppercase leading-tight">Escolha seu estilo</h2>
             </div>
             <div className="mt-1 grid grid-cols-2 gap-2">
               <article className="relative h-[76px] overflow-hidden rounded-xl border border-cyan-400/35 bg-[#06121c]">
                 <img src="/assets/rift-battle-card.png" alt="Rift Battle" className="absolute inset-0 h-full w-full object-cover"/>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#030913] via-transparent to-transparent"/>
-                <div className="absolute inset-x-0 bottom-0 p-2"><h3 className="font-heading text-[10px] font-black uppercase">Rift Battle</h3><p className="text-[6px] text-slate-300">Batalhas rápidas e táticas.</p></div>
+                <div className="absolute inset-x-0 bottom-0 p-2"><h3 className="font-heading text-[12px] font-black uppercase">Rift Battle</h3><p className="text-[7px] text-slate-200">Batalhas rápidas e táticas.</p></div>
               </article>
               <article className="relative h-[76px] overflow-hidden rounded-xl border border-fuchsia-400/35 bg-[#110918]">
                 <img src="/assets/nexus-duel-card.png" alt="Nexus Duel" className="absolute inset-0 h-full w-full object-cover"/>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#07040c] via-transparent to-transparent"/>
-                <div className="absolute inset-x-0 bottom-0 p-2"><h3 className="font-heading text-[10px] font-black uppercase">Nexus Duel</h3><p className="text-[6px] text-slate-300">Estratégia, Nexos e blefe.</p></div>
+                <div className="absolute inset-x-0 bottom-0 p-2"><h3 className="font-heading text-[12px] font-black uppercase">Nexus Duel</h3><p className="text-[7px] text-slate-200">Estratégia, Nexos e blefe.</p></div>
               </article>
             </div>
           </div>
