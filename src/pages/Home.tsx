@@ -127,13 +127,13 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           </div>
         </section>
 
-        <section className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
+        <section className="mx-auto hidden max-w-4xl px-4 py-20 text-center sm:px-6 lg:block">
           <h2 className="font-heading text-3xl font-black uppercase sm:text-5xl">Pronto para entrar no <span className="text-cyan-300">NEXA?</span></h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-400">Conta grátis, sem download. Receba 1.000 NEX e entre na sua primeira batalha.</p>
           <button type="button" onClick={goRegister} className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-cyan-300 px-7 font-heading text-xs font-black uppercase tracking-wider text-slate-950 transition hover:bg-cyan-200">Criar conta grátis <ArrowRight className="h-4 w-4"/></button>
         </section>
       </main>
-      <footer className="border-t border-white/[.07] py-6 text-center text-[10px] font-mono uppercase tracking-wider text-slate-500">NEXA Universe</footer>
+      <footer className="border-t border-white/[.07] py-3 text-center text-[9px] font-mono uppercase tracking-wider text-slate-500 lg:py-6 lg:text-[10px]">NEXA Universe</footer>
     </div>
   );
 };
