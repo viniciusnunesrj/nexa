@@ -64,14 +64,13 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            <div className="relative min-h-[420px] lg:min-h-[520px]">
-              <div className="absolute left-0 top-0 w-[88%] overflow-hidden rounded-[24px] border border-cyan-400/30 bg-[#06121c] shadow-[0_35px_100px_rgba(0,0,0,.65),0_0_65px_rgba(34,211,238,.18)]">
-                <img src="/assets/rift-battle-card.png" alt="Rift Battle V2" className="aspect-[16/9] w-full object-cover"/>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#03060b]/80 via-transparent to-transparent"/>
-              </div>
-              <div className="absolute bottom-0 right-0 w-[82%] overflow-hidden rounded-[24px] border border-fuchsia-400/30 bg-[#110918] shadow-[0_35px_100px_rgba(0,0,0,.7),0_0_65px_rgba(217,70,239,.18)]">
-                <img src="/assets/nexus-duel-card.png" alt="Nexus Duel" className="aspect-[16/9] w-full object-cover"/>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#03060b]/80 via-transparent to-transparent"/>
+            <div className="relative min-h-[300px] sm:min-h-[360px] lg:min-h-[520px]">
+              <div className="absolute inset-x-8 bottom-5 h-24 rounded-full bg-cyan-400/10 blur-3xl" />
+              <img src="/assets/cards/dragons/card-dragon-shadow-v1.png" alt="Carta Dragão das Sombras do NEXA" className="absolute left-[3%] top-[18%] w-[31%] -rotate-[12deg] rounded-xl shadow-[0_28px_70px_rgba(0,0,0,.7),0_0_35px_rgba(217,70,239,.18)] sm:w-[29%]" />
+              <img src="/assets/cards/gods/card-god-thunder-v1.png" alt="Carta Deus do Trovão do NEXA" className="absolute left-1/2 top-[2%] z-20 w-[35%] -translate-x-1/2 rotate-[2deg] rounded-xl shadow-[0_30px_80px_rgba(0,0,0,.75),0_0_45px_rgba(34,211,238,.22)] sm:w-[33%]" />
+              <img src="/assets/cards/knights/card-knight-celestial-v1.png" alt="Carta Cavaleiro Celestial do NEXA" className="absolute right-[3%] top-[18%] z-10 w-[31%] rotate-[12deg] rounded-xl shadow-[0_28px_70px_rgba(0,0,0,.7),0_0_35px_rgba(59,130,246,.18)] sm:w-[29%]" />
+              <div className="absolute bottom-0 left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full border border-cyan-300/25 bg-[#050b13]/90 px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[.16em] text-cyan-100 backdrop-blur-md sm:text-[10px]">
+                Colecione • Monte o deck • Batalhe
               </div>
             </div>
           </div>
