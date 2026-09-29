@@ -44,22 +44,22 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 <Sparkles className="h-3.5 w-3.5" /> Universo NEXA
               </span>
               <h1 className="mt-5 font-heading text-5xl font-black uppercase leading-[.9] tracking-tight sm:text-7xl lg:text-[82px]">
-                Jogue.<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400">Colecione.</span><br/>Evolua.
+                Jogue grátis.<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400">Monte seu deck.</span><br/>Entre na batalha.
               </h1>
               <p className="mt-6 max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
-                Entre no universo NEXA, dispute batalhas, construa sua coleção de cartas e evolua sua conta em experiências conectadas.
+                Card game estratégico direto no navegador. Crie sua conta em segundos, receba 1.000 NEX e escolha entre Rift Battle e Nexus Duel.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button type="button" onClick={goRegister} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-6 font-heading text-xs font-black uppercase tracking-[.1em] text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.2)] transition hover:bg-cyan-200">
-                  Criar conta grátis <ArrowRight className="h-4 w-4"/>
+                  Jogar agora — grátis <ArrowRight className="h-4 w-4"/>
                 </button>
                 <button type="button" onClick={() => onNavigate('login')} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[.03] px-6 font-heading text-xs font-black uppercase tracking-[.1em] text-white transition hover:bg-white/[.07]">
                   Já tenho conta
                 </button>
               </div>
               <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-[10px] font-mono uppercase tracking-wider text-slate-400">
-                <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400"/> Conta gratuita</span>
-                <span className="flex items-center gap-1.5"><Layers className="h-3.5 w-3.5 text-cyan-400"/> Coleção compartilhada</span>
+                <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400"/> Sem download</span>
+                <span className="flex items-center gap-1.5"><Layers className="h-3.5 w-3.5 text-cyan-400"/> +1.000 NEX ao criar conta</span>
                 <span className="flex items-center gap-1.5"><Trophy className="h-3.5 w-3.5 text-amber-400"/> Progressão</span>
               </div>
             </div>
@@ -114,8 +114,8 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
         <section className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
           <h2 className="font-heading text-3xl font-black uppercase sm:text-5xl">Pronto para entrar no <span className="text-cyan-300">NEXA?</span></h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-400">Crie sua conta e comece sua coleção.</p>
-          <button type="button" onClick={goRegister} className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-cyan-300 px-7 font-heading text-xs font-black uppercase tracking-wider text-slate-950 transition hover:bg-cyan-200">Jogar grátis <ArrowRight className="h-4 w-4"/></button>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-400">Conta grátis, sem download. Receba 1.000 NEX e entre na sua primeira batalha.</p>
+          <button type="button" onClick={goRegister} className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-cyan-300 px-7 font-heading text-xs font-black uppercase tracking-wider text-slate-950 transition hover:bg-cyan-200">Criar conta grátis <ArrowRight className="h-4 w-4"/></button>
         </section>
       </main>
       <footer className="border-t border-white/[.07] py-6 text-center text-[10px] font-mono uppercase tracking-wider text-slate-500">NEXA Universe</footer>
