@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { soundService } from '../services/soundService';
+import { trackFunnelEvent } from '../lib/funnelAnalytics';
 import {
   User,
   Mail,
@@ -63,6 +64,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate, onSuccess }) => 
       return;
     }
 
+    void trackFunnelEvent('register_submit');
     setIsLoading(true);
     soundService.playClick();
 
@@ -75,18 +77,22 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate, onSuccess }) => 
       });
 
       if (result.success && result.requiresEmailConfirmation) {
+        void trackFunnelEvent('register_success', { requires_email_confirmation: true });
         setPassword('');
         setConfirmPassword('');
         setMessage(result.message || 'Confirme seu e-mail e faça login para continuar.');
       } else if (result.success && result.user) {
+        void trackFunnelEvent('register_success', { requires_email_confirmation: false });
         soundService.playSuccess();
         if (onSuccess) onSuccess();
         onNavigate('dashboard');
       } else {
+        void trackFunnelEvent('register_error', { stage: 'auth' });
         soundService.playError();
         setError(result.error || 'Erro ao registrar nova conta.');
       }
     } catch {
+      void trackFunnelEvent('register_error', { stage: 'unexpected' });
       setError('Erro inesperado ao registrar usuário.');
     } finally {
       setIsLoading(false);
