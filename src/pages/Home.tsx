@@ -1,11 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ArrowRight, LogIn, Swords, Layers, Trophy, Sparkles, ShieldCheck } from 'lucide-react';
+import { trackFunnelEvent } from '../lib/funnelAnalytics';
 
 interface HomeProps {
   onNavigate: (page: string) => void;
 }
 
 export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
+  useEffect(() => {
+    void trackFunnelEvent('landing_view');
+  }, []);
+
+  const goRegister = () => {
+    void trackFunnelEvent('register_open', { origin: 'home_cta' });
+    onNavigate('register');
+  };
+
   return (
     <div className="min-h-screen bg-[#02040a] text-white overflow-x-hidden">
       <header className="sticky top-0 z-30 border-b border-white/[.07] bg-[#03060b]/85 backdrop-blur-xl">
@@ -18,7 +28,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <button type="button" onClick={() => onNavigate('login')} className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/10 px-3.5 text-xs font-bold text-slate-200 transition hover:border-cyan-400/35 hover:text-white">
               <LogIn className="h-4 w-4" /> <span className="hidden sm:inline">Entrar</span>
             </button>
-            <button type="button" onClick={() => onNavigate('register')} className="h-10 rounded-xl bg-cyan-300 px-4 text-xs font-black uppercase tracking-wide text-slate-950 transition hover:bg-cyan-200">
+            <button type="button" onClick={goRegister} className="h-10 rounded-xl bg-cyan-300 px-4 text-xs font-black uppercase tracking-wide text-slate-950 transition hover:bg-cyan-200">
               Jogar grátis
             </button>
           </div>
@@ -40,7 +50,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 Entre no universo NEXA, dispute batalhas, construa sua coleção de cartas e evolua sua conta em experiências conectadas.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <button type="button" onClick={() => onNavigate('register')} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-6 font-heading text-xs font-black uppercase tracking-[.1em] text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.2)] transition hover:bg-cyan-200">
+                <button type="button" onClick={goRegister} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-6 font-heading text-xs font-black uppercase tracking-[.1em] text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.2)] transition hover:bg-cyan-200">
                   Criar conta grátis <ArrowRight className="h-4 w-4"/>
                 </button>
                 <button type="button" onClick={() => onNavigate('login')} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[.03] px-6 font-heading text-xs font-black uppercase tracking-[.1em] text-white transition hover:bg-white/[.07]">
@@ -105,7 +115,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         <section className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
           <h2 className="font-heading text-3xl font-black uppercase sm:text-5xl">Pronto para entrar no <span className="text-cyan-300">NEXA?</span></h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-400">Crie sua conta e comece sua coleção.</p>
-          <button type="button" onClick={() => onNavigate('register')} className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-cyan-300 px-7 font-heading text-xs font-black uppercase tracking-wider text-slate-950 transition hover:bg-cyan-200">Jogar grátis <ArrowRight className="h-4 w-4"/></button>
+          <button type="button" onClick={goRegister} className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-cyan-300 px-7 font-heading text-xs font-black uppercase tracking-wider text-slate-950 transition hover:bg-cyan-200">Jogar grátis <ArrowRight className="h-4 w-4"/></button>
         </section>
       </main>
       <footer className="border-t border-white/[.07] py-6 text-center text-[10px] font-mono uppercase tracking-wider text-slate-500">NEXA Universe</footer>
