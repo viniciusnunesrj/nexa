@@ -19,7 +19,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-[#02040a] text-white overflow-x-hidden">
       <header className="sticky top-0 z-30 border-b border-white/[.07] bg-[#03060b]/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6">
           <button type="button" onClick={() => onNavigate('home')} className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 via-cyan-300 to-indigo-500 font-brand text-lg font-black text-slate-950 shadow-[0_0_24px_rgba(34,211,238,.25)]">N</span>
             <span className="font-brand text-xl font-black tracking-[.16em]">NEXA</span>
@@ -41,11 +41,11 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
           {/* Mobile: compact, stable first-screen composition */}
           <div className="relative mx-auto max-w-[430px] px-4 pb-4 pt-3 lg:hidden">
-            <div className="relative h-[365px] overflow-hidden">
+            <div className="relative h-[300px] overflow-hidden">
               <span className="relative z-40 inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-[#06121c]/85 px-2.5 py-1 text-[7px] font-mono font-black uppercase tracking-[.14em] text-cyan-300 backdrop-blur">
                 <Sparkles className="h-3 w-3" /> Universo NEXA
               </span>
-              <div className="absolute -right-[14%] -top-3 z-0 h-[350px] w-[72%]">
+              <div className="absolute -right-[13%] -top-2 z-0 h-[300px] w-[71%]">
                 <div className="absolute right-5 top-8 h-44 w-44 rounded-full bg-fuchsia-500/20 blur-3xl"/>
                 <img src="/assets/cards/dragons/card-dragon-shadow-v1.png" alt="Carta Dragão das Sombras do NEXA" className="absolute right-[7%] top-0 h-[54%] w-[62%] rotate-[7deg] rounded-lg object-cover shadow-[0_18px_45px_rgba(0,0,0,.85)]"/>
                 <img src="/assets/cards/gods/card-god-thunder-v1.png" alt="Carta Deus do Trovão do NEXA" className="absolute -left-[2%] top-[25%] z-10 h-[56%] w-[64%] -rotate-[7deg] rounded-lg object-cover shadow-[0_20px_50px_rgba(0,0,0,.9)]"/>
@@ -53,38 +53,38 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               </div>
               <div className="pointer-events-none absolute -left-4 inset-y-0 z-10 w-[64%] bg-gradient-to-r from-[#02060c] via-[#02060c]/94 to-transparent"/>
               <div className="pointer-events-none absolute inset-x-[-1rem] bottom-0 z-10 h-16 bg-gradient-to-t from-[#03101a] to-transparent"/>
-              <h1 className="relative z-30 mt-5 w-[56%] font-heading text-[clamp(30px,8vw,34px)] font-black uppercase leading-[.88] tracking-tight">
+              <h1 className="relative z-30 mt-4 w-[57%] font-heading text-[clamp(27px,7.4vw,31px)] font-black uppercase leading-[.88] tracking-tight">
                 Jogue<br/>grátis.<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400">Monte<br/>seu deck.</span><br/>Entre na<br/>batalha.
               </h1>
-              <p className="absolute bottom-2 left-0 z-30 w-[57%] text-[10px] leading-[1.35] text-slate-300">
+              <p className="absolute bottom-3 left-0 z-30 w-[48%] text-[8.5px] leading-[1.3] text-slate-300">
                 Card game estratégico no navegador. Crie sua conta e receba <strong className="font-black text-cyan-300">1.000 NEX</strong>.
               </p>
             </div>
 
-            <div className="grid grid-cols-3 divide-x divide-white/10 border-y border-white/10 py-2 font-mono text-[6.5px] font-black uppercase leading-[1.25] text-slate-300">
+            <div className="grid grid-cols-3 divide-x divide-white/10 border-y border-white/10 py-1.5 font-mono text-[6px] font-black uppercase leading-[1.25] text-slate-300">
               <span className="flex flex-col items-center gap-1 text-center"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400"/>Sem download</span>
               <span className="flex flex-col items-center gap-1 text-center"><Layers className="h-3.5 w-3.5 text-cyan-400"/>+1.000 NEX<br/>ao criar conta</span>
               <span className="flex flex-col items-center gap-1 text-center"><Swords className="h-3.5 w-3.5 text-fuchsia-400"/>Rift Battle<br/>+ Nexus Duel</span>
             </div>
 
-            <button type="button" onClick={goRegister} className="mt-2 inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-cyan-400 px-4 font-heading text-[9px] font-black uppercase tracking-[.1em] text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.2)]">
+            <button type="button" onClick={goRegister} className="mt-1.5 inline-flex h-[40px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-cyan-400 px-4 font-heading text-[9px] font-black uppercase tracking-[.1em] text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.2)]">
               Jogar agora — grátis <ArrowRight className="h-3.5 w-3.5"/>
             </button>
-            <button type="button" onClick={() => onNavigate('login')} className="mt-1.5 inline-flex h-[34px] w-full items-center justify-center rounded-xl border border-white/15 bg-black/20 px-4 font-heading text-[8px] font-black uppercase tracking-[.09em] text-white">
+            <button type="button" onClick={() => onNavigate('login')} className="mt-1 inline-flex h-[30px] w-full items-center justify-center rounded-xl border border-white/15 bg-black/20 px-4 font-heading text-[8px] font-black uppercase tracking-[.09em] text-white">
               Já tenho conta
             </button>
 
-            <div className="mt-3 text-center">
+            <div className="mt-2 text-center">
               <span className="font-mono text-[6.5px] font-black uppercase tracking-[.16em] text-cyan-300">Dois modos de jogo</span>
               <h2 className="mt-0.5 font-heading text-[15px] font-black uppercase leading-tight">Escolha seu estilo</h2>
             </div>
-            <div className="mt-1.5 grid grid-cols-2 gap-2">
-              <article className="relative h-[92px] overflow-hidden rounded-xl border border-cyan-400/35 bg-[#06121c]">
+            <div className="mt-1 grid grid-cols-2 gap-2">
+              <article className="relative h-[76px] overflow-hidden rounded-xl border border-cyan-400/35 bg-[#06121c]">
                 <img src="/assets/rift-battle-card.png" alt="Rift Battle" className="absolute inset-0 h-full w-full object-cover"/>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#030913] via-transparent to-transparent"/>
                 <div className="absolute inset-x-0 bottom-0 p-2"><h3 className="font-heading text-[10px] font-black uppercase">Rift Battle</h3><p className="text-[6px] text-slate-300">Batalhas rápidas e táticas.</p></div>
               </article>
-              <article className="relative h-[92px] overflow-hidden rounded-xl border border-fuchsia-400/35 bg-[#110918]">
+              <article className="relative h-[76px] overflow-hidden rounded-xl border border-fuchsia-400/35 bg-[#110918]">
                 <img src="/assets/nexus-duel-card.png" alt="Nexus Duel" className="absolute inset-0 h-full w-full object-cover"/>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#07040c] via-transparent to-transparent"/>
                 <div className="absolute inset-x-0 bottom-0 p-2"><h3 className="font-heading text-[10px] font-black uppercase">Nexus Duel</h3><p className="text-[6px] text-slate-300">Estratégia, Nexos e blefe.</p></div>
