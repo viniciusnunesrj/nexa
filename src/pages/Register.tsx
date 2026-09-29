@@ -9,6 +9,8 @@ import {
   ArrowRight,
   AlertCircle,
   Loader2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 interface RegisterProps {
@@ -22,7 +24,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate, onSuccess }) => 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -59,11 +61,6 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate, onSuccess }) => 
       setError('A senha deve conter no mínimo 6 caracteres.');
       return;
     }
-    if (password !== confirmPassword) {
-      setError('A confirmação de senha não confere com a senha digitada.');
-      return;
-    }
-
     void trackFunnelEvent('register_submit');
     setIsLoading(true);
     soundService.playClick();
@@ -73,13 +70,12 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate, onSuccess }) => 
         username: username.trim(),
         email: email.trim(),
         password,
-        confirmPassword,
+        confirmPassword: password,
       });
 
       if (result.success && result.requiresEmailConfirmation) {
         void trackFunnelEvent('register_success', { requires_email_confirmation: true });
         setPassword('');
-        setConfirmPassword('');
         setMessage(result.message || 'Confirme seu e-mail e faça login para continuar.');
       } else if (result.success && result.user) {
         void trackFunnelEvent('register_success', { requires_email_confirmation: false });
@@ -139,9 +135,15 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate, onSuccess }) => 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div><label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><User className="h-3.5 w-3.5 text-cyan-400"/>Nome de usuário</label><input type="text" value={username} onChange={(e)=>setUsername(e.target.value)} placeholder="Como você quer ser chamado no NEXA" disabled={isLoading} className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/></div>
               <div><label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Mail className="h-3.5 w-3.5 text-cyan-400"/>E-mail</label><input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="seu@email.com" disabled={isLoading} className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/></div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div><label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Lock className="h-3.5 w-3.5 text-cyan-400"/>Senha</label><input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" disabled={isLoading} className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/></div>
-                <div><label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Lock className="h-3.5 w-3.5 text-cyan-400"/>Confirmar senha</label><input type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} placeholder="Repita sua senha" disabled={isLoading} className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/></div>
+              <div>
+                <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300"><Lock className="h-3.5 w-3.5 text-cyan-400"/>Senha</label>
+                <div className="relative">
+                  <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" disabled={isLoading} autoComplete="new-password" className="w-full rounded-xl border border-white/10 bg-[#0b101a] px-4 py-3.5 pr-12 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-400/70 focus:ring-2 focus:ring-cyan-400/10"/>
+                  <button type="button" onClick={()=>setShowPassword((value)=>!value)} disabled={isLoading} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition hover:text-cyan-300 disabled:opacity-50">
+                    {showPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
+                  </button>
+                </div>
+                <p className="mt-1.5 text-[10px] text-slate-500">Uma senha só. Você pode conferir antes de criar a conta.</p>
               </div>
               <button type="submit" disabled={isLoading} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-cyan-400 py-4 font-heading text-xs font-black uppercase tracking-[.12em] text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.18)] transition hover:brightness-110 disabled:opacity-50">{isLoading ? <><Loader2 className="h-4 w-4 animate-spin"/>Criando conta...</> : <>Criar minha conta <ArrowRight className="h-4 w-4"/></>}</button>
             </form>
