@@ -25,6 +25,7 @@ import { Boxes } from './pages/Boxes';
 import { Collections } from './pages/Collections';
 import { Progression } from './pages/Progression';
 import { RiftBattleV2 } from './pages/RiftBattleV2';
+import { Expedition } from './pages/Expedition';
 import { LevelUpModal } from './components/progression/LevelUpModal';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
@@ -48,6 +49,7 @@ const AppContent: React.FC = () => {
     if (path === 'games' || path === 'jogos') return 'games';
     if (path === 'arena') return 'arena';
     if (path === 'riftbattle-v2') return 'riftbattle-v2';
+    if (path === 'expedition') return 'expedition';
     return 'dashboard';
   });
   const initialPage = useRef(currentPage);
@@ -120,6 +122,8 @@ const AppContent: React.FC = () => {
         return <Arena onNavigate={handleNavigate} />;
       case 'riftbattle-v2':
         return <RiftBattleV2 />;
+      case 'expedition':
+        return <Expedition onNavigate={handleNavigate} />;
       case 'boxes':
       case 'caixas':
         return <Boxes onNavigate={handleNavigate} />;
