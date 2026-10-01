@@ -20,14 +20,15 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [enemyHp, setEnemyHp] = useState(enemies[0].max);
   const [running, setRunning] = useState(true);
   const [zone, setZone] = useState(1);
-  const [gear, setGear] = useState<{name:string;power:number}[]>([]);
+  const [gear, setGear] = useState<{name:string;power:number;slot:string}[]>([]);
+  const [equipped, setEquipped] = useState<Record<string,{name:string;power:number} | null>>({ arma:null, armadura:null, nucleo:null, visor:null });
   const [power, setPower] = useState(12);
   const [bossHp, setBossHp] = useState<number | null>(null);
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const gearPool = useMemo(() => [
-    { name: 'Lâmina Neon', power: 3 }, { name: 'Visor Rift', power: 4 },
-    { name: 'Núcleo Ciano', power: 5 }, { name: 'Armadura Nexus', power: 7 }
+    { name: 'Lâmina Neon', power: 3, slot: 'arma' }, { name: 'Visor Rift', power: 4, slot: 'visor' },
+    { name: 'Núcleo Ciano', power: 5, slot: 'nucleo' }, { name: 'Armadura Nexus', power: 7, slot: 'armadura' }
   ], []);
   const needXp = 40 + (level - 1) * 25;
 
@@ -40,6 +41,14 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         const next = hp - (8 + level * 2 + Math.floor(power / 4));
         if (next > 0) return next;
         const foe = enemies[enemyIndex];
+  const equipItem = (item:{name:string;power:number;slot:string}) => {
+    setEquipped(current => {
+      const next = { ...current, [item.slot]: item };
+      const total = 12 + Object.values(next).reduce((sum, piece) => sum + (piece?.power || 0), 0);
+      setPower(total);
+      return next;
+    });
+  };
         setKills(k => {
           const n = k + 1;
           if (n % 5 === 0) {
@@ -65,7 +74,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setPower(12); setBossHp(null); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -93,7 +102,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         <section className="rounded-xl border border-white/10 bg-[#060b16] p-4">
           <div className="flex items-center justify-between"><b className="text-sm uppercase text-white">Drops e equipamento</b><span className="text-[9px] text-cyan-300">{drops} fragmentos</span></div>
           <p className="mt-1 text-[10px] text-slate-500">A cada 5 eliminações cai um item de teste. Equipe para aumentar o dano.</p>
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">{gear.length ? gear.map(item => <button key={item.name} onClick={()=>setPower(12+item.power)} className="rounded-lg border border-violet-400/25 bg-violet-500/10 p-2 text-left"><span className="block text-[10px] font-bold text-violet-200">{item.name}</span><span className="text-[9px] text-emerald-300">+{item.power} POD</span></button>) : <div className="col-span-full rounded-lg border border-dashed border-white/10 p-3 text-center text-[10px] text-slate-500">Continue farmando para encontrar equipamento.</div>}</div>
+          <div className="mt-3 grid grid-cols-4 gap-2">{Object.entries(equipped).map(([slot,item])=><div key={slot} className={item ? "min-h-20 rounded-lg border border-cyan-400/30 bg-cyan-400/10 p-2" : "min-h-20 rounded-lg border border-dashed border-white/15 bg-black/20 p-2"}><span className="block text-[8px] font-black uppercase text-slate-500">{slot}</span>{item ? <><span className="mt-2 block text-[9px] font-bold text-cyan-200">{item.name}</span><span className="text-[8px] text-emerald-300">+{item.power} POD</span></> : <span className="mt-3 block text-center text-xl text-slate-700">+</span>}</div>)}</div>
+          <div className="mt-3 border-t border-white/5 pt-3"><p className="mb-2 text-[9px] font-black uppercase text-slate-500">Mochila</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{gear.length ? gear.map(item => <button key={item.name} onClick={()=>equipItem(item)} className="rounded-lg border border-violet-400/25 bg-violet-500/10 p-2 text-left transition hover:border-violet-300/60"><span className="block text-[10px] font-bold text-violet-200">{item.name}</span><span className="text-[8px] uppercase text-slate-500">{item.slot}</span><span className="block text-[9px] text-emerald-300">+{item.power} POD · Equipar</span></button>) : <div className="col-span-full rounded-lg border border-dashed border-white/10 p-3 text-center text-[10px] text-slate-500">Continue farmando para encontrar equipamento.</div>}</div></div>
         </section>
         <section className="rounded-xl border border-rose-400/20 bg-[#100914] p-4">
           <b className="text-sm uppercase text-rose-200">Guardião da Zona</b><p className="mt-1 text-[10px] text-slate-500">Teste de boss disponível a cada 10 eliminações.</p>
