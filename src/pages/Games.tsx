@@ -23,6 +23,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [gear, setGear] = useState<{name:string;power:number}[]>([]);
   const [power, setPower] = useState(12);
   const [bossHp, setBossHp] = useState<number | null>(null);
+  const [hitFlash, setHitFlash] = useState(false);
+  const [lootFlash, setLootFlash] = useState<string | null>(null);
   const gearPool = useMemo(() => [
     { name: 'Lâmina Neon', power: 3 }, { name: 'Visor Rift', power: 4 },
     { name: 'Núcleo Ciano', power: 5 }, { name: 'Armadura Nexus', power: 7 }
@@ -33,6 +35,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     if (!running) return;
     const timer = window.setInterval(() => {
       setEnemyHp(hp => {
+        setHitFlash(true);
+        window.setTimeout(() => setHitFlash(false), 140);
         const next = hp - (8 + level * 2 + Math.floor(power / 4));
         if (next > 0) return next;
         const foe = enemies[enemyIndex];
@@ -42,6 +46,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             setDrops(d => d + 1);
             const item = gearPool[(n / 5 - 1) % gearPool.length];
             setGear(g => g.some(x => x.name === item.name) ? g : [...g, item]);
+            setLootFlash(item.name);
+            window.setTimeout(() => setLootFlash(null), 1300);
           }
           if (n % 10 === 0) setZone(z => Math.min(5, z + 1));
           return n;
@@ -74,11 +80,14 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       <section className="relative min-h-[390px] overflow-hidden rounded-2xl border border-cyan-400/30 bg-[#060b18] p-4">
         <div className="absolute inset-0 opacity-30" style={{backgroundImage:'linear-gradient(#22d3ee33 1px,transparent 1px),linear-gradient(90deg,#22d3ee33 1px,transparent 1px)',backgroundSize:'38px 38px'}} />
         <div className="relative flex justify-between text-[10px] uppercase"><span className="rounded-full bg-black/50 px-3 py-1 text-cyan-200">{'Zona '+zone.toString().padStart(2,'0')+' · Farm automático'}</span><span className="text-emerald-300">{running ? 'Combatendo' : 'Pausado'}</span></div>
-        <div className="relative mt-16 grid grid-cols-2 items-center gap-5 text-center">
-          <div><div className="mx-auto flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-cyan-300/50 bg-cyan-400/10 text-6xl">♟</div><b className="mt-3 block text-xs text-white">Agente NEXA · Nv. {level} · POD {power}</b></div>
-          <div><div className="mx-auto flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-fuchsia-300/50 bg-fuchsia-400/10 text-6xl text-fuchsia-200">{foe.icon}</div><b className="mt-3 block text-xs text-white">{foe.name}</b><div className="mx-auto mt-2 h-2 max-w-36 overflow-hidden rounded bg-slate-700"><div className="h-full bg-rose-400 transition-all" style={{width:(enemyHp/foe.max*100)+'%'}} /></div><small className="text-slate-400">{enemyHp}/{foe.max} HP</small></div>
-        </div>
-        <div className="relative mt-12 flex justify-center gap-2">{['◉','✧','◆','✦'].map((x,i)=><div key={i} className="flex h-14 w-14 flex-col items-center justify-center rounded-xl border border-violet-400/40 bg-violet-500/10 text-xl text-violet-200">{x}<small className="text-[7px] text-slate-400">Carta {i+1}</small></div>)}</div>
+        <div className="relative mt-12">
+          <div className="pointer-events-none absolute left-[10%] right-[10%] top-[54%] h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent" />
+          {lootFlash && <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 animate-bounce rounded-full border border-amber-300/40 bg-black/80 px-3 py-1 text-[10px] font-black text-amber-200">DROP! {lootFlash}</div>}
+          <div className="grid grid-cols-2 items-end gap-5 text-center">
+          <div className="relative"><div className="absolute left-1/2 top-16 h-5 w-28 -translate-x-1/2 rounded-[50%] bg-cyan-400/10 blur-sm" /><div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-[40%_40%_32%_32%] border-2 border-cyan-300/50 bg-gradient-to-b from-cyan-400/20 to-slate-950 text-6xl shadow-[0_0_35px_rgba(34,211,238,.18)]">♟</div><b className="mt-3 block text-xs text-white">Agente NEXA · Nv. {level} · POD {power}</b></div>
+          <div className={hitFlash ? 'relative scale-95 brightness-150 transition' : 'relative transition'}><div className="absolute left-1/2 top-16 h-5 w-28 -translate-x-1/2 rounded-[50%] bg-fuchsia-400/10 blur-sm" /><div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-[40%_40%_32%_32%] border-2 border-fuchsia-300/50 bg-gradient-to-b from-fuchsia-400/20 to-slate-950 text-6xl text-fuchsia-200 shadow-[0_0_35px_rgba(217,70,239,.18)]">{foe.icon}</div><b className="mt-3 block text-xs text-white">{foe.name}</b><div className="mx-auto mt-2 h-2 max-w-36 overflow-hidden rounded bg-slate-700"><div className="h-full bg-rose-400 transition-all" style={{width:(enemyHp/foe.max*100)+'%'}} /></div><small className="text-slate-400">{enemyHp}/{foe.max} HP</small></div>
+        </div></div>
+        <div className="relative mt-10 flex justify-center gap-2">{['◉','✧','◆','✦'].map((x,i)=><div key={i} className="group flex h-16 w-14 flex-col items-center justify-center rounded-lg border border-violet-400/40 bg-gradient-to-b from-violet-500/20 to-black/50 text-xl text-violet-200 shadow-[0_5px_18px_rgba(139,92,246,.12)]"><span className="transition group-hover:-translate-y-0.5">{x}</span><small className="mt-1 text-[7px] text-slate-400">NEXA {i+1}</small></div>)}</div>
       </section>
       <div className="grid gap-3 lg:grid-cols-[1.3fr_.7fr]">
         <section className="rounded-xl border border-white/10 bg-[#060b16] p-4">
