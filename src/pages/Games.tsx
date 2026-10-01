@@ -1,11 +1,79 @@
-import React from 'react';
-import { ArrowRight, CheckCircle2, Swords, Zap, Users, Layers, Trophy } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowRight, CheckCircle2, Swords, Users, Layers, Trophy, Pause, Play, RotateCcw } from 'lucide-react';
 
 interface GamesProps {
   onNavigate: (page: string) => void;
 }
 
+
+const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const enemies = [
+    { name: 'Drone Corrompido', max: 36, xp: 10, icon: '◈' },
+    { name: 'Sentinela Rift', max: 58, xp: 16, icon: '⬡' },
+    { name: 'Predador Neon', max: 82, xp: 25, icon: '✦' },
+  ];
+  const [level, setLevel] = useState(1);
+  const [xp, setXp] = useState(0);
+  const [kills, setKills] = useState(0);
+  const [drops, setDrops] = useState(0);
+  const [enemyIndex, setEnemyIndex] = useState(0);
+  const [enemyHp, setEnemyHp] = useState(enemies[0].max);
+  const [running, setRunning] = useState(true);
+  const needXp = 40 + (level - 1) * 25;
+
+  useEffect(() => {
+    if (!running) return;
+    const timer = window.setInterval(() => {
+      setEnemyHp(hp => {
+        const next = hp - (10 + level * 2);
+        if (next > 0) return next;
+        const foe = enemies[enemyIndex];
+        setKills(k => { const n = k + 1; if (n % 5 === 0) setDrops(d => d + 1); return n; });
+        setXp(current => {
+          const total = current + foe.xp;
+          if (total >= needXp) { setLevel(v => v + 1); return total - needXp; }
+          return total;
+        });
+        const ni = (enemyIndex + 1) % enemies.length;
+        setEnemyIndex(ni);
+        return enemies[ni].max;
+      });
+    }, 850);
+    return () => window.clearInterval(timer);
+  }, [running, level, enemyIndex, needXp]);
+
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); };
+  const foe = enemies[enemyIndex];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><p className="text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">NEXA · protótipo isolado</p><h1 className="font-heading text-2xl font-black uppercase text-white">Expedition <span className="text-fuchsia-400">/ Setor Neon</span></h1></div>
+        <button onClick={onClose} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-slate-200">Voltar aos jogos</button>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {[['Nível', level], ['XP', xp + '/' + needXp], ['Eliminações', kills], ['Fragmentos', drops]].map(([a,b]) => <div key={a} className="rounded-xl border border-cyan-400/20 bg-[#060b16] p-3"><p className="text-[9px] uppercase text-slate-500">{a}</p><b className="text-xl text-cyan-200">{b}</b></div>)}
+      </div>
+      <section className="relative min-h-[390px] overflow-hidden rounded-2xl border border-cyan-400/30 bg-[#060b18] p-4">
+        <div className="absolute inset-0 opacity-30" style={{backgroundImage:'linear-gradient(#22d3ee33 1px,transparent 1px),linear-gradient(90deg,#22d3ee33 1px,transparent 1px)',backgroundSize:'38px 38px'}} />
+        <div className="relative flex justify-between text-[10px] uppercase"><span className="rounded-full bg-black/50 px-3 py-1 text-cyan-200">Zona 01 · Farm automático</span><span className="text-emerald-300">{running ? 'Combatendo' : 'Pausado'}</span></div>
+        <div className="relative mt-16 grid grid-cols-2 items-center gap-5 text-center">
+          <div><div className="mx-auto flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-cyan-300/50 bg-cyan-400/10 text-6xl">♟</div><b className="mt-3 block text-xs text-white">Agente NEXA · Nv. {level}</b></div>
+          <div><div className="mx-auto flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-fuchsia-300/50 bg-fuchsia-400/10 text-6xl text-fuchsia-200">{foe.icon}</div><b className="mt-3 block text-xs text-white">{foe.name}</b><div className="mx-auto mt-2 h-2 max-w-36 overflow-hidden rounded bg-slate-700"><div className="h-full bg-rose-400 transition-all" style={{width:(enemyHp/foe.max*100)+'%'}} /></div><small className="text-slate-400">{enemyHp}/{foe.max} HP</small></div>
+        </div>
+        <div className="relative mt-12 flex justify-center gap-2">{['◉','✧','◆','✦'].map((x,i)=><div key={i} className="flex h-14 w-14 flex-col items-center justify-center rounded-xl border border-violet-400/40 bg-violet-500/10 text-xl text-violet-200">{x}<small className="text-[7px] text-slate-400">Carta {i+1}</small></div>)}</div>
+      </section>
+      <div className="grid gap-3 md:grid-cols-2">
+        <section className="rounded-xl border border-white/10 bg-[#060b16] p-4"><div className="flex gap-2"><button onClick={()=>setRunning(v=>!v)} className="flex items-center gap-2 rounded-lg bg-cyan-300 px-4 py-2 text-xs font-black text-slate-950">{running?<Pause size={14}/>:<Play size={14}/>} {running?'Pausar':'Continuar'}</button><button onClick={reset} className="flex items-center gap-2 rounded-lg border border-white/20 px-3 py-2 text-xs text-slate-200"><RotateCcw size={14}/> Reiniciar</button></div><p className="mt-3 text-[10px] text-amber-300">Não altera XP, NEX, NXA ou inventário reais.</p></section>
+        <section className="rounded-xl border border-white/10 bg-[#060b16] p-4"><div className="flex items-center justify-between"><b className="flex items-center gap-2 text-sm text-white"><Users size={15}/> Party · 1/4</b><span className="text-[9px] text-amber-300">planejada</span></div><div className="mt-3 grid grid-cols-3 gap-2">{[2,3,4].map(n=><div key={n} className="rounded-lg border border-dashed border-white/20 p-2 text-center text-[9px] text-slate-500">Slot {n} vazio</div>)}</div></section>
+      </div>
+    </div>
+  );
+};
+
 export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
+  const [showExpedition, setShowExpedition] = useState(false);
+  if (showExpedition) return <ExpeditionPrototype onClose={() => setShowExpedition(false)} />;
   return (
     <div className="space-y-4">
       <section className="relative isolate overflow-hidden rounded-[22px] border border-cyan-400/20 bg-[#040811] px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,.38)] sm:px-7">
@@ -32,7 +100,7 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
         <button type="button" onClick={() => onNavigate('riftbattle-v2')} className="group relative min-h-[310px] overflow-hidden rounded-[22px] border border-cyan-400/40 bg-[#06121c] p-5 text-left shadow-[0_24px_65px_rgba(0,0,0,.32)] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/75 hover:shadow-[0_30px_75px_rgba(0,0,0,.42),0_0_38px_rgba(34,211,238,.09)] sm:p-6">
           <div className="pointer-events-none absolute inset-0">
             <img src="/assets/rift-battle-card.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-right opacity-100 transition duration-500 group-hover:scale-[1.02]" />
@@ -70,6 +138,13 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
               <div className="mt-4 flex flex-wrap gap-1.5"><span className="rounded-full border border-fuchsia-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">PvE</span><span className="rounded-full border border-fuchsia-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">PvP</span><span className="rounded-full border border-fuchsia-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">4×4</span><span className="rounded-full border border-fuchsia-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">Deck + Nexos</span></div>
             </div>
             <span className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-fuchsia-400/45 bg-fuchsia-500/[.13] px-4 font-heading text-[10px] font-black uppercase tracking-[.09em] text-fuchsia-100 transition group-hover:bg-fuchsia-500/[.22] sm:w-[82%]">Jogar Nexus Duel <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></span>
+          </div>
+        </button>
+        <button type="button" onClick={() => setShowExpedition(true)} className="group relative min-h-[310px] overflow-hidden rounded-[22px] border border-violet-400/35 bg-[#07101b] p-5 text-left shadow-[0_24px_65px_rgba(0,0,0,.32)] transition hover:-translate-y-1 hover:border-violet-300/70 sm:p-6">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_35%,rgba(168,85,247,.20),transparent_35%),linear-gradient(135deg,#07101b,#0b1725)]" />
+          <div className="relative z-10 flex min-h-[270px] flex-col justify-between">
+            <div><div className="flex items-center gap-2"><span className="font-mono text-[10px] font-black uppercase tracking-[.16em] text-violet-300">NEXA · EXPEDITION</span><span className="rounded-full border border-amber-400/25 px-2 py-0.5 text-[9px] font-bold uppercase text-amber-300">Protótipo</span></div><h2 className="mt-2 font-heading text-[27px] font-black uppercase text-white">Expedition</h2><p className="mt-3 text-[12px] leading-relaxed text-slate-300">Farm automático persistente, progressão, drops, quatro companheiros e estrutura preparada para Party 1–4.</p><div className="mt-4 flex flex-wrap gap-1.5">{['Idle RPG','Auto-farm','4 cartas','Party 1–4'].map(x=><span key={x} className="rounded-full border border-violet-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">{x}</span>)}</div></div>
+            <span className="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-violet-400 px-4 font-heading text-[10px] font-black uppercase text-slate-950">Testar protótipo <ArrowRight className="h-4 w-4"/></span>
           </div>
         </button>
       </div>
