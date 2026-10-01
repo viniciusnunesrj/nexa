@@ -9,7 +9,14 @@ interface HomeProps {
 export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   useEffect(() => {
     void trackFunnelEvent('landing_view');
-  }, []);
+
+    // Promote's CTA already says "Criar conta". TikTok visitors should not
+    // need a second CTA click on the landing page before seeing the form.
+    if (/tiktok/i.test(document.referrer || '')) {
+      void trackFunnelEvent('register_open', { origin: 'tiktok_auto' });
+      onNavigate('register');
+    }
+  }, [onNavigate]);
 
   const goRegister = () => {
     void trackFunnelEvent('register_open', { origin: 'home_cta' });
