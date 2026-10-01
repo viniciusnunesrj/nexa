@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, CheckCircle2, Swords, Users, Layers, Trophy, Pause, Play, RotateCcw } from 'lucide-react';
 
 interface GamesProps {
@@ -19,16 +19,33 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [enemyIndex, setEnemyIndex] = useState(0);
   const [enemyHp, setEnemyHp] = useState(enemies[0].max);
   const [running, setRunning] = useState(true);
+  const [zone, setZone] = useState(1);
+  const [gear, setGear] = useState<{name:string;power:number}[]>([]);
+  const [power, setPower] = useState(12);
+  const [bossHp, setBossHp] = useState<number | null>(null);
+  const gearPool = useMemo(() => [
+    { name: 'Lâmina Neon', power: 3 }, { name: 'Visor Rift', power: 4 },
+    { name: 'Núcleo Ciano', power: 5 }, { name: 'Armadura Nexus', power: 7 }
+  ], []);
   const needXp = 40 + (level - 1) * 25;
 
   useEffect(() => {
     if (!running) return;
     const timer = window.setInterval(() => {
       setEnemyHp(hp => {
-        const next = hp - (10 + level * 2);
+        const next = hp - (8 + level * 2 + Math.floor(power / 4));
         if (next > 0) return next;
         const foe = enemies[enemyIndex];
-        setKills(k => { const n = k + 1; if (n % 5 === 0) setDrops(d => d + 1); return n; });
+        setKills(k => {
+          const n = k + 1;
+          if (n % 5 === 0) {
+            setDrops(d => d + 1);
+            const item = gearPool[(n / 5 - 1) % gearPool.length];
+            setGear(g => g.some(x => x.name === item.name) ? g : [...g, item]);
+          }
+          if (n % 10 === 0) setZone(z => Math.min(5, z + 1));
+          return n;
+        });
         setXp(current => {
           const total = current + foe.xp;
           if (total >= needXp) { setLevel(v => v + 1); return total - needXp; }
@@ -40,9 +57,9 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       });
     }, 850);
     return () => window.clearInterval(timer);
-  }, [running, level, enemyIndex, needXp]);
+  }, [running, level, enemyIndex, needXp, power, gearPool]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setPower(12); setBossHp(null); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -52,17 +69,28 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         <button onClick={onClose} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-slate-200">Voltar aos jogos</button>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {[['Nível', level], ['XP', xp + '/' + needXp], ['Eliminações', kills], ['Fragmentos', drops]].map(([a,b]) => <div key={a} className="rounded-xl border border-cyan-400/20 bg-[#060b16] p-3"><p className="text-[9px] uppercase text-slate-500">{a}</p><b className="text-xl text-cyan-200">{b}</b></div>)}
+        {[['Nível', level], ['XP', xp + '/' + needXp], ['Poder', power], ['Zona', zone]].map(([a,b]) => <div key={a} className="rounded-xl border border-cyan-400/20 bg-[#060b16] p-3"><p className="text-[9px] uppercase text-slate-500">{a}</p><b className="text-xl text-cyan-200">{b}</b></div>)}
       </div>
       <section className="relative min-h-[390px] overflow-hidden rounded-2xl border border-cyan-400/30 bg-[#060b18] p-4">
         <div className="absolute inset-0 opacity-30" style={{backgroundImage:'linear-gradient(#22d3ee33 1px,transparent 1px),linear-gradient(90deg,#22d3ee33 1px,transparent 1px)',backgroundSize:'38px 38px'}} />
-        <div className="relative flex justify-between text-[10px] uppercase"><span className="rounded-full bg-black/50 px-3 py-1 text-cyan-200">Zona 01 · Farm automático</span><span className="text-emerald-300">{running ? 'Combatendo' : 'Pausado'}</span></div>
+        <div className="relative flex justify-between text-[10px] uppercase"><span className="rounded-full bg-black/50 px-3 py-1 text-cyan-200">Zona {zone.toString().padStart(2,'0')} · Farm automático</span><span className="text-emerald-300">{running ? 'Combatendo' : 'Pausado'}</span></div>
         <div className="relative mt-16 grid grid-cols-2 items-center gap-5 text-center">
-          <div><div className="mx-auto flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-cyan-300/50 bg-cyan-400/10 text-6xl">♟</div><b className="mt-3 block text-xs text-white">Agente NEXA · Nv. {level}</b></div>
+          <div><div className="mx-auto flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-cyan-300/50 bg-cyan-400/10 text-6xl">♟</div><b className="mt-3 block text-xs text-white">Agente NEXA · Nv. {level} · POD {power}</b></div>
           <div><div className="mx-auto flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-fuchsia-300/50 bg-fuchsia-400/10 text-6xl text-fuchsia-200">{foe.icon}</div><b className="mt-3 block text-xs text-white">{foe.name}</b><div className="mx-auto mt-2 h-2 max-w-36 overflow-hidden rounded bg-slate-700"><div className="h-full bg-rose-400 transition-all" style={{width:(enemyHp/foe.max*100)+'%'}} /></div><small className="text-slate-400">{enemyHp}/{foe.max} HP</small></div>
         </div>
         <div className="relative mt-12 flex justify-center gap-2">{['◉','✧','◆','✦'].map((x,i)=><div key={i} className="flex h-14 w-14 flex-col items-center justify-center rounded-xl border border-violet-400/40 bg-violet-500/10 text-xl text-violet-200">{x}<small className="text-[7px] text-slate-400">Carta {i+1}</small></div>)}</div>
       </section>
+      <div className="grid gap-3 lg:grid-cols-[1.3fr_.7fr]">
+        <section className="rounded-xl border border-white/10 bg-[#060b16] p-4">
+          <div className="flex items-center justify-between"><b className="text-sm uppercase text-white">Drops e equipamento</b><span className="text-[9px] text-cyan-300">{drops} fragmentos</span></div>
+          <p className="mt-1 text-[10px] text-slate-500">A cada 5 eliminações cai um item de teste. Equipe para aumentar o dano.</p>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">{gear.length ? gear.map(item => <button key={item.name} onClick={()=>setPower(12+item.power)} className="rounded-lg border border-violet-400/25 bg-violet-500/10 p-2 text-left"><span className="block text-[10px] font-bold text-violet-200">{item.name}</span><span className="text-[9px] text-emerald-300">+{item.power} POD</span></button>) : <div className="col-span-full rounded-lg border border-dashed border-white/10 p-3 text-center text-[10px] text-slate-500">Continue farmando para encontrar equipamento.</div>}</div>
+        </section>
+        <section className="rounded-xl border border-rose-400/20 bg-[#100914] p-4">
+          <b className="text-sm uppercase text-rose-200">Guardião da Zona</b><p className="mt-1 text-[10px] text-slate-500">Teste de boss disponível a cada 10 eliminações.</p>
+          {kills >= 10 ? <button onClick={()=>{const hp=bossHp??120;const next=hp-(18+power);if(next<=0){setBossHp(null);setDrops(d=>d+3);setPower(p=>p+2)}else setBossHp(next)}} className="mt-3 w-full rounded-lg border border-rose-400/35 bg-rose-500/10 p-3 text-xs font-black text-rose-200">ATACAR BOSS · {bossHp??120}/120 HP</button> : <div className="mt-3 rounded-lg border border-dashed border-white/10 p-3 text-center text-[10px] text-slate-500">Desbloqueia em {10-kills} eliminações</div>}
+        </section>
+      </div>
       <div className="grid gap-3 md:grid-cols-2">
         <section className="rounded-xl border border-white/10 bg-[#060b16] p-4"><div className="flex gap-2"><button onClick={()=>setRunning(v=>!v)} className="flex items-center gap-2 rounded-lg bg-cyan-300 px-4 py-2 text-xs font-black text-slate-950">{running?<Pause size={14}/>:<Play size={14}/>} {running?'Pausar':'Continuar'}</button><button onClick={reset} className="flex items-center gap-2 rounded-lg border border-white/20 px-3 py-2 text-xs text-slate-200"><RotateCcw size={14}/> Reiniciar</button></div><p className="mt-3 text-[10px] text-amber-300">Não altera XP, NEX, NXA ou inventário reais.</p></section>
         <section className="rounded-xl border border-white/10 bg-[#060b16] p-4"><div className="flex items-center justify-between"><b className="flex items-center gap-2 text-sm text-white"><Users size={15}/> Party · 1/4</b><span className="text-[9px] text-amber-300">planejada</span></div><div className="mt-3 grid grid-cols-3 gap-2">{[2,3,4].map(n=><div key={n} className="rounded-lg border border-dashed border-white/20 p-2 text-center text-[9px] text-slate-500">Slot {n} vazio</div>)}</div></section>
