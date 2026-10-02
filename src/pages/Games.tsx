@@ -52,6 +52,10 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [forgeLevel, setForgeLevel] = useState(0);
   const [salvaged, setSalvaged] = useState(0);
   const [zoneMastery, setZoneMastery] = useState<Record<number,number>>({});
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [guards, setGuards] = useState<{id:string;name:string;rarity:string;skill:string;power:number}[]>([]);
+  const [activeGuard, setActiveGuard] = useState<string | null>(null);
+  const [guardChance, setGuardChance] = useState<{name:string;rarity:string;skill:string;power:number} | null>(null);
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
@@ -136,6 +140,10 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         });
         setCodex(c => ({...c,[foe.name]:(c[foe.name]||0)+1}));
         setZoneMastery(m => ({...m,[zone]:(m[zone]||0)+1}));
+        if ((kills+1)%11===0 && !guardChance) {
+          const roll=(kills+zone)%4;
+          setGuardChance(roll===0?{name:'Sentinela Eco',rarity:'Épico',skill:'Pulso de Guarda',power:9}:roll===1?{name:'Vigia Rift',rarity:'Raro',skill:'Olho do Setor',power:6}:roll===2?{name:'Soldado Nexus',rarity:'Comum',skill:'Fogo de Cobertura',power:3}:{name:'Executor Eco',rarity:'Lendário',skill:'Ruptura Fantasma',power:13});
+        }
         setCredits(c => c + 2 + zone + upgrades.salvage);
         setHp(h => Math.max(1, h - Math.max(1, 4 + zone - Math.floor(power/12) - upgrades.recovery)));
         setKills(k => {
@@ -163,13 +171,14 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       });
     }, 850);
     return () => window.clearInterval(timer);
-  }, [running, level, enemyIndex, needXp, power, gearPool, zone, upgrades.damage, upgrades.salvage, upgrades.recovery]);
+  }, [running, level, enemyIndex, needXp, power, gearPool, zone, upgrades.damage, upgrades.salvage, upgrades.recovery, kills, guardChance]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); setCodex({}); setBounties({}); setCores(0); setForgeLevel(0); setSalvaged(0); setZoneMastery({}); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); setCodex({}); setBounties({}); setCores(0); setForgeLevel(0); setSalvaged(0); setZoneMastery({}); setTutorialStep(0); setGuards([]); setActiveGuard(null); setGuardChance(null); };
   const foe = enemies[enemyIndex];
 
   return (
     <div className="space-y-4">
+      {tutorialStep < 4 && <div className="sticky top-2 z-40 rounded-xl border border-cyan-300/30 bg-[#020812]/95 p-3 shadow-2xl"><span className="text-[8px] font-black uppercase tracking-[.2em] text-cyan-300">Treinamento NEXA · {tutorialStep+1}/4</span><b className="mt-1 block text-sm text-white">{['Bem-vindo à Expedição','Observe o auto-combate','Equipe seus drops','Explore por conta própria'][tutorialStep]}</b><p className="mt-1 text-[9px] text-slate-400">{['Vamos mostrar apenas o essencial.','Pause ou retome o farm. Combates geram XP, recursos e descobertas.','Itens vão para a Mochila: equipe os melhores e recicle o restante.','Cartas, Ecos, Codex e mapa se conectam. O resto você descobre jogando.'][tutorialStep]}</p><div className="mt-2 flex gap-3"><button onClick={()=>setTutorialStep(t=>t+1)} className="rounded border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-[8px] font-black text-cyan-200">{tutorialStep===3?'COMEÇAR':'PRÓXIMO'}</button><button onClick={()=>setTutorialStep(4)} className="text-[8px] text-slate-600">Pular</button></div></div>}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><p className="text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">NEXA · protótipo isolado</p><h1 className="font-heading text-2xl font-black uppercase text-white">Expedition <span className="text-fuchsia-400">/ Setor Neon</span></h1></div>
         <button onClick={onClose} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-slate-200">Voltar aos jogos</button>
@@ -189,6 +198,11 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           <div className={hitFlash ? 'relative scale-95 brightness-150 transition' : 'relative transition'}><div className="absolute left-1/2 top-16 h-5 w-28 -translate-x-1/2 rounded-[50%] bg-fuchsia-400/10 blur-sm" /><div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-[40%_40%_32%_32%] border-2 border-fuchsia-300/50 bg-gradient-to-b from-fuchsia-400/20 to-slate-950 text-6xl text-fuchsia-200 shadow-[0_0_35px_rgba(217,70,239,.18)]">{foe.icon}</div><b className="mt-3 block text-xs text-white">{foe.name}</b><div className="mx-auto mt-2 h-2 max-w-36 overflow-hidden rounded bg-slate-700"><div className="h-full bg-rose-400 transition-all" style={{width:(enemyHp/foe.max*100)+'%'}} /></div><small className="text-slate-400">{enemyHp}/{foe.max} HP</small></div>
         </div></div>
         <div className="relative mt-10 flex justify-center gap-2">{companions.map((c,i)=><div key={c.name} title={c.effect} className={(cardPulse===i?'scale-110 border-cyan-200 bg-cyan-400/25 ':'')+"group relative flex h-20 w-16 flex-col items-center justify-center overflow-hidden rounded-lg border border-violet-400/40 bg-gradient-to-b from-violet-500/20 to-black/50 text-xl text-violet-200 shadow-[0_5px_18px_rgba(139,92,246,.12)] transition"}><span className="transition group-hover:-translate-y-0.5">{c.icon}</span><small className="mt-1 text-[7px] font-bold text-slate-300">{c.name}</small><small className="text-[6px] uppercase text-slate-500">{c.role}</small><div className="absolute bottom-0 left-0 h-1 bg-cyan-400 transition-all" style={{width:cardCharge[i]+'%'}} /></div>)}</div>
+      </section>
+      <section className="rounded-xl border border-purple-400/15 bg-purple-500/5 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-purple-300">Guardiões de Eco</span><b className="mt-1 block text-sm text-white">{activeGuard ? guards.find(g=>g.id===activeGuard)?.name : 'Nenhum invocado'}</b><p className="text-[9px] text-slate-500">Alguns NPCs derrotados deixam um Eco raro. Capture sua assinatura e invoque-a como Guarda.</p></div><span className="text-[8px] text-purple-200">{guards.length} coletados</span></div>
+        {guardChance && <div className="mt-3 rounded-lg border border-purple-300/30 bg-black/30 p-3"><span className="text-[7px] font-black uppercase text-purple-300">Eco capturável detectado</span><b className="block text-xs text-white">{guardChance.name} · {guardChance.rarity}</b><p className="text-[8px] text-slate-400">{guardChance.skill} · +{guardChance.power} POD de Guarda</p><div className="mt-2 flex gap-2"><button onClick={()=>{const g={...guardChance,id:Date.now().toString()};setGuards(v=>[g,...v]);setGuardChance(null)}} className="rounded border border-purple-400/30 px-3 py-1 text-[8px] font-black text-purple-200">CAPTURAR ECO</button><button onClick={()=>setGuardChance(null)} className="rounded border border-white/10 px-3 py-1 text-[8px] text-slate-500">DEIXAR</button></div></div>}
+        <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">{guards.slice(0,4).map(g=><button key={g.id} onClick={()=>setActiveGuard(g.id)} className={(activeGuard===g.id?'border-purple-300 bg-purple-400/15 ':'border-white/10 bg-black/20 ')+"rounded-lg border p-2 text-left"}><span className="text-[7px] uppercase text-purple-300">{g.rarity}</span><b className="block text-[9px] text-white">{g.name}</b><span className="text-[7px] text-slate-500">{g.skill}</span></button>)}</div>
       </section>
       <section className="rounded-xl border border-teal-400/15 bg-teal-500/5 p-3">
         <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-teal-300">Domínio Regional</span><b className="mt-1 block text-sm text-white">{zoneNames[zone-1]} · Nv. {Math.min(3,Math.floor((zoneMastery[zone]||0)/10))}/3</b><p className="text-[9px] text-slate-500">Caçar, explorar e derrotar ameaças torna sua equipe especialista naquela região.</p></div><span className="text-[8px] text-teal-200">{zoneMastery[zone]||0} atividade</span></div>
