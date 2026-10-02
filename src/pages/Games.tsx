@@ -41,6 +41,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [renown, setRenown] = useState(0);
   const [research, setResearch] = useState(0);
   const [upgrades, setUpgrades] = useState<Record<string,number>>({damage:0, salvage:0, recovery:0});
+  const [eliteKills, setEliteKills] = useState(0);
+  const [elite, setElite] = useState<{name:string;hp:number;max:number;trait:string} | null>(null);
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
@@ -68,6 +70,10 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       return next;
     });
   };
+        if (!elite && (kills + 1) % 9 === 0) {
+          const eliteMax = 95 + zone * 45;
+          setElite({name: zone>=4?'Arauto Abissal':zone>=2?'Executor Rift':'Drone Alfa',hp:eliteMax,max:eliteMax,trait:zone%2===0?'Blindagem Reativa':'Carga Instável'});
+        }
         setEventMeter(m => {
           const next = m + 1;
           if (next >= 7 && !event) {
@@ -118,7 +124,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool, zone, upgrades.damage, upgrades.salvage, upgrades.recovery]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -162,6 +168,10 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       <section className="rounded-xl border border-amber-300/20 bg-gradient-to-r from-amber-500/10 via-violet-500/5 to-cyan-500/10 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-amber-300">Sequência de Expedição</span><b className="mt-1 block text-sm text-white">{streakDay} dias em sequência</b><p className="text-[9px] text-slate-500">Entre diariamente para manter a sequência e melhorar o baú do 7º dia.</p></div><button disabled={dailyClaimed} onClick={()=>{setDailyClaimed(true);setCredits(c=>c+15);setPotions(p=>p+1)}} className="rounded-lg border border-amber-300/30 bg-amber-400/10 px-4 py-2 text-[9px] font-black text-amber-200 disabled:opacity-40">{dailyClaimed?'RESGATADO':'RESGATAR DIA '+streakDay}</button></div>
         <div className="mt-3 grid grid-cols-7 gap-1">{[1,2,3,4,5,6,7].map(d=><div key={d} className={(d<streakDay || (d===streakDay&&dailyClaimed)?'border-emerald-400/30 bg-emerald-500/10 ':d===streakDay?'border-amber-300/50 bg-amber-500/10 ':'border-white/10 bg-black/20 ')+"rounded-lg border p-2 text-center"}><span className="block text-[7px] uppercase text-slate-500">Dia {d}</span><b className="text-[9px] text-white">{d===7?'Baú':'+'+(8+d*3)}</b><span className="block text-[6px] text-slate-500">{d===7?'Especial':'Sucata'}</span></div>)}</div>
+      </section>
+      <section className={elite ? "rounded-xl border border-rose-400/30 bg-gradient-to-r from-rose-500/10 to-orange-500/5 p-3" : "rounded-xl border border-white/10 bg-white/[.02] p-3"}>
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-rose-300">Ameaça de Elite</span>{elite ? <><b className="mt-1 block text-sm text-white">{elite.name}</b><p className="text-[9px] text-slate-500">{elite.trait} · inimigo opcional de alto risco.</p></> : <p className="mt-1 text-[9px] text-slate-500">Assinaturas especiais podem surgir durante o farm.</p>}</div>{elite ? <button onClick={()=>{const dmg=22+power+upgrades.damage*3;const next=elite.hp-dmg;if(next<=0){setElite(null);setEliteKills(k=>k+1);setCredits(c=>c+30+zone*5);setDrops(d=>d+2)}else{setElite({...elite,hp:next});setHp(h=>Math.max(1,h-(7+zone)))}}} className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-[9px] font-black text-rose-200">ENFRENTAR · {elite.hp}/{elite.max}</button> : <span className="text-[8px] text-slate-600">{eliteKills} abatidos</span>}</div>
+        {elite && <div className="mt-2 h-1.5 overflow-hidden rounded bg-black/50"><div className="h-full bg-rose-400 transition-all" style={{width:(elite.hp/elite.max*100)+'%'}} /></div>}
       </section>
       <div className="grid gap-3 md:grid-cols-[.8fr_1.2fr]">
         <section className="rounded-xl border border-cyan-400/15 bg-cyan-500/5 p-3"><span className="text-[8px] font-black uppercase tracking-widest text-cyan-300">Sinergia ativa</span><b className="mt-1 block text-sm text-white">{synergy}</b><p className="mt-1 text-[9px] text-slate-500">{synergyText}</p><div className="mt-2 h-1 overflow-hidden rounded bg-black/50"><div className="h-full bg-cyan-400" style={{width:Math.min(100,25+power*2)+'%'}} /></div></section>
