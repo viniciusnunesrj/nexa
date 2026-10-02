@@ -32,7 +32,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [manaPotions, setManaPotions] = useState(1);
   const [hp, setHp] = useState(100);
   const [mana, setMana] = useState(60);
-  const [playerClass, setPlayerClass] = useState('Vanguarda');
+  const [playerClass, setPlayerClass] = useState('Kael');
   const [profileOpen, setProfileOpen] = useState(false);
   const [skillFlash, setSkillFlash] = useState<string | null>(null);
   const [cardCharge, setCardCharge] = useState([0,0,0,0]);
@@ -83,20 +83,20 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
   const gearPool = useMemo(() => [
-    { name: 'Lâmina Neon', power: 3, slot: 'arma', requiredClass:'Vanguarda', stat:'skill', statValue:2 }, { name: 'Visor Rift', power: 4, slot: 'visor', requiredClass:'Batedor', stat:'explore', statValue:2 },
-    { name: 'Núcleo Ciano', power: 5, slot: 'nucleo', requiredClass:'Tecnomante', stat:'mana', statValue:10 }, { name: 'Armadura Nexus', power: 7, slot: 'armadura', requiredClass:'Vanguarda', stat:'hp', statValue:12 },
+    { name: 'Lâmina Neon', power: 3, slot: 'arma', requiredClass:'Kael', stat:'skill', statValue:2 }, { name: 'Visor Rift', power: 4, slot: 'visor', requiredClass:'Freya', stat:'explore', statValue:2 },
+    { name: 'Núcleo Ciano', power: 5, slot: 'nucleo', requiredClass:'Cyrus', stat:'mana', statValue:10 }, { name: 'Armadura Nexus', power: 7, slot: 'armadura', requiredClass:'Kael', stat:'hp', statValue:12 },
     { name: 'Relé Universal', power: 2, slot: 'nucleo', requiredClass:'Universal', stat:'mana', statValue:4 }
   ], []);
   const needXp = 40 + (level - 1) * 25;
   const classDefs:Record<string,{maxMana:number;manaUse:number;skill:string;desc:string}> = {
-    Vanguarda:{maxMana:60,manaUse:14,skill:'Impacto Nexus',desc:'Equilíbrio entre resistência e dano.'},
-    Tecnomante:{maxMana:100,manaUse:22,skill:'Pulso Rift',desc:'Mais mana e habilidades energéticas.'},
-    Batedor:{maxMana:75,manaUse:16,skill:'Disparo Fantasma',desc:'Mobilidade, exploração e precisão.'}
+    Kael:{maxMana:60,manaUse:14,skill:'Golpe de Ruptura',desc:'Combatente físico resistente. Pode evoluir para defesa, dano pesado ou pressão agressiva.'},
+    Cyrus:{maxMana:105,manaUse:22,skill:'Rajada Arcana',desc:'Especialista em poder mágico. Pode focar dano, controle ou eficiência de mana.'},
+    Freya:{maxMana:85,manaUse:18,skill:'Pulso Vital',desc:'Combatente versátil de suporte. Pode focar cura, fortalecimento ou dano híbrido.'}
   };
   const classData=classDefs[playerClass];
   const gearStat=(stat:string)=>Object.values(equipped).reduce((n,i)=>n+(i?.stat===stat?(i.statValue||0):0),0);
   const maxMana=classData.maxMana + Math.floor(level/5)*5 + gearStat('mana');
-  const maxHp = 100 + (level - 1) * 6 + (talents.survival || 0) * 4 + (playerClass==='Vanguarda'?15:0) + gearStat('hp');
+  const maxHp = 100 + (level - 1) * 6 + (talents.survival || 0) * 4 + (playerClass==='Kael'?18:playerClass==='Freya'?6:0) + gearStat('hp');
   const effectiveHp = Math.min(hp, maxHp);
   const renownTier = renown >= 60 ? 'Vanguarda' : renown >= 30 ? 'Operador' : renown >= 10 ? 'Batedor' : 'Recruta';
 
@@ -105,10 +105,10 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     setMana(v=>Math.max(0,v-classData.manaUse));
     setSkillFlash(classData.skill);
     window.setTimeout(()=>setSkillFlash(null),650);
-    if(playerClass==='Vanguarda'){
+    if(playerClass==='Kael'){
       setEnemyHp(v=>Math.max(0,v-(18+level*3+Math.floor(power/3)+gearStat('skill'))));
       setHp(v=>Math.min(maxHp,v+8));
-    } else if(playerClass==='Tecnomante'){
+    } else if(playerClass==='Cyrus'){
       setEnemyHp(v=>Math.max(0,v-(28+level*4+Math.floor(power/2)+gearStat('skill'))));
     } else {
       setEnemyHp(v=>Math.max(0,v-(20+level*3+Math.floor(power/2)+gearStat('skill'))));
@@ -245,7 +245,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 
   useEffect(()=>{ if(running) setMana(v=>Math.min(maxMana,v+1)); },[kills, running, maxMana]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setManaPotions(1); setHp(100); setMana(60); setPlayerClass('Vanguarda'); setProfileOpen(false); setSkillFlash(null); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setTalents({combat:0,survival:0,exploration:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); setCodex({}); setBounties({}); setCores(0); setForgeLevel(0); setSalvaged(0); setZoneMastery({}); setTutorialStep(0); setGuards([]); setActiveGuard(null); setGuardChance(null); setSeals(2); setMerchantOpen(false); setMarketListings([]); setMarketOpen(false); setDailyNexClaimed(false); setEventsInteracted(0); setExpChat(v=>v.slice(0,3)); setChatText(''); setChatReply(null); setGuardiansDefeated(0); setQuickPanel(null); setGameMenuOpen(false); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setManaPotions(1); setHp(100); setMana(60); setPlayerClass('Kael'); setProfileOpen(false); setSkillFlash(null); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setTalents({combat:0,survival:0,exploration:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); setCodex({}); setBounties({}); setCores(0); setForgeLevel(0); setSalvaged(0); setZoneMastery({}); setTutorialStep(0); setGuards([]); setActiveGuard(null); setGuardChance(null); setSeals(2); setMerchantOpen(false); setMarketListings([]); setMarketOpen(false); setDailyNexClaimed(false); setEventsInteracted(0); setExpChat(v=>v.slice(0,3)); setChatText(''); setChatReply(null); setGuardiansDefeated(0); setQuickPanel(null); setGameMenuOpen(false); };
   const talentPointsTotal = Math.floor((level - 1) / 2) + Math.floor(renown / 20);
   const talentPointsSpent = Object.values(talents).reduce((a,b)=>a+b,0);
   const talentPoints = Math.max(0,talentPointsTotal-talentPointsSpent);
