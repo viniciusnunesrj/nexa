@@ -41,6 +41,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [renown, setRenown] = useState(0);
   const [research, setResearch] = useState(0);
   const [upgrades, setUpgrades] = useState<Record<string,number>>({damage:0, salvage:0, recovery:0});
+  const [talents, setTalents] = useState<Record<string,number>>({combat:0,survival:0,exploration:0});
   const [eliteKills, setEliteKills] = useState(0);
   const [elite, setElite] = useState<{name:string;hp:number;max:number;trait:string} | null>(null);
   const [mapNode, setMapNode] = useState(0);
@@ -207,7 +208,19 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool, zone, upgrades.damage, upgrades.salvage, upgrades.recovery, kills, guardChance]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); setCodex({}); setBounties({}); setCores(0); setForgeLevel(0); setSalvaged(0); setZoneMastery({}); setTutorialStep(0); setGuards([]); setActiveGuard(null); setGuardChance(null); setSeals(2); setMerchantOpen(false); setMarketListings([]); setMarketOpen(false); setDailyNexClaimed(false); setEventsInteracted(0); setExpChat(v=>v.slice(0,3)); setChatText(''); setChatReply(null); setGuardiansDefeated(0); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setTalents({combat:0,survival:0,exploration:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); setCodex({}); setBounties({}); setCores(0); setForgeLevel(0); setSalvaged(0); setZoneMastery({}); setTutorialStep(0); setGuards([]); setActiveGuard(null); setGuardChance(null); setSeals(2); setMerchantOpen(false); setMarketListings([]); setMarketOpen(false); setDailyNexClaimed(false); setEventsInteracted(0); setExpChat(v=>v.slice(0,3)); setChatText(''); setChatReply(null); setGuardiansDefeated(0); };
+  const talentPointsTotal = Math.floor((level - 1) / 2) + Math.floor(renown / 20);
+  const talentPointsSpent = Object.values(talents).reduce((a,b)=>a+b,0);
+  const talentPoints = Math.max(0,talentPointsTotal-talentPointsSpent);
+  const talentDefs = [
+    {id:'combat',name:'Combate',icon:'⚔',desc:'Aprimora dano e eficiência contra ameaças.',effects:['+1 dano por ponto','Elites e Guardiões sofrem pressão maior','Preparação para funções de Party']},
+    {id:'survival',name:'Sobrevivência',icon:'⬡',desc:'Mantém a expedição ativa por mais tempo.',effects:['+4 PV máximo por ponto','Reduz desgaste a cada 2 pontos','Melhora sustentação no auto-farm']},
+    {id:'exploration',name:'Exploração',icon:'✦',desc:'Acelera descobertas e coleta em campo.',effects:['+2% avanço de mapa por ponto','Melhora leitura de eventos e Codex','Apoia descoberta de Ecos']}
+  ];
+  const spendTalent = (id:string) => {
+    if(talentPoints<1 || (talents[id]||0)>=5) return;
+    setTalents(v=>({...v,[id]:(v[id]||0)+1}));
+  };
   const dailyActivity = [
     Math.min(25, kills / 20 * 25),
     Math.min(20, mapNode / 100 * 20),
@@ -273,7 +286,12 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-orange-300">Forja de Ruptura</span><b className="mt-1 block text-sm text-white">{cores} Núcleos de Elite · Forja Nv. {forgeLevel}</b><p className="text-[9px] text-slate-500">Elites e bosses alimentam a forja. Melhore drops que você decidiu manter.</p></div><button disabled={cores<3||forgeLevel>=3} onClick={()=>{setCores(c=>c-3);setForgeLevel(l=>l+1)}} className="rounded border border-orange-400/25 px-3 py-2 text-[8px] font-black text-orange-200 disabled:opacity-30">{forgeLevel>=3?'FORJA MÁXIMA':'3 NÚCLEOS · EVOLUIR FORJA'}</button></div>
         <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">{gear.slice(0,4).map(item=><div key={item.id} className="rounded-lg border border-white/10 bg-black/20 p-2"><b className="block text-[9px] text-white">{item.name}</b><span className="text-[8px] text-emerald-300">+{item.power} POD</span><button disabled={cores<1||credits<30} onClick={()=>enhanceItem(item)} className="mt-2 w-full rounded border border-orange-400/20 px-2 py-1 text-[7px] font-black text-orange-200 disabled:opacity-30">1 NÚCLEO + 30 SUCATA</button></div>)}</div>
       </section>
-      <section className="rounded-xl border border-sky-400/15 bg-sky-500/5 p-3">
+            <section className="rounded-xl border border-violet-400/15 bg-gradient-to-r from-violet-500/5 to-cyan-500/5 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-violet-300">Talentos do Expedicionário</span><b className="mt-1 block text-sm text-white">${talentPoints} pontos disponíveis</b><p className="text-[9px] text-slate-500">Ganhe pontos com nível e Renome. Eles especializam o mesmo personagem — sem criar outra moeda.</p></div><div className="rounded-lg border border-violet-400/20 bg-black/20 px-3 py-2 text-center"><span className="block text-[7px] uppercase text-slate-500">Investidos</span><b className="text-[10px] text-violet-200">${talentPointsSpent} / ${talentPointsTotal}</b></div></div>
+        <div className="mt-3 grid gap-2 md:grid-cols-3">{talentDefs.map(t=>{const lv=talents[t.id]||0;return <div key={t.id} className="rounded-lg border border-white/10 bg-black/25 p-3"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className="text-lg">{t.icon}</span><b className="text-[10px] text-white">{t.name}</b></div><span className="text-[8px] font-black text-violet-300">Nv. {lv}/5</span></div><p className="mt-2 text-[8px] text-slate-400">{t.desc}</p><div className="mt-2 space-y-1">{t.effects.map((e,i)=><div key={e} className={(lv>i?'text-cyan-200':'text-slate-600')+" text-[7px]"}>{lv>i?'✓':'○'} {e}</div>)}</div><button disabled={talentPoints<1||lv>=5} onClick={()=>spendTalent(t.id)} className="mt-3 w-full rounded border border-violet-400/25 bg-violet-500/5 px-2 py-1.5 text-[7px] font-black text-violet-200 disabled:opacity-30">{lv>=5?'ESPECIALIZAÇÃO MÁXIMA':'INVESTIR 1 PONTO'}</button></div>})}</div>
+        <p className="mt-2 text-[7px] text-slate-600">Protótipo: os bônus serão conectados gradualmente ao combate, mapa, Ecos, chefes e Party para evitar progressões soltas.</p>
+      </section>
+<section className="rounded-xl border border-sky-400/15 bg-sky-500/5 p-3">
         <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-sky-300">Laboratório Nexus</span><b className="mt-1 block text-sm text-white">{research} Dados de Pesquisa</b><p className="text-[9px] text-slate-500">Converta sucata em pesquisa e especialize sua expedição.</p></div><button disabled={credits<20} onClick={()=>{setCredits(c=>c-20);setResearch(r=>r+1)}} className="rounded border border-sky-400/25 px-3 py-2 text-[8px] font-black text-sky-200 disabled:opacity-30">20 SUCATA → 1 DADO</button></div>
         <div className="mt-3 grid gap-2 md:grid-cols-3">{[
           {id:'damage',name:'Overclock',desc:'+2 dano por nível'},
