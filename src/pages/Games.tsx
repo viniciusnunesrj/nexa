@@ -80,6 +80,9 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     { name: 'Núcleo Ciano', power: 5, slot: 'nucleo' }, { name: 'Armadura Nexus', power: 7, slot: 'armadura' }
   ], []);
   const needXp = 40 + (level - 1) * 25;
+  const maxHp = 100 + (level - 1) * 6 + (talents.survival || 0) * 4;
+  const effectiveHp = Math.min(hp, maxHp);
+  const renownTier = renown >= 60 ? 'Vanguarda' : renown >= 30 ? 'Operador' : renown >= 10 ? 'Batedor' : 'Recruta';
 
   const rarityClass = (r:string) => r==='Lendário' ? 'border-amber-300/60 text-amber-200' : r==='Épico' ? 'border-fuchsia-400/50 text-fuchsia-200' : r==='Raro' ? 'border-cyan-400/50 text-cyan-200' : 'border-white/15 text-slate-300';
   const listMarketItem = (item:ProtoGear) => {
@@ -134,7 +137,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       setEnemyHp(hp => {
         setHitFlash(true);
         window.setTimeout(() => setHitFlash(false), 140);
-        const next = hp - (8 + level * 2 + Math.floor(power / 4) + upgrades.damage * 2);
+        const next = hp - (8 + level * 2 + Math.floor(power / 4) + upgrades.damage * 2 + (talents.combat || 0));
         if (next > 0) return next;
         const foe = {...enemies[enemyIndex], max: Math.round(enemies[enemyIndex].max * (1 + (zone - 1) * .28))};
         if (!elite && (kills + 1) % 9 === 0) {
@@ -163,7 +166,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           return nv;
         }));
         setMapNode(n => {
-          const next = Math.min(100,n+4+zone);
+          const next = Math.min(100,n+4+zone+(talents.exploration||0)*2);
           if(next>=75 && zone>=3) setRaidSignal(true);
           if(next>=100 && !worldBoss) {
             const max=260+zone*120;
@@ -179,8 +182,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           const data=rarity==='Lendário'?{name:'Executor Eco',skill:'Ruptura Fantasma',power:13,capture:6}:rarity==='Épico'?{name:'Sentinela Eco',skill:'Pulso de Guarda',power:9,capture:12}:rarity==='Raro'?{name:'Vigia Rift',skill:'Olho do Setor',power:6,capture:25}:{name:'Soldado Nexus',skill:'Fogo de Cobertura',power:3,capture:45};
           setGuardChance({...data,rarity});
         }
-        setCredits(c => c + 2 + zone + upgrades.salvage);
-        setHp(h => Math.max(1, h - Math.max(1, 4 + zone - Math.floor(power/12) - upgrades.recovery)));
+        setCredits(c => c + 2 + zone + upgrades.salvage + ((talents.exploration||0)>=4 ? 1 : 0));
+        setHp(h => Math.max(1, h - Math.max(1, 4 + zone - Math.floor(power/12) - upgrades.recovery - Math.floor((talents.survival||0)/2))));
         setKills(k => {
           const n = k + 1;
           if (n % 5 === 0) {
@@ -206,16 +209,16 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       });
     }, 850);
     return () => window.clearInterval(timer);
-  }, [running, level, enemyIndex, needXp, power, gearPool, zone, upgrades.damage, upgrades.salvage, upgrades.recovery, kills, guardChance]);
+  }, [running, level, enemyIndex, needXp, power, gearPool, zone, upgrades.damage, upgrades.salvage, upgrades.recovery, talents.combat, talents.survival, talents.exploration, kills, guardChance]);
 
   const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setTalents({combat:0,survival:0,exploration:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); setCodex({}); setBounties({}); setCores(0); setForgeLevel(0); setSalvaged(0); setZoneMastery({}); setTutorialStep(0); setGuards([]); setActiveGuard(null); setGuardChance(null); setSeals(2); setMerchantOpen(false); setMarketListings([]); setMarketOpen(false); setDailyNexClaimed(false); setEventsInteracted(0); setExpChat(v=>v.slice(0,3)); setChatText(''); setChatReply(null); setGuardiansDefeated(0); };
   const talentPointsTotal = Math.floor((level - 1) / 2) + Math.floor(renown / 20);
   const talentPointsSpent = Object.values(talents).reduce((a,b)=>a+b,0);
   const talentPoints = Math.max(0,talentPointsTotal-talentPointsSpent);
   const talentDefs = [
-    {id:'combat',name:'Combate',icon:'⚔',desc:'Aprimora dano e eficiência contra ameaças.',effects:['+1 dano por ponto','Elites e Guardiões sofrem pressão maior','Preparação para funções de Party']},
-    {id:'survival',name:'Sobrevivência',icon:'⬡',desc:'Mantém a expedição ativa por mais tempo.',effects:['+4 PV máximo por ponto','Reduz desgaste a cada 2 pontos','Melhora sustentação no auto-farm']},
-    {id:'exploration',name:'Exploração',icon:'✦',desc:'Acelera descobertas e coleta em campo.',effects:['+2% avanço de mapa por ponto','Melhora leitura de eventos e Codex','Apoia descoberta de Ecos']}
+    {id:'combat',name:'Combate',icon:'⚔',desc:'Aprimora dano e eficiência contra ameaças.',effects:['+1 dano por ponto','+2 dano em Elite / +3 em Boss por ponto','Preparação para funções de Party']},
+    {id:'survival',name:'Sobrevivência',icon:'⬡',desc:'Mantém a expedição ativa por mais tempo.',effects:['+4 PV máximo por ponto','-1 desgaste a cada 2 pontos','Reduz dano de Elite e Boss']},
+    {id:'exploration',name:'Exploração',icon:'✦',desc:'Acelera descobertas e coleta em campo.',effects:['+2 avanço de mapa por ponto','Nv. 4+: +1 sucata por abate','Apoia descoberta de Ecos']}
   ];
   const spendTalent = (id:string) => {
     if(talentPoints<1 || (talents[id]||0)>=5) return;
@@ -323,10 +326,10 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       <section className="rounded-xl border border-indigo-400/15 bg-[#070a18] p-3">
         <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-indigo-300">Mapa da Zona</span><b className="mt-1 block text-sm text-white">{zoneNames[zone-1]}</b></div><span className="text-[8px] text-slate-500">{mapNode}% explorado</span></div>
         <div className="relative mt-4 h-16"><div className="absolute left-4 right-4 top-7 h-px bg-indigo-400/25" />{[0,25,50,75,100].map((n,i)=><div key={n} className="absolute top-4 -translate-x-1/2 text-center" style={{left:(8+i*21)+'%'}}><div className={(mapNode>=n?'border-indigo-300 bg-indigo-400/20 text-indigo-100':'border-white/10 bg-black text-slate-700')+" mx-auto flex h-7 w-7 items-center justify-center rounded-full border text-[9px]"}>{i===4?'☠':i+1}</div><span className="mt-1 block text-[6px] uppercase text-slate-600">{i===4?'Boss':'Setor'}</span></div>)}</div>
-        {worldBoss ? <div className="mt-2 rounded-lg border border-red-400/30 bg-red-500/10 p-3"><div className="flex items-center justify-between gap-3"><div><span className="text-[7px] font-black uppercase text-red-300">Boss encontrado no mapa</span><b className="block text-xs text-white">{worldBoss.name}</b></div><button onClick={()=>{const dmg=28+power+upgrades.damage*4;const next=worldBoss.hp-dmg;if(next<=0){setWorldBoss(null);setMapNode(0);setCredits(c=>c+60+zone*10);setDrops(d=>d+3);setRenown(r=>r+5);setCores(c=>c+2)}else{setWorldBoss({...worldBoss,hp:next});setHp(h=>Math.max(1,h-(10+zone*2)))}}} className="rounded border border-red-400/30 px-3 py-2 text-[8px] font-black text-red-200">ATACAR · {worldBoss.hp}/{worldBoss.max}</button></div><div className="mt-2 h-1.5 overflow-hidden rounded bg-black/60"><div className="h-full bg-red-400 transition-all" style={{width:(worldBoss.hp/worldBoss.max*100)+'%'}} /></div></div> : <p className="mt-1 text-[8px] text-slate-600">Explore a região durante o farm. O último ponto pode esconder uma ameaça maior.</p>}
+        {worldBoss ? <div className="mt-2 rounded-lg border border-red-400/30 bg-red-500/10 p-3"><div className="flex items-center justify-between gap-3"><div><span className="text-[7px] font-black uppercase text-red-300">Boss encontrado no mapa</span><b className="block text-xs text-white">{worldBoss.name}</b></div><button onClick={()=>{const dmg=28+power+upgrades.damage*4+(talents.combat||0)*3;const next=worldBoss.hp-dmg;if(next<=0){setWorldBoss(null);setMapNode(0);setCredits(c=>c+60+zone*10);setDrops(d=>d+3);setRenown(r=>r+5);setCores(c=>c+2)}else{setWorldBoss({...worldBoss,hp:next});setHp(h=>Math.max(1,h-Math.max(1,10+zone*2-Math.floor((talents.survival||0)/2))))}}} className="rounded border border-red-400/30 px-3 py-2 text-[8px] font-black text-red-200">ATACAR · {worldBoss.hp}/{worldBoss.max}</button></div><div className="mt-2 h-1.5 overflow-hidden rounded bg-black/60"><div className="h-full bg-red-400 transition-all" style={{width:(worldBoss.hp/worldBoss.max*100)+'%'}} /></div></div> : <p className="mt-1 text-[8px] text-slate-600">Explore a região durante o farm. O último ponto pode esconder uma ameaça maior.</p>}
       </section>
       <section className={elite ? "rounded-xl border border-rose-400/30 bg-gradient-to-r from-rose-500/10 to-orange-500/5 p-3" : "rounded-xl border border-white/10 bg-white/[.02] p-3"}>
-        <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-rose-300">Ameaça de Elite</span>{elite ? <><b className="mt-1 block text-sm text-white">{elite.name}</b><p className="text-[9px] text-slate-500">{elite.trait} · inimigo opcional de alto risco.</p></> : <p className="mt-1 text-[9px] text-slate-500">Assinaturas especiais podem surgir durante o farm.</p>}</div>{elite ? <button onClick={()=>{const dmg=22+power+upgrades.damage*3;const next=elite.hp-dmg;if(next<=0){setElite(null);setEliteKills(k=>k+1);setCredits(c=>c+30+zone*5);setDrops(d=>d+2);setCores(c=>c+1)}else{setElite({...elite,hp:next});setHp(h=>Math.max(1,h-(7+zone)))}}} className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-[9px] font-black text-rose-200">ENFRENTAR · {elite.hp}/{elite.max}</button> : <span className="text-[8px] text-slate-600">{eliteKills} abatidos</span>}</div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-rose-300">Ameaça de Elite</span>{elite ? <><b className="mt-1 block text-sm text-white">{elite.name}</b><p className="text-[9px] text-slate-500">{elite.trait} · inimigo opcional de alto risco.</p></> : <p className="mt-1 text-[9px] text-slate-500">Assinaturas especiais podem surgir durante o farm.</p>}</div>{elite ? <button onClick={()=>{const dmg=22+power+upgrades.damage*3+(talents.combat||0)*2;const next=elite.hp-dmg;if(next<=0){setElite(null);setEliteKills(k=>k+1);setCredits(c=>c+30+zone*5);setDrops(d=>d+2);setCores(c=>c+1)}else{setElite({...elite,hp:next});setHp(h=>Math.max(1,h-Math.max(1,7+zone-Math.floor((talents.survival||0)/2))))}}} className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-[9px] font-black text-rose-200">ENFRENTAR · {elite.hp}/{elite.max}</button> : <span className="text-[8px] text-slate-600">{eliteKills} abatidos</span>}</div>
         {elite && <div className="mt-2 h-1.5 overflow-hidden rounded bg-black/50"><div className="h-full bg-rose-400 transition-all" style={{width:(elite.hp/elite.max*100)+'%'}} /></div>}
       </section>
       <div className="grid gap-3 md:grid-cols-[.8fr_1.2fr]">
