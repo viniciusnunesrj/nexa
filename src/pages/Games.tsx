@@ -498,8 +498,25 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 };
 
 export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
-  const [showExpedition, setShowExpedition] = useState(false);
-  if (showExpedition) return <ExpeditionPrototype onClose={() => setShowExpedition(false)} />;
+  const [showExpedition, setShowExpedition] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('expedition') === '1';
+  });
+  const openExpedition = () => {
+    setShowExpedition(true);
+    if (typeof window !== 'undefined') {
+      const url=new URL(window.location.href); url.searchParams.set('expedition','1');
+      window.history.replaceState({},'',url.toString());
+    }
+  };
+  const closeExpedition = () => {
+    setShowExpedition(false);
+    if (typeof window !== 'undefined') {
+      const url=new URL(window.location.href); url.searchParams.delete('expedition');
+      window.history.replaceState({},'',url.toString());
+    }
+  };
+  if (showExpedition) return <ExpeditionPrototype onClose={closeExpedition} />;
   return (
     <div className="space-y-4">
       <section className="relative isolate overflow-hidden rounded-[22px] border border-cyan-400/20 bg-[#040811] px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,.38)] sm:px-7">
@@ -566,7 +583,7 @@ export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
             <span className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-fuchsia-400/45 bg-fuchsia-500/[.13] px-4 font-heading text-[10px] font-black uppercase tracking-[.09em] text-fuchsia-100 transition group-hover:bg-fuchsia-500/[.22] sm:w-[82%]">Jogar Nexus Duel <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/></span>
           </div>
         </button>
-        <button type="button" onClick={() => setShowExpedition(true)} className="group relative min-h-[310px] overflow-hidden rounded-[22px] border border-violet-400/35 bg-[#07101b] p-5 text-left shadow-[0_24px_65px_rgba(0,0,0,.32)] transition hover:-translate-y-1 hover:border-violet-300/70 sm:p-6">
+        <button type="button" onClick={openExpedition} className="group relative min-h-[310px] overflow-hidden rounded-[22px] border border-violet-400/35 bg-[#07101b] p-5 text-left shadow-[0_24px_65px_rgba(0,0,0,.32)] transition hover:-translate-y-1 hover:border-violet-300/70 sm:p-6">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_35%,rgba(168,85,247,.20),transparent_35%),linear-gradient(135deg,#07101b,#0b1725)]" />
           <div className="relative z-10 flex min-h-[270px] flex-col justify-between">
             <div><div className="flex items-center gap-2"><span className="font-mono text-[10px] font-black uppercase tracking-[.16em] text-violet-300">NEXA · EXPEDITION</span><span className="rounded-full border border-amber-400/25 px-2 py-0.5 text-[9px] font-bold uppercase text-amber-300">Protótipo</span></div><h2 className="mt-2 font-heading text-[27px] font-black uppercase text-white">Expedition</h2><p className="mt-3 text-[12px] leading-relaxed text-slate-300">Farm automático persistente, progressão, drops, quatro companheiros e estrutura preparada para Party 1–4.</p><div className="mt-4 flex flex-wrap gap-1.5">{['Idle RPG','Auto-farm','4 cartas','Party 1–4'].map(x=><span key={x} className="rounded-full border border-violet-400/20 bg-black/25 px-2.5 py-1 text-[9px] font-bold text-slate-200">{x}</span>)}</div></div>
