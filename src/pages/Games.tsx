@@ -45,6 +45,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [elite, setElite] = useState<{name:string;hp:number;max:number;trait:string} | null>(null);
   const [mapNode, setMapNode] = useState(0);
   const [worldBoss, setWorldBoss] = useState<{name:string;hp:number;max:number} | null>(null);
+  const [raidSignal, setRaidSignal] = useState(false);
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
@@ -99,6 +100,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         }));
         setMapNode(n => {
           const next = Math.min(100,n+4+zone);
+          if(next>=75 && zone>=3) setRaidSignal(true);
           if(next>=100 && !worldBoss) {
             const max=260+zone*120;
             setWorldBoss({name:zone>=4?'Colosso do Abismo':zone>=2?'Titã Rift':'Sentinela Nexus',hp:max,max});
@@ -134,7 +136,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool, zone, upgrades.damage, upgrades.salvage, upgrades.recovery]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -179,6 +181,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-amber-300">Sequência de Expedição</span><b className="mt-1 block text-sm text-white">{streakDay} dias em sequência</b><p className="text-[9px] text-slate-500">Entre diariamente para manter a sequência e melhorar o baú do 7º dia.</p></div><button disabled={dailyClaimed} onClick={()=>{setDailyClaimed(true);setCredits(c=>c+15);setPotions(p=>p+1)}} className="rounded-lg border border-amber-300/30 bg-amber-400/10 px-4 py-2 text-[9px] font-black text-amber-200 disabled:opacity-40">{dailyClaimed?'RESGATADO':'RESGATAR DIA '+streakDay}</button></div>
         <div className="mt-3 grid grid-cols-7 gap-1">{[1,2,3,4,5,6,7].map(d=><div key={d} className={(d<streakDay || (d===streakDay&&dailyClaimed)?'border-emerald-400/30 bg-emerald-500/10 ':d===streakDay?'border-amber-300/50 bg-amber-500/10 ':'border-white/10 bg-black/20 ')+"rounded-lg border p-2 text-center"}><span className="block text-[7px] uppercase text-slate-500">Dia {d}</span><b className="text-[9px] text-white">{d===7?'Baú':'+'+(8+d*3)}</b><span className="block text-[6px] text-slate-500">{d===7?'Especial':'Sucata'}</span></div>)}</div>
       </section>
+      {raidSignal && <section className="rounded-xl border border-orange-400/25 bg-gradient-to-r from-orange-500/10 to-red-500/5 p-3"><div className="flex flex-wrap items-center justify-between gap-3"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-orange-300">Sinal de Raid Detectado</span><b className="mt-1 block text-sm text-white">Entidade de Ruptura · PARTY</b><p className="mt-1 text-[9px] text-slate-400">A assinatura excede a capacidade de um único agente. Conteúdo planejado para 2–4 jogadores.</p></div><button disabled className="rounded-lg border border-orange-400/25 bg-orange-500/10 px-4 py-2 text-[8px] font-black text-orange-200 opacity-60">REQUER PARTY · 2/4+</button></div><div className="mt-3 grid grid-cols-4 gap-2">{[1,2,3,4].map(i=><div key={i} className={(i===1?'border-cyan-400/30 text-cyan-200':'border-dashed border-white/10 text-slate-700')+" rounded-lg border p-2 text-center text-[8px]"}>{i===1?'VOCÊ':'AGUARDANDO'}</div>)}</div></section>}
       <section className="rounded-xl border border-indigo-400/15 bg-[#070a18] p-3">
         <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-indigo-300">Mapa da Zona</span><b className="mt-1 block text-sm text-white">{zoneNames[zone-1]}</b></div><span className="text-[8px] text-slate-500">{mapNode}% explorado</span></div>
         <div className="relative mt-4 h-16"><div className="absolute left-4 right-4 top-7 h-px bg-indigo-400/25" />{[0,25,50,75,100].map((n,i)=><div key={n} className="absolute top-4 -translate-x-1/2 text-center" style={{left:(8+i*21)+'%'}}><div className={(mapNode>=n?'border-indigo-300 bg-indigo-400/20 text-indigo-100':'border-white/10 bg-black text-slate-700')+" mx-auto flex h-7 w-7 items-center justify-center rounded-full border text-[9px]"}>{i===4?'☠':i+1}</div><span className="mt-1 block text-[6px] uppercase text-slate-600">{i===4?'Boss':'Setor'}</span></div>)}</div>
