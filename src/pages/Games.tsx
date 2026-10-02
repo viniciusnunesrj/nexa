@@ -43,6 +43,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [upgrades, setUpgrades] = useState<Record<string,number>>({damage:0, salvage:0, recovery:0});
   const [eliteKills, setEliteKills] = useState(0);
   const [elite, setElite] = useState<{name:string;hp:number;max:number;trait:string} | null>(null);
+  const [mapNode, setMapNode] = useState(0);
+  const [worldBoss, setWorldBoss] = useState<{name:string;hp:number;max:number} | null>(null);
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
@@ -95,6 +97,14 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           }
           return nv;
         }));
+        setMapNode(n => {
+          const next = Math.min(100,n+4+zone);
+          if(next>=100 && !worldBoss) {
+            const max=260+zone*120;
+            setWorldBoss({name:zone>=4?'Colosso do Abismo':zone>=2?'Titã Rift':'Sentinela Nexus',hp:max,max});
+          }
+          return next;
+        });
         setCredits(c => c + 2 + zone + upgrades.salvage);
         setHp(h => Math.max(1, h - Math.max(1, 4 + zone - Math.floor(power/12) - upgrades.recovery)));
         setKills(k => {
@@ -124,7 +134,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool, zone, upgrades.damage, upgrades.salvage, upgrades.recovery]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -168,6 +178,11 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       <section className="rounded-xl border border-amber-300/20 bg-gradient-to-r from-amber-500/10 via-violet-500/5 to-cyan-500/10 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-amber-300">Sequência de Expedição</span><b className="mt-1 block text-sm text-white">{streakDay} dias em sequência</b><p className="text-[9px] text-slate-500">Entre diariamente para manter a sequência e melhorar o baú do 7º dia.</p></div><button disabled={dailyClaimed} onClick={()=>{setDailyClaimed(true);setCredits(c=>c+15);setPotions(p=>p+1)}} className="rounded-lg border border-amber-300/30 bg-amber-400/10 px-4 py-2 text-[9px] font-black text-amber-200 disabled:opacity-40">{dailyClaimed?'RESGATADO':'RESGATAR DIA '+streakDay}</button></div>
         <div className="mt-3 grid grid-cols-7 gap-1">{[1,2,3,4,5,6,7].map(d=><div key={d} className={(d<streakDay || (d===streakDay&&dailyClaimed)?'border-emerald-400/30 bg-emerald-500/10 ':d===streakDay?'border-amber-300/50 bg-amber-500/10 ':'border-white/10 bg-black/20 ')+"rounded-lg border p-2 text-center"}><span className="block text-[7px] uppercase text-slate-500">Dia {d}</span><b className="text-[9px] text-white">{d===7?'Baú':'+'+(8+d*3)}</b><span className="block text-[6px] text-slate-500">{d===7?'Especial':'Sucata'}</span></div>)}</div>
+      </section>
+      <section className="rounded-xl border border-indigo-400/15 bg-[#070a18] p-3">
+        <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-indigo-300">Mapa da Zona</span><b className="mt-1 block text-sm text-white">{zoneNames[zone-1]}</b></div><span className="text-[8px] text-slate-500">{mapNode}% explorado</span></div>
+        <div className="relative mt-4 h-16"><div className="absolute left-4 right-4 top-7 h-px bg-indigo-400/25" />{[0,25,50,75,100].map((n,i)=><div key={n} className="absolute top-4 -translate-x-1/2 text-center" style={{left:(8+i*21)+'%'}}><div className={(mapNode>=n?'border-indigo-300 bg-indigo-400/20 text-indigo-100':'border-white/10 bg-black text-slate-700')+" mx-auto flex h-7 w-7 items-center justify-center rounded-full border text-[9px]"}>{i===4?'☠':i+1}</div><span className="mt-1 block text-[6px] uppercase text-slate-600">{i===4?'Boss':'Setor'}</span></div>)}</div>
+        {worldBoss ? <div className="mt-2 rounded-lg border border-red-400/30 bg-red-500/10 p-3"><div className="flex items-center justify-between gap-3"><div><span className="text-[7px] font-black uppercase text-red-300">Boss encontrado no mapa</span><b className="block text-xs text-white">{worldBoss.name}</b></div><button onClick={()=>{const dmg=28+power+upgrades.damage*4;const next=worldBoss.hp-dmg;if(next<=0){setWorldBoss(null);setMapNode(0);setCredits(c=>c+60+zone*10);setDrops(d=>d+3);setRenown(r=>r+5)}else{setWorldBoss({...worldBoss,hp:next});setHp(h=>Math.max(1,h-(10+zone*2)))}}} className="rounded border border-red-400/30 px-3 py-2 text-[8px] font-black text-red-200">ATACAR · {worldBoss.hp}/{worldBoss.max}</button></div><div className="mt-2 h-1.5 overflow-hidden rounded bg-black/60"><div className="h-full bg-red-400 transition-all" style={{width:(worldBoss.hp/worldBoss.max*100)+'%'}} /></div></div> : <p className="mt-1 text-[8px] text-slate-600">Explore a região durante o farm. O último ponto pode esconder uma ameaça maior.</p>}
       </section>
       <section className={elite ? "rounded-xl border border-rose-400/30 bg-gradient-to-r from-rose-500/10 to-orange-500/5 p-3" : "rounded-xl border border-white/10 bg-white/[.02] p-3"}>
         <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-rose-300">Ameaça de Elite</span>{elite ? <><b className="mt-1 block text-sm text-white">{elite.name}</b><p className="text-[9px] text-slate-500">{elite.trait} · inimigo opcional de alto risco.</p></> : <p className="mt-1 text-[9px] text-slate-500">Assinaturas especiais podem surgir durante o farm.</p>}</div>{elite ? <button onClick={()=>{const dmg=22+power+upgrades.damage*3;const next=elite.hp-dmg;if(next<=0){setElite(null);setEliteKills(k=>k+1);setCredits(c=>c+30+zone*5);setDrops(d=>d+2)}else{setElite({...elite,hp:next});setHp(h=>Math.max(1,h-(7+zone)))}}} className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-[9px] font-black text-rose-200">ENFRENTAR · {elite.hp}/{elite.max}</button> : <span className="text-[8px] text-slate-600">{eliteKills} abatidos</span>}</div>
