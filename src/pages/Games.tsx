@@ -498,7 +498,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 };
 
 export const Games: React.FC<GamesProps> = ({ onNavigate }) => {
-  const [showExpedition, setShowExpedition] = useState(() => {
+  // Preview trigger: Expedition playtest\n  const [showExpedition, setShowExpedition] = useState(() => {
     if (typeof window === 'undefined') return false;
     return new URLSearchParams(window.location.search).get('expedition') === '1';
   });
