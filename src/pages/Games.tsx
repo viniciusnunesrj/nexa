@@ -30,6 +30,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [credits, setCredits] = useState(0);
   const [potions, setPotions] = useState(1);
   const [hp, setHp] = useState(100);
+  const [cardCharge, setCardCharge] = useState([0,0,0,0]);
+  const [cardPulse, setCardPulse] = useState<number | null>(null);
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
@@ -57,6 +59,18 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       return next;
     });
   };
+        setCardCharge(ch => ch.map((v,i) => {
+          const nv = v + (i===3 ? 8 : 6);
+          if (nv >= 100) {
+            setCardPulse(i); window.setTimeout(()=>setCardPulse(null),450);
+            if (i===0) setEnemyHp(eh => Math.max(0, eh - (10 + level*2)));
+            if (i===1) setHp(h => Math.min(maxHp, h + 18));
+            if (i===2) setHp(h => Math.min(maxHp, h + 8));
+            if (i===3) setCredits(c => c + 5 + zone);
+            return 0;
+          }
+          return nv;
+        }));
         setCredits(c => c + 2 + zone);
         setHp(h => Math.max(1, h - Math.max(1, 4 + zone - Math.floor(power/12))));
         setKills(k => {
@@ -86,7 +100,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool, zone]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -109,7 +123,11 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           <div className="relative"><div className="absolute left-1/2 top-16 h-5 w-28 -translate-x-1/2 rounded-[50%] bg-cyan-400/10 blur-sm" /><div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-[40%_40%_32%_32%] border-2 border-cyan-300/50 bg-gradient-to-b from-cyan-400/20 to-slate-950 text-6xl shadow-[0_0_35px_rgba(34,211,238,.18)]">♟</div><b className="mt-3 block text-xs text-white">Agente NEXA · Nv. {level} · POD {power}</b></div>
           <div className={hitFlash ? 'relative scale-95 brightness-150 transition' : 'relative transition'}><div className="absolute left-1/2 top-16 h-5 w-28 -translate-x-1/2 rounded-[50%] bg-fuchsia-400/10 blur-sm" /><div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-[40%_40%_32%_32%] border-2 border-fuchsia-300/50 bg-gradient-to-b from-fuchsia-400/20 to-slate-950 text-6xl text-fuchsia-200 shadow-[0_0_35px_rgba(217,70,239,.18)]">{foe.icon}</div><b className="mt-3 block text-xs text-white">{foe.name}</b><div className="mx-auto mt-2 h-2 max-w-36 overflow-hidden rounded bg-slate-700"><div className="h-full bg-rose-400 transition-all" style={{width:(enemyHp/foe.max*100)+'%'}} /></div><small className="text-slate-400">{enemyHp}/{foe.max} HP</small></div>
         </div></div>
-        <div className="relative mt-10 flex justify-center gap-2">{['◉','✧','◆','✦'].map((x,i)=><div key={i} className="group flex h-16 w-14 flex-col items-center justify-center rounded-lg border border-violet-400/40 bg-gradient-to-b from-violet-500/20 to-black/50 text-xl text-violet-200 shadow-[0_5px_18px_rgba(139,92,246,.12)]"><span className="transition group-hover:-translate-y-0.5">{x}</span><small className="mt-1 text-[7px] text-slate-400">NEXA {i+1}</small></div>)}</div>
+        <div className="relative mt-10 flex justify-center gap-2">{companions.map((c,i)=><div key={c.name} title={c.effect} className={(cardPulse===i?'scale-110 border-cyan-200 bg-cyan-400/25 ':'')+"group relative flex h-20 w-16 flex-col items-center justify-center overflow-hidden rounded-lg border border-violet-400/40 bg-gradient-to-b from-violet-500/20 to-black/50 text-xl text-violet-200 shadow-[0_5px_18px_rgba(139,92,246,.12)] transition"}><span className="transition group-hover:-translate-y-0.5">{c.icon}</span><small className="mt-1 text-[7px] font-bold text-slate-300">{c.name}</small><small className="text-[6px] uppercase text-slate-500">{c.role}</small><div className="absolute bottom-0 left-0 h-1 bg-cyan-400 transition-all" style={{width:cardCharge[i]+'%'}} /></div>)}</div>
+      </section>
+      <section className="rounded-xl border border-violet-400/15 bg-violet-500/5 p-3">
+        <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-widest text-violet-300">Esquadrão de cartas</span><p className="mt-1 text-[9px] text-slate-500">As quatro cartas carregam habilidades automaticamente durante o farm.</p></div><span className="rounded-full border border-violet-400/20 px-2 py-1 text-[8px] text-violet-300">4/4 ATIVAS</span></div>
+        <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">{companions.map((c,i)=><div key={c.name} className="rounded-lg border border-white/10 bg-black/20 p-2"><div className="flex items-center justify-between"><b className="text-[9px] text-white">{c.name}</b><span className="text-[8px] text-violet-300">{Math.round(cardCharge[i])}%</span></div><span className="text-[7px] uppercase text-slate-500">{c.role}</span><p className="mt-1 text-[8px] text-slate-400">{c.effect}</p></div>)}</div>
       </section>
       <div className="grid gap-3 md:grid-cols-3">
         <section className="rounded-xl border border-emerald-400/15 bg-emerald-500/5 p-3"><span className="text-[8px] font-black uppercase text-emerald-400">Sobrevivência</span><div className="mt-2 h-2 overflow-hidden rounded-full bg-black/60"><div className="h-full bg-emerald-400 transition-all" style={{width: Math.min(100,(effectiveHp/maxHp)*100)+'%'}} /></div><div className="mt-2 flex items-center justify-between text-[9px] text-slate-400"><span>{effectiveHp}/{maxHp} HP</span><button disabled={potions<=0 || effectiveHp>=maxHp} onClick={()=>{setPotions(p=>p-1);setHp(maxHp)}} className="rounded border border-emerald-400/25 px-2 py-1 text-emerald-300 disabled:opacity-30">Usar reparo ({potions})</button></div></section>
