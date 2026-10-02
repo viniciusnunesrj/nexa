@@ -50,6 +50,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [bounties, setBounties] = useState<Record<string,boolean>>({});
   const [cores, setCores] = useState(0);
   const [forgeLevel, setForgeLevel] = useState(0);
+  const [salvaged, setSalvaged] = useState(0);
+  const [zoneMastery, setZoneMastery] = useState<Record<number,number>>({});
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
@@ -69,6 +71,16 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         if (next > 0) return next;
         const foe = {...enemies[enemyIndex], max: Math.round(enemies[enemyIndex].max * (1 + (zone - 1) * .28))};
   const rarityClass = (r:string) => r==='Lendário' ? 'border-amber-300/60 text-amber-200' : r==='Épico' ? 'border-fuchsia-400/50 text-fuchsia-200' : r==='Raro' ? 'border-cyan-400/50 text-cyan-200' : 'border-white/15 text-slate-300';
+  const salvageItem = (item:ProtoGear) => {
+    const gain = item.rarity==='Lendário'?12:item.rarity==='Épico'?7:item.rarity==='Raro'?4:2;
+    setGear(g=>g.filter(x=>x.id!==item.id)); setCredits(c=>c+gain); setSalvaged(v=>v+1);
+    setEquipped(eq=>{
+      if(eq[item.slot]?.id!==item.id) return eq;
+      const next={...eq,[item.slot]:null};
+      setPower(12+Object.values(next).reduce((sum,p)=>sum+(p?.power||0),0));
+      return next;
+    });
+  };
   const enhanceItem = (item:ProtoGear) => {
     if (cores < 1 || credits < 30) return;
     setCores(c=>c-1); setCredits(c=>c-30);
@@ -123,6 +135,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           return next;
         });
         setCodex(c => ({...c,[foe.name]:(c[foe.name]||0)+1}));
+        setZoneMastery(m => ({...m,[zone]:(m[zone]||0)+1}));
         setCredits(c => c + 2 + zone + upgrades.salvage);
         setHp(h => Math.max(1, h - Math.max(1, 4 + zone - Math.floor(power/12) - upgrades.recovery)));
         setKills(k => {
@@ -152,7 +165,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool, zone, upgrades.damage, upgrades.salvage, upgrades.recovery]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); setCodex({}); setBounties({}); setCores(0); setForgeLevel(0); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); setCodex({}); setBounties({}); setCores(0); setForgeLevel(0); setSalvaged(0); setZoneMastery({}); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -176,6 +189,10 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           <div className={hitFlash ? 'relative scale-95 brightness-150 transition' : 'relative transition'}><div className="absolute left-1/2 top-16 h-5 w-28 -translate-x-1/2 rounded-[50%] bg-fuchsia-400/10 blur-sm" /><div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-[40%_40%_32%_32%] border-2 border-fuchsia-300/50 bg-gradient-to-b from-fuchsia-400/20 to-slate-950 text-6xl text-fuchsia-200 shadow-[0_0_35px_rgba(217,70,239,.18)]">{foe.icon}</div><b className="mt-3 block text-xs text-white">{foe.name}</b><div className="mx-auto mt-2 h-2 max-w-36 overflow-hidden rounded bg-slate-700"><div className="h-full bg-rose-400 transition-all" style={{width:(enemyHp/foe.max*100)+'%'}} /></div><small className="text-slate-400">{enemyHp}/{foe.max} HP</small></div>
         </div></div>
         <div className="relative mt-10 flex justify-center gap-2">{companions.map((c,i)=><div key={c.name} title={c.effect} className={(cardPulse===i?'scale-110 border-cyan-200 bg-cyan-400/25 ':'')+"group relative flex h-20 w-16 flex-col items-center justify-center overflow-hidden rounded-lg border border-violet-400/40 bg-gradient-to-b from-violet-500/20 to-black/50 text-xl text-violet-200 shadow-[0_5px_18px_rgba(139,92,246,.12)] transition"}><span className="transition group-hover:-translate-y-0.5">{c.icon}</span><small className="mt-1 text-[7px] font-bold text-slate-300">{c.name}</small><small className="text-[6px] uppercase text-slate-500">{c.role}</small><div className="absolute bottom-0 left-0 h-1 bg-cyan-400 transition-all" style={{width:cardCharge[i]+'%'}} /></div>)}</div>
+      </section>
+      <section className="rounded-xl border border-teal-400/15 bg-teal-500/5 p-3">
+        <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-teal-300">Domínio Regional</span><b className="mt-1 block text-sm text-white">{zoneNames[zone-1]} · Nv. {Math.min(3,Math.floor((zoneMastery[zone]||0)/10))}/3</b><p className="text-[9px] text-slate-500">Caçar, explorar e derrotar ameaças torna sua equipe especialista naquela região.</p></div><span className="text-[8px] text-teal-200">{zoneMastery[zone]||0} atividade</span></div>
+        <div className="mt-3 grid grid-cols-3 gap-2">{[10,20,30].map((n,i)=><div key={n} className={(zoneMastery[zone]||0)>=n?"rounded-lg border border-teal-400/30 bg-teal-400/10 p-2":"rounded-lg border border-white/10 bg-black/20 p-2"}><span className="text-[7px] uppercase text-slate-500">Domínio {i+1}</span><b className="block text-[9px] text-white">{i===0?'Rotas Seguras':i===1?'Caçador Local':'Mestre da Zona'}</b><p className="mt-1 text-[7px] text-slate-500">{i===0?'Conhecimento do terreno':i===1?'Eficiência contra criaturas':'Prestígio regional'}</p></div>)}</div>
       </section>
       <section className="rounded-xl border border-orange-400/15 bg-orange-500/5 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-orange-300">Forja de Ruptura</span><b className="mt-1 block text-sm text-white">{cores} Núcleos de Elite · Forja Nv. {forgeLevel}</b><p className="text-[9px] text-slate-500">Elites e bosses alimentam a forja. Melhore drops que você decidiu manter.</p></div><button disabled={cores<3||forgeLevel>=3} onClick={()=>{setCores(c=>c-3);setForgeLevel(l=>l+1)}} className="rounded border border-orange-400/25 px-3 py-2 text-[8px] font-black text-orange-200 disabled:opacity-30">{forgeLevel>=3?'FORJA MÁXIMA':'3 NÚCLEOS · EVOLUIR FORJA'}</button></div>
@@ -237,7 +254,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           <div className="flex items-center justify-between"><b className="text-sm uppercase text-white">Drops e equipamento</b><span className="text-[9px] text-cyan-300">{drops} fragmentos</span></div>
           <p className="mt-1 text-[10px] text-slate-500">A cada 5 eliminações cai um item de teste. Equipe para aumentar o dano.</p>
           <div className="mt-3 grid grid-cols-4 gap-2">{Object.entries(equipped).map(([slot,item])=><div key={slot} className={item ? "min-h-20 rounded-lg border border-cyan-400/30 bg-cyan-400/10 p-2" : "min-h-20 rounded-lg border border-dashed border-white/15 bg-black/20 p-2"}><span className="block text-[8px] font-black uppercase text-slate-500">{slot}</span>{item ? <><span className="mt-2 block text-[9px] font-bold text-cyan-200">{item.name}</span><span className="text-[8px] text-emerald-300">+{item.power} POD</span></> : <span className="mt-3 block text-center text-xl text-slate-700">+</span>}</div>)}</div>
-          <div className="mt-3 border-t border-white/5 pt-3"><p className="mb-2 text-[9px] font-black uppercase text-slate-500">Mochila</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{gear.length ? gear.map(item => <button key={item.id} onClick={()=>equipItem(item)} className={'rounded-lg border bg-violet-500/10 p-2 text-left transition hover:brightness-125 '+rarityClass(item.rarity)}><span className="block text-[8px] font-black uppercase">{item.rarity}</span><span className="block text-[10px] font-bold">{item.name}</span><span className="text-[8px] uppercase text-slate-500">{item.slot}</span><span className="block text-[9px] text-emerald-300">+{item.power} POD · Equipar</span></button>) : <div className="col-span-full rounded-lg border border-dashed border-white/10 p-3 text-center text-[10px] text-slate-500">Continue farmando para encontrar equipamento.</div>}</div></div>
+          <div className="mt-3 border-t border-white/5 pt-3"><p className="mb-2 text-[9px] font-black uppercase text-slate-500">Mochila</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{gear.length ? gear.map(item => <button key={item.id} onClick={()=>equipItem(item)} className={'rounded-lg border bg-violet-500/10 p-2 text-left transition hover:brightness-125 '+rarityClass(item.rarity)}><span className="block text-[8px] font-black uppercase">{item.rarity}</span><span className="block text-[10px] font-bold">{item.name}</span><span className="text-[8px] uppercase text-slate-500">{item.slot}</span><span className="block text-[9px] text-emerald-300">+{item.power} POD · Equipar</span></button><button onClick={()=>salvageItem(item)} className="mt-1 w-full rounded border border-white/10 px-1 py-1 text-[7px] text-slate-500 hover:text-orange-200">RECICLAR</button>) : <div className="col-span-full rounded-lg border border-dashed border-white/10 p-3 text-center text-[10px] text-slate-500">Continue farmando para encontrar equipamento.</div>}</div></div>
         </section>
         <section className="rounded-xl border border-rose-400/20 bg-[#100914] p-4">
           <b className="text-sm uppercase text-rose-200">Guardião da Zona</b><p className="mt-1 text-[10px] text-slate-500">Teste de boss disponível a cada 10 eliminações.</p>
