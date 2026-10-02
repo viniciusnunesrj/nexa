@@ -20,7 +20,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [enemyHp, setEnemyHp] = useState(enemies[0].max);
   const [running, setRunning] = useState(true);
   const [zone, setZone] = useState(1);
-  type ProtoGear = { id:string; name:string; power:number; slot:string; rarity:string; requiredClass?:string; setName?:string };
+  type ProtoGear = { id:string; name:string; power:number; slot:string; rarity:string; requiredClass?:string; setName?:string; stat?:'hp'|'mana'|'skill'|'explore'; statValue?:number };
   const [gear, setGear] = useState<ProtoGear[]>([]);
   const [equipped, setEquipped] = useState<Record<string,ProtoGear | null>>({ arma:null, armadura:null, nucleo:null, visor:null });
   const [power, setPower] = useState(12);
@@ -83,9 +83,9 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
   const gearPool = useMemo(() => [
-    { name: 'Lâmina Neon', power: 3, slot: 'arma', requiredClass:'Vanguarda' }, { name: 'Visor Rift', power: 4, slot: 'visor', requiredClass:'Batedor' },
-    { name: 'Núcleo Ciano', power: 5, slot: 'nucleo', requiredClass:'Tecnomante' }, { name: 'Armadura Nexus', power: 7, slot: 'armadura', requiredClass:'Vanguarda' },
-    { name: 'Relé Universal', power: 2, slot: 'nucleo', requiredClass:'Universal' }
+    { name: 'Lâmina Neon', power: 3, slot: 'arma', requiredClass:'Vanguarda', stat:'skill', statValue:2 }, { name: 'Visor Rift', power: 4, slot: 'visor', requiredClass:'Batedor', stat:'explore', statValue:2 },
+    { name: 'Núcleo Ciano', power: 5, slot: 'nucleo', requiredClass:'Tecnomante', stat:'mana', statValue:10 }, { name: 'Armadura Nexus', power: 7, slot: 'armadura', requiredClass:'Vanguarda', stat:'hp', statValue:12 },
+    { name: 'Relé Universal', power: 2, slot: 'nucleo', requiredClass:'Universal', stat:'mana', statValue:4 }
   ], []);
   const needXp = 40 + (level - 1) * 25;
   const classDefs:Record<string,{maxMana:number;manaUse:number;skill:string;desc:string}> = {
@@ -94,8 +94,9 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     Batedor:{maxMana:75,manaUse:16,skill:'Disparo Fantasma',desc:'Mobilidade, exploração e precisão.'}
   };
   const classData=classDefs[playerClass];
-  const maxMana=classData.maxMana + Math.floor(level/5)*5;
-  const maxHp = 100 + (level - 1) * 6 + (talents.survival || 0) * 4 + (playerClass==='Vanguarda'?15:0);
+  const gearStat=(stat:string)=>Object.values(equipped).reduce((n,i)=>n+(i?.stat===stat?(i.statValue||0):0),0);
+  const maxMana=classData.maxMana + Math.floor(level/5)*5 + gearStat('mana');
+  const maxHp = 100 + (level - 1) * 6 + (talents.survival || 0) * 4 + (playerClass==='Vanguarda'?15:0) + gearStat('hp');
   const effectiveHp = Math.min(hp, maxHp);
   const renownTier = renown >= 60 ? 'Vanguarda' : renown >= 30 ? 'Operador' : renown >= 10 ? 'Batedor' : 'Recruta';
 
@@ -105,13 +106,13 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     setSkillFlash(classData.skill);
     window.setTimeout(()=>setSkillFlash(null),650);
     if(playerClass==='Vanguarda'){
-      setEnemyHp(v=>Math.max(0,v-(18+level*3+Math.floor(power/3))));
+      setEnemyHp(v=>Math.max(0,v-(18+level*3+Math.floor(power/3)+gearStat('skill'))));
       setHp(v=>Math.min(maxHp,v+8));
     } else if(playerClass==='Tecnomante'){
-      setEnemyHp(v=>Math.max(0,v-(28+level*4+Math.floor(power/2))));
+      setEnemyHp(v=>Math.max(0,v-(28+level*4+Math.floor(power/2)+gearStat('skill'))));
     } else {
-      setEnemyHp(v=>Math.max(0,v-(20+level*3+Math.floor(power/2))));
-      setMapNode(v=>Math.min(100,v+4));
+      setEnemyHp(v=>Math.max(0,v-(20+level*3+Math.floor(power/2)+gearStat('skill'))));
+      setMapNode(v=>Math.min(100,v+4+gearStat('explore')));
     }
   };
   const rarityClass = (r:string) => r==='Lendário' ? 'border-amber-300/60 text-amber-200' : r==='Épico' ? 'border-fuchsia-400/50 text-fuchsia-200' : r==='Raro' ? 'border-cyan-400/50 text-cyan-200' : 'border-white/15 text-slate-300';
@@ -353,7 +354,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       </section>
       <section className="rounded-xl border border-orange-400/15 bg-orange-500/5 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-orange-300">Forja de Ruptura</span><b className="mt-1 block text-sm text-white">{cores} Núcleos de Elite · Forja Nv. {forgeLevel}</b><p className="text-[9px] text-slate-500">Elites e bosses alimentam a forja. Melhore drops que você decidiu manter.</p></div><button disabled={cores<3||forgeLevel>=3} onClick={()=>{setCores(c=>c-3);setForgeLevel(l=>l+1)}} className="rounded border border-orange-400/25 px-3 py-2 text-[8px] font-black text-orange-200 disabled:opacity-30">{forgeLevel>=3?'FORJA MÁXIMA':'3 NÚCLEOS · EVOLUIR FORJA'}</button></div>
-        <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">{gear.slice(0,4).map(item=><div key={item.id} className="rounded-lg border border-white/10 bg-black/20 p-2"><b className="block text-[9px] text-white">{item.name}</b><span className="text-[8px] text-emerald-300">+{item.power} POD</span>{item.requiredClass&&<span className={(item.requiredClass==='Universal'||item.requiredClass===playerClass?'text-cyan-200':'text-rose-300')+" mt-1 block text-[7px] uppercase"}>{item.requiredClass==='Universal'?'Universal':'Requer · '+item.requiredClass}</span>}<button disabled={cores<1||credits<30} onClick={()=>enhanceItem(item)} className="mt-2 w-full rounded border border-orange-400/20 px-2 py-1 text-[7px] font-black text-orange-200 disabled:opacity-30">1 NÚCLEO + 30 SUCATA</button></div>)}</div>
+        <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">{gear.slice(0,4).map(item=><div key={item.id} className="rounded-lg border border-white/10 bg-black/20 p-2"><b className="block text-[9px] text-white">{item.name}</b><span className="text-[8px] text-emerald-300">+{item.power} POD</span>{item.requiredClass&&<span className={(item.requiredClass==='Universal'||item.requiredClass===playerClass?'text-cyan-200':'text-rose-300')+" mt-1 block text-[7px] uppercase"}>{item.requiredClass==='Universal'?'Universal':'Requer · '+item.requiredClass}</span>}{item.stat&&<span className="block text-[7px] text-amber-200">{item.stat==='hp'?'+'+item.statValue+' HP':item.stat==='mana'?'+'+item.statValue+' Mana':item.stat==='skill'?'+'+item.statValue+' Habilidade':'+'+item.statValue+' Exploração'}</span>}<button disabled={cores<1||credits<30} onClick={()=>enhanceItem(item)} className="mt-2 w-full rounded border border-orange-400/20 px-2 py-1 text-[7px] font-black text-orange-200 disabled:opacity-30">1 NÚCLEO + 30 SUCATA</button></div>)}</div>
       </section>
             <section id="exp-talents" className="rounded-xl border border-violet-400/15 bg-gradient-to-r from-violet-500/5 to-cyan-500/5 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-violet-300">Talentos do Expedicionário</span><b className="mt-1 block text-sm text-white">${talentPoints} pontos disponíveis</b><p className="text-[9px] text-slate-500">Ganhe pontos com nível e Renome. Eles especializam o mesmo personagem — sem criar outra moeda.</p></div><div className="rounded-lg border border-violet-400/20 bg-black/20 px-3 py-2 text-center"><span className="block text-[7px] uppercase text-slate-500">Investidos</span><b className="text-[10px] text-violet-200">${talentPointsSpent} / ${talentPointsTotal}</b></div></div>
@@ -416,7 +417,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           <div className="flex items-center justify-between"><b className="text-sm uppercase text-white">Drops e equipamento</b><span className="text-[9px] text-cyan-300">{drops} fragmentos</span></div>
           <p className="mt-1 text-[10px] text-slate-500">A cada 5 eliminações cai um item de teste. Equipe para aumentar o dano.</p>
           <div className="mt-3 grid grid-cols-4 gap-2">{Object.entries(equipped).map(([slot,item])=><div key={slot} className={item ? "min-h-20 rounded-lg border border-cyan-400/30 bg-cyan-400/10 p-2" : "min-h-20 rounded-lg border border-dashed border-white/15 bg-black/20 p-2"}><span className="block text-[8px] font-black uppercase text-slate-500">{slot}</span>{item ? <><span className="mt-2 block text-[9px] font-bold text-cyan-200">{item.name}</span><span className="text-[8px] text-emerald-300">+{item.power} POD</span></> : <span className="mt-3 block text-center text-xl text-slate-700">+</span>}</div>)}</div>
-          <div className="mt-3 border-t border-white/5 pt-3"><p className="mb-2 text-[9px] font-black uppercase text-slate-500">Mochila</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{gear.length ? gear.map(item => <button key={item.id} onClick={()=>equipItem(item)} className={'rounded-lg border bg-violet-500/10 p-2 text-left transition hover:brightness-125 '+rarityClass(item.rarity)}><span className="block text-[8px] font-black uppercase">{item.rarity}</span><span className="block text-[10px] font-bold">{item.name}</span><span className="text-[8px] uppercase text-slate-500">{item.slot}</span>{item.requiredClass&&<span className={(item.requiredClass==='Universal'||item.requiredClass===playerClass?'text-cyan-200':'text-rose-300')+" block text-[7px] uppercase"}>{item.requiredClass==='Universal'?'Universal':'Requer · '+item.requiredClass}</span>}<span className="block text-[9px] text-emerald-300">+{item.power} POD · Equipar</span></button><div className="mt-1 grid grid-cols-2 gap-1"><button onClick={()=>salvageItem(item)} className="rounded border border-white/10 px-1 py-1 text-[7px] text-slate-500 hover:text-orange-200">RECICLAR</button><button onClick={()=>listMarketItem(item)} className="rounded border border-cyan-400/15 px-1 py-1 text-[7px] text-cyan-300">VENDER</button></div>) : <div className="col-span-full rounded-lg border border-dashed border-white/10 p-3 text-center text-[10px] text-slate-500">Continue farmando para encontrar equipamento.</div>}</div></div>
+          <div className="mt-3 border-t border-white/5 pt-3"><p className="mb-2 text-[9px] font-black uppercase text-slate-500">Mochila</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{gear.length ? gear.map(item => <button key={item.id} onClick={()=>equipItem(item)} className={'rounded-lg border bg-violet-500/10 p-2 text-left transition hover:brightness-125 '+rarityClass(item.rarity)}><span className="block text-[8px] font-black uppercase">{item.rarity}</span><span className="block text-[10px] font-bold">{item.name}</span><span className="text-[8px] uppercase text-slate-500">{item.slot}</span>{item.requiredClass&&<span className={(item.requiredClass==='Universal'||item.requiredClass===playerClass?'text-cyan-200':'text-rose-300')+" block text-[7px] uppercase"}>{item.requiredClass==='Universal'?'Universal':'Requer · '+item.requiredClass}</span>}{item.stat&&<span className="block text-[7px] text-amber-200">{item.stat==='hp'?'+'+item.statValue+' HP':item.stat==='mana'?'+'+item.statValue+' Mana':item.stat==='skill'?'+'+item.statValue+' Habilidade':'+'+item.statValue+' Exploração'}</span>}<span className="block text-[9px] text-emerald-300">+{item.power} POD · Equipar</span></button><div className="mt-1 grid grid-cols-2 gap-1"><button onClick={()=>salvageItem(item)} className="rounded border border-white/10 px-1 py-1 text-[7px] text-slate-500 hover:text-orange-200">RECICLAR</button><button onClick={()=>listMarketItem(item)} className="rounded border border-cyan-400/15 px-1 py-1 text-[7px] text-cyan-300">VENDER</button></div>) : <div className="col-span-full rounded-lg border border-dashed border-white/10 p-3 text-center text-[10px] text-slate-500">Continue farmando para encontrar equipamento.</div>}</div></div>
         </section>
         <section className="rounded-xl border border-rose-400/20 bg-[#100914] p-4">
           <b className="text-sm uppercase text-rose-200">Guardião da Zona</b><p className="mt-1 text-[10px] text-slate-500">Teste de boss disponível a cada 10 eliminações.</p>
