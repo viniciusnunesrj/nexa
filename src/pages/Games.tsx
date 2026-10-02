@@ -46,6 +46,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [mapNode, setMapNode] = useState(0);
   const [worldBoss, setWorldBoss] = useState<{name:string;hp:number;max:number} | null>(null);
   const [raidSignal, setRaidSignal] = useState(false);
+  const [codex, setCodex] = useState<Record<string,number>>({});
+  const [bounties, setBounties] = useState<Record<string,boolean>>({});
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
@@ -107,6 +109,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           }
           return next;
         });
+        setCodex(c => ({...c,[foe.name]:(c[foe.name]||0)+1}));
         setCredits(c => c + 2 + zone + upgrades.salvage);
         setHp(h => Math.max(1, h - Math.max(1, 4 + zone - Math.floor(power/12) - upgrades.recovery)));
         setKills(k => {
@@ -136,7 +139,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool, zone, upgrades.damage, upgrades.salvage, upgrades.recovery]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); setResearch(0); setUpgrades({damage:0,salvage:0,recovery:0}); setEliteKills(0); setElite(null); setMapNode(0); setWorldBoss(null); setRaidSignal(false); setCodex({}); setBounties({}); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -180,6 +183,14 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       <section className="rounded-xl border border-amber-300/20 bg-gradient-to-r from-amber-500/10 via-violet-500/5 to-cyan-500/10 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-amber-300">Sequência de Expedição</span><b className="mt-1 block text-sm text-white">{streakDay} dias em sequência</b><p className="text-[9px] text-slate-500">Entre diariamente para manter a sequência e melhorar o baú do 7º dia.</p></div><button disabled={dailyClaimed} onClick={()=>{setDailyClaimed(true);setCredits(c=>c+15);setPotions(p=>p+1)}} className="rounded-lg border border-amber-300/30 bg-amber-400/10 px-4 py-2 text-[9px] font-black text-amber-200 disabled:opacity-40">{dailyClaimed?'RESGATADO':'RESGATAR DIA '+streakDay}</button></div>
         <div className="mt-3 grid grid-cols-7 gap-1">{[1,2,3,4,5,6,7].map(d=><div key={d} className={(d<streakDay || (d===streakDay&&dailyClaimed)?'border-emerald-400/30 bg-emerald-500/10 ':d===streakDay?'border-amber-300/50 bg-amber-500/10 ':'border-white/10 bg-black/20 ')+"rounded-lg border p-2 text-center"}><span className="block text-[7px] uppercase text-slate-500">Dia {d}</span><b className="text-[9px] text-white">{d===7?'Baú':'+'+(8+d*3)}</b><span className="block text-[6px] text-slate-500">{d===7?'Especial':'Sucata'}</span></div>)}</div>
+      </section>
+      <section className="rounded-xl border border-emerald-400/15 bg-emerald-500/5 p-3">
+        <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-emerald-300">Codex de Criaturas</span><b className="mt-1 block text-sm text-white">Pesquisa de Campo</b><p className="text-[9px] text-slate-500">Quanto mais você caça uma espécie, mais informações permanentes descobre sobre ela.</p></div><span className="text-[8px] text-slate-500">{Object.keys(codex).length}/{enemies.length} catalogadas</span></div>
+        <div className="mt-3 grid gap-2 md:grid-cols-3">{enemies.map(e=>{const seen=codex[e.name]||0;const tier=seen>=20?3:seen>=8?2:seen>=1?1:0;return <div key={e.name} className="rounded-lg border border-white/10 bg-black/20 p-2"><div className="flex items-center justify-between"><b className="text-[9px] text-white">{tier?e.name:'???'}</b><span className="text-[8px] text-emerald-300">Pesquisa {tier}/3</span></div><p className="mt-1 text-[8px] text-slate-500">{tier===0?'Espécie ainda não registrada.':tier===1?'Habitat e resistência identificados.':tier===2?'Padrões de combate analisados.':'Registro completo · fraqueza catalogada.'}</p><div className="mt-2 h-1 overflow-hidden rounded bg-white/5"><div className="h-full bg-emerald-400" style={{width:Math.min(100,seen/20*100)+'%'}} /></div></div>})}</div>
+      </section>
+      <section className="rounded-xl border border-yellow-400/15 bg-yellow-500/5 p-3">
+        <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-yellow-300">Contratos de Caça</span><p className="mt-1 text-[9px] text-slate-500">Recompensas opcionais baseadas no que você já encontrou no mapa.</p></div><span className="text-[8px] text-slate-500">Quadro local</span></div>
+        <div className="mt-3 grid gap-2 md:grid-cols-3">{enemies.map((e,i)=>{const need=6+i*3;const done=(codex[e.name]||0)>=need;const claimed=!!bounties[e.name];return <div key={e.name} className="rounded-lg border border-white/10 bg-black/20 p-2"><b className="text-[9px] text-white">Caçar {e.name}</b><p className="text-[8px] text-slate-500">{Math.min(codex[e.name]||0,need)}/{need} abatidos</p><button disabled={!done||claimed} onClick={()=>{setBounties(b=>({...b,[e.name]:true}));setCredits(c=>c+20+i*10);setRenown(r=>r+2+i)}} className="mt-2 w-full rounded border border-yellow-400/20 px-2 py-1 text-[7px] font-black text-yellow-200 disabled:opacity-30">{claimed?'CONTRATO CONCLUÍDO':done?'COLETAR RECOMPENSA':'EM CAÇA'}</button></div>})}</div>
       </section>
       {raidSignal && <section className="rounded-xl border border-orange-400/25 bg-gradient-to-r from-orange-500/10 to-red-500/5 p-3"><div className="flex flex-wrap items-center justify-between gap-3"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-orange-300">Sinal de Raid Detectado</span><b className="mt-1 block text-sm text-white">Entidade de Ruptura · PARTY</b><p className="mt-1 text-[9px] text-slate-400">A assinatura excede a capacidade de um único agente. Conteúdo planejado para 2–4 jogadores.</p></div><button disabled className="rounded-lg border border-orange-400/25 bg-orange-500/10 px-4 py-2 text-[8px] font-black text-orange-200 opacity-60">REQUER PARTY · 2/4+</button></div><div className="mt-3 grid grid-cols-4 gap-2">{[1,2,3,4].map(i=><div key={i} className={(i===1?'border-cyan-400/30 text-cyan-200':'border-dashed border-white/10 text-slate-700')+" rounded-lg border p-2 text-center text-[8px]"}>{i===1?'VOCÊ':'AGUARDANDO'}</div>)}</div></section>}
       <section className="rounded-xl border border-indigo-400/15 bg-[#070a18] p-3">
