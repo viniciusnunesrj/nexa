@@ -278,13 +278,16 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const talentPointsTotal = Math.floor((level - 1) / 2) + Math.floor(renown / 20);
   const talentPointsSpent = Object.values(talents).reduce((a,b)=>a+b,0);
   const talentPoints = Math.max(0,talentPointsTotal-talentPointsSpent);
+  const rankOrder = ['E','D','C','B','A','S'];
+  const rankAtLeast = (rank:string) => rankOrder.indexOf(characterRank) >= rankOrder.indexOf(rank);
   const talentDefs = [
-    {id:'combat',name:'Combate',icon:'⚔',desc:'Aprimora dano e eficiência contra ameaças.',effects:['+1 dano por ponto','+2 dano em Elite / +3 em Boss por ponto','Preparação para funções de Party']},
-    {id:'survival',name:'Sobrevivência',icon:'⬡',desc:'Mantém a expedição ativa por mais tempo.',effects:['+4 PV máximo por ponto','-1 desgaste a cada 2 pontos','Reduz dano de Elite e Boss']},
-    {id:'exploration',name:'Exploração',icon:'✦',desc:'Acelera descobertas e coleta em campo.',effects:['+2 avanço de mapa por ponto','Nv. 4+: +1 sucata por abate','Apoia descoberta de Ecos']}
+    {id:'combat',name:'Combate',icon:'⚔',desc:'Aprimora dano e eficiência contra ameaças.',unlock:'E',effects:['+1 dano por ponto','+2 dano em Elite / +3 em Boss por ponto','Preparação para funções de Party']},
+    {id:'survival',name:'Sobrevivência',icon:'⬡',desc:'Mantém a expedição ativa por mais tempo.',unlock:'D',effects:['+4 PV máximo por ponto','-1 desgaste a cada 2 pontos','Reduz dano de Elite e Boss']},
+    {id:'exploration',name:'Exploração',icon:'✦',desc:'Acelera descobertas e coleta em campo.',unlock:'C',effects:['+2 avanço de mapa por ponto','Nv. 4+: +1 sucata por abate','Apoia descoberta de Ecos']}
   ];
   const spendTalent = (id:string) => {
-    if(talentPoints<1 || (talents[id]||0)>=5) return;
+    const def=talentDefs.find(t=>t.id===id);
+    if(!def || !rankAtLeast(def.unlock) || talentPoints<1 || (talents[id]||0)>=5) return;
     setTalents(v=>({...v,[id]:(v[id]||0)+1}));
   };
   const quickActions = [
@@ -388,7 +391,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       </section>
             <section id="exp-talents" className="rounded-xl border border-violet-400/15 bg-gradient-to-r from-violet-500/5 to-cyan-500/5 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-violet-300">Talentos do Expedicionário</span><b className="mt-1 block text-sm text-white">${talentPoints} pontos disponíveis</b><p className="text-[9px] text-slate-500">Ganhe pontos com nível e Renome. Eles especializam o mesmo personagem — sem criar outra moeda.</p></div><div className="rounded-lg border border-violet-400/20 bg-black/20 px-3 py-2 text-center"><span className="block text-[7px] uppercase text-slate-500">Investidos</span><b className="text-[10px] text-violet-200">${talentPointsSpent} / ${talentPointsTotal}</b></div></div>
-        <div className="mt-3 grid gap-2 md:grid-cols-3">{talentDefs.map(t=>{const lv=talents[t.id]||0;return <div key={t.id} className="rounded-lg border border-white/10 bg-black/25 p-3"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className="text-lg">{t.icon}</span><b className="text-[10px] text-white">{t.name}</b></div><span className="text-[8px] font-black text-violet-300">Nv. {lv}/5</span></div><p className="mt-2 text-[8px] text-slate-400">{t.desc}</p><div className="mt-2 space-y-1">{t.effects.map((e,i)=><div key={e} className={(lv>i?'text-cyan-200':'text-slate-600')+" text-[7px]"}>{lv>i?'✓':'○'} {e}</div>)}</div><button disabled={talentPoints<1||lv>=5} onClick={()=>spendTalent(t.id)} className="mt-3 w-full rounded border border-violet-400/25 bg-violet-500/5 px-2 py-1.5 text-[7px] font-black text-violet-200 disabled:opacity-30">{lv>=5?'ESPECIALIZAÇÃO MÁXIMA':'INVESTIR 1 PONTO'}</button></div>})}</div>
+        <div className="mt-3 grid gap-2 md:grid-cols-3">{talentDefs.map(t=>{const lv=talents[t.id]||0;const unlocked=rankAtLeast(t.unlock);return <div key={t.id} className={(unlocked?'border-white/10 bg-black/25':'border-white/5 bg-black/40 opacity-60')+" rounded-lg border p-3"}><div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className="text-lg">{t.icon}</span><b className="text-[10px] text-white">{t.name}</b></div><div className="text-right"><span className="block text-[8px] font-black text-violet-300">Nv. {lv}/5</span><span className={(unlocked?'text-emerald-300':'text-amber-300')+" text-[7px] font-black"}>{unlocked?'LIBERADO':'RANK '+t.unlock}</span></div></div><p className="mt-2 text-[8px] text-slate-400">{t.desc}</p><div className="mt-2 space-y-1">{t.effects.map((e,i)=><div key={e} className={(lv>i?'text-cyan-200':'text-slate-600')+" text-[7px]"}>{lv>i?'✓':'○'} {e}</div>)}</div><button disabled={!unlocked||talentPoints<1||lv>=5} onClick={()=>spendTalent(t.id)} className="mt-3 w-full rounded border border-violet-400/25 bg-violet-500/5 px-2 py-1.5 text-[7px] font-black text-violet-200 disabled:opacity-30">{!unlocked?'PROMOVA PARA RANK '+t.unlock:lv>=5?'ESPECIALIZAÇÃO MÁXIMA':'INVESTIR 1 PONTO'}</button></div>})}</div>
         <p className="mt-2 text-[7px] text-slate-600">Protótipo: os bônus serão conectados gradualmente ao combate, mapa, Ecos, chefes e Party para evitar progressões soltas.</p>
       </section>
 <section className="rounded-xl border border-sky-400/15 bg-sky-500/5 p-3">
