@@ -39,6 +39,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [profileOpen, setProfileOpen] = useState(false);
   const [skillFlash, setSkillFlash] = useState<string | null>(null);
   const [cardCharge, setCardCharge] = useState([0,0,0,0]);
+  const [selectedCard, setSelectedCard] = useState(0);
   const [cardPulse, setCardPulse] = useState<number | null>(null);
   const [event, setEvent] = useState<{title:string;body:string;kind:string} | null>(null);
   const [eventMeter, setEventMeter] = useState(0);
@@ -412,8 +413,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 
         <div className="absolute left-[68%] top-[45%] z-10 -translate-x-1/2 text-center">
           <div className="mx-auto h-14 w-14 rotate-45 border-4 border-fuchsia-300/60 bg-[#35163d] shadow-[0_0_24px_rgba(232,121,249,.35)]"><div className="m-3 h-5 w-5 border-2 border-rose-200 bg-[#110b1c]"/></div>
-          <b className="mt-3 block text-[9px] text-rose-100">{foe.name} · Nv. {foe.level}</b><div className="mx-auto mt-1 h-1.5 w-24 overflow-hidden bg-black/70"><div className="h-full bg-rose-400" style={{width:Math.max(0,enemyHp/foe.hp*100)+'%'}}/></div>
-          <span className="text-[8px] text-slate-400">{enemyHp}/{foe.hp} HP</span>
+          <b className="mt-3 block text-[9px] text-rose-100">{foe.name} · Nv. {foe.level}</b><div className="mx-auto mt-1 h-1.5 w-24 overflow-hidden bg-black/70"><div className="h-full bg-rose-400" style={{width:Math.max(0,enemyHp/foe.max*100)+'%'}}/></div>
+          <span className="text-[8px] text-slate-400">{enemyHp}/{foe.max} HP</span>
         </div>
 
         <div className="absolute bottom-24 left-1/2 z-20 flex -translate-x-1/2 gap-1">{companions.map((card,i)=><button key={card.name} onClick={()=>setSelectedCard(i)} className={(selectedCard===i?'border-cyan-300 bg-cyan-400/15':'border-violet-400/25 bg-[#100c25]/90')+" h-14 w-12 rounded border text-center shadow-xl"}><span className="block text-sm text-violet-200">{card.icon}</span><b className="block text-[6px] text-white">{card.name}</b><span className="text-[5px] uppercase text-slate-500">{card.role}</span></button>)}</div>
