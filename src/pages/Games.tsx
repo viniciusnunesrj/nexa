@@ -25,6 +25,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [equipped, setEquipped] = useState<Record<string,ProtoGear | null>>({ arma:null, armadura:null, nucleo:null, visor:null });
   const [power, setPower] = useState(12);
   const [bossHp, setBossHp] = useState<number | null>(null);
+  const [bossDefeated, setBossDefeated] = useState(false);
+  const [areaNotice, setAreaNotice] = useState<string | null>(null);
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
@@ -63,7 +65,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             setLootFlash(rarity.name+' · '+item.name);
             window.setTimeout(() => setLootFlash(null), 1300);
           }
-          if (n % 10 === 0) setZone(z => Math.min(5, z + 1));
+          if (n % 10 === 0) setBossDefeated(false);
           return n;
         });
         setXp(current => {
@@ -79,7 +81,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool, zone]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -93,8 +95,9 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       </div>
       <section className="relative min-h-[390px] overflow-hidden rounded-2xl border border-cyan-400/30 bg-[#060b18] p-4">
         <div className="absolute inset-0 opacity-30" style={{backgroundImage:'linear-gradient(#22d3ee33 1px,transparent 1px),linear-gradient(90deg,#22d3ee33 1px,transparent 1px)',backgroundSize:'38px 38px'}} />
-        <div className="relative flex justify-between text-[10px] uppercase"><span className="rounded-full bg-black/50 px-3 py-1 text-cyan-200">{'Zona '+zone.toString().padStart(2,'0')+' · Farm automático'}</span><span className="text-emerald-300">{running ? 'Combatendo' : 'Pausado'}</span></div>
+        <div className="relative flex justify-between text-[10px] uppercase"><span className="rounded-full bg-black/50 px-3 py-1 text-cyan-200">{'Zona '+zone.toString().padStart(2,'0')+' · '+zoneNames[zone-1]}</span><span className="text-emerald-300">{running ? 'Combatendo' : 'Pausado'}</span></div>
         <div className="relative mt-12">
+          {areaNotice && <div className="absolute inset-x-0 top-1/3 z-30 mx-auto w-fit rounded-xl border border-cyan-300/40 bg-black/90 px-6 py-3 text-center shadow-2xl"><span className="block text-[9px] font-black uppercase tracking-[.3em] text-cyan-400">Nova área</span><b className="text-lg text-white">{areaNotice}</b></div>}
           <div className="pointer-events-none absolute left-[10%] right-[10%] top-[54%] h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent" />
           {lootFlash && <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 animate-bounce rounded-full border border-amber-300/40 bg-black/80 px-3 py-1 text-[10px] font-black text-amber-200">DROP! {lootFlash}</div>}
           <div className="grid grid-cols-2 items-end gap-5 text-center">
@@ -112,7 +115,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         </section>
         <section className="rounded-xl border border-rose-400/20 bg-[#100914] p-4">
           <b className="text-sm uppercase text-rose-200">Guardião da Zona</b><p className="mt-1 text-[10px] text-slate-500">Teste de boss disponível a cada 10 eliminações.</p>
-          {kills >= 10 ? <button onClick={()=>{const hp=bossHp??120;const next=hp-(18+power);if(next<=0){setBossHp(null);setDrops(d=>d+3);setPower(p=>p+2)}else setBossHp(next)}} className="mt-3 w-full rounded-lg border border-rose-400/35 bg-rose-500/10 p-3 text-xs font-black text-rose-200">ATACAR BOSS · {bossHp??120}/120 HP</button> : <div className="mt-3 rounded-lg border border-dashed border-white/10 p-3 text-center text-[10px] text-slate-500">Desbloqueia em {10-kills} eliminações</div>}
+          {kills >= zone*10 ? (bossDefeated ? <button disabled={zone>=5} onClick={()=>{const next=Math.min(5,zone+1);setZone(next);setBossDefeated(false);setBossHp(null);setEnemyHp(Math.round(enemies[enemyIndex].max*(1+(next-1)*.28)));setAreaNotice(zoneNames[next-1]);window.setTimeout(()=>setAreaNotice(null),1600)}} className="mt-3 w-full rounded-lg border border-emerald-400/35 bg-emerald-500/10 p-3 text-xs font-black text-emerald-200 disabled:opacity-40">{zone>=5?'EXPEDIÇÃO CONCLUÍDA':'AVANÇAR PARA PRÓXIMA ZONA'}</button> : <button onClick={()=>{const max=120+(zone-1)*70;const hp=bossHp??max;const next=hp-(18+power);if(next<=0){setBossHp(null);setBossDefeated(true);setDrops(d=>d+3);setPower(p=>p+2)}else setBossHp(next)}} className="mt-3 w-full rounded-lg border border-rose-400/35 bg-rose-500/10 p-3 text-xs font-black text-rose-200">ATACAR BOSS · {bossHp??(120+(zone-1)*70)}/{120+(zone-1)*70} HP</button>) : <div className="mt-3 rounded-lg border border-dashed border-white/10 p-3 text-center text-[10px] text-slate-500">Desbloqueia em {Math.max(0,zone*10-kills)} eliminações</div>}
         </section>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
