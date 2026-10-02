@@ -32,6 +32,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [hp, setHp] = useState(100);
   const [cardCharge, setCardCharge] = useState([0,0,0,0]);
   const [cardPulse, setCardPulse] = useState<number | null>(null);
+  const [event, setEvent] = useState<{title:string;body:string;kind:string} | null>(null);
+  const [eventMeter, setEventMeter] = useState(0);
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
@@ -59,6 +61,15 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       return next;
     });
   };
+        setEventMeter(m => {
+          const next = m + 1;
+          if (next >= 7 && !event) {
+            const pick = (kills + zone) % 3;
+            setEvent(pick===0 ? {title:'Fenda Instável',body:'Uma ruptura energética surgiu. Arrisque-se por sucata extra.',kind:'risk'} : pick===1 ? {title:'Cache Abandonado',body:'Um depósito NEXA foi detectado fora da rota.',kind:'loot'} : {title:'Sinal de Socorro',body:'Um eco aliado pede assistência no setor.',kind:'rescue'});
+            return 0;
+          }
+          return next;
+        });
         setCardCharge(ch => ch.map((v,i) => {
           const nv = v + (i===3 ? 8 : 6);
           if (nv >= 100) {
@@ -100,7 +111,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool, zone]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -125,6 +136,10 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         </div></div>
         <div className="relative mt-10 flex justify-center gap-2">{companions.map((c,i)=><div key={c.name} title={c.effect} className={(cardPulse===i?'scale-110 border-cyan-200 bg-cyan-400/25 ':'')+"group relative flex h-20 w-16 flex-col items-center justify-center overflow-hidden rounded-lg border border-violet-400/40 bg-gradient-to-b from-violet-500/20 to-black/50 text-xl text-violet-200 shadow-[0_5px_18px_rgba(139,92,246,.12)] transition"}><span className="transition group-hover:-translate-y-0.5">{c.icon}</span><small className="mt-1 text-[7px] font-bold text-slate-300">{c.name}</small><small className="text-[6px] uppercase text-slate-500">{c.role}</small><div className="absolute bottom-0 left-0 h-1 bg-cyan-400 transition-all" style={{width:cardCharge[i]+'%'}} /></div>)}</div>
       </section>
+      <div className="grid gap-3 md:grid-cols-[.8fr_1.2fr]">
+        <section className="rounded-xl border border-cyan-400/15 bg-cyan-500/5 p-3"><span className="text-[8px] font-black uppercase tracking-widest text-cyan-300">Sinergia ativa</span><b className="mt-1 block text-sm text-white">{synergy}</b><p className="mt-1 text-[9px] text-slate-500">{synergyText}</p><div className="mt-2 h-1 overflow-hidden rounded bg-black/50"><div className="h-full bg-cyan-400" style={{width:Math.min(100,25+power*2)+'%'}} /></div></section>
+        <section className={event ? "rounded-xl border border-amber-300/30 bg-amber-500/10 p-3" : "rounded-xl border border-white/10 bg-white/[.02] p-3"}><div className="flex items-center justify-between"><span className="text-[8px] font-black uppercase tracking-widest text-amber-300">Evento de campo</span><span className="text-[8px] text-slate-500">{event ? 'DECISÃO DISPONÍVEL' : 'Escaneando setor...'}</span></div>{event ? <><b className="mt-1 block text-sm text-white">{event.title}</b><p className="mt-1 text-[9px] text-slate-400">{event.body}</p><div className="mt-2 flex gap-2"><button onClick={()=>{if(event.kind==='risk'){setCredits(c=>c+18);setHp(h=>Math.max(1,h-12))}else if(event.kind==='loot'){setCredits(c=>c+12);setDrops(d=>d+1)}else{setHp(h=>Math.min(maxHp,h+22));setPotions(p=>p+1)}setEvent(null)}} className="rounded border border-amber-300/30 bg-amber-400/10 px-3 py-1 text-[9px] font-bold text-amber-200">INTERAGIR</button><button onClick={()=>setEvent(null)} className="rounded border border-white/10 px-3 py-1 text-[9px] text-slate-400">IGNORAR</button></div></> : <div className="mt-2 h-1 overflow-hidden rounded bg-black/50"><div className="h-full bg-amber-300/60 transition-all" style={{width:(eventMeter/7*100)+'%'}} /></div>}</section>
+      </div>
       <section className="rounded-xl border border-violet-400/15 bg-violet-500/5 p-3">
         <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-widest text-violet-300">Esquadrão de cartas</span><p className="mt-1 text-[9px] text-slate-500">As quatro cartas carregam habilidades automaticamente durante o farm.</p></div><span className="rounded-full border border-violet-400/20 px-2 py-1 text-[8px] text-violet-300">4/4 ATIVAS</span></div>
         <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">{companions.map((c,i)=><div key={c.name} className="rounded-lg border border-white/10 bg-black/20 p-2"><div className="flex items-center justify-between"><b className="text-[9px] text-white">{c.name}</b><span className="text-[8px] text-violet-300">{Math.round(cardCharge[i])}%</span></div><span className="text-[7px] uppercase text-slate-500">{c.role}</span><p className="mt-1 text-[8px] text-slate-400">{c.effect}</p></div>)}</div>
