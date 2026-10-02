@@ -37,6 +37,8 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [dailyClaimed, setDailyClaimed] = useState(false);
   const [streakDay, setStreakDay] = useState(3);
   const [missionClaims, setMissionClaims] = useState<Record<string,boolean>>({});
+  const [milestoneClaims, setMilestoneClaims] = useState<Record<string,boolean>>({});
+  const [renown, setRenown] = useState(0);
   const [hitFlash, setHitFlash] = useState(false);
   const [lootFlash, setLootFlash] = useState<string | null>(null);
   const rarityRoll = (seed:number) => seed % 20 === 0 ? {name:'Lendário', mult:2.2} : seed % 8 === 0 ? {name:'Épico', mult:1.7} : seed % 3 === 0 ? {name:'Raro', mult:1.35} : {name:'Comum', mult:1};
@@ -114,7 +116,7 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     return () => window.clearInterval(timer);
   }, [running, level, enemyIndex, needXp, power, gearPool, zone]);
 
-  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); };
+  const reset = () => { setLevel(1); setXp(0); setKills(0); setDrops(0); setEnemyIndex(0); setEnemyHp(enemies[0].max); setRunning(true); setZone(1); setGear([]); setEquipped({ arma:null, armadura:null, nucleo:null, visor:null }); setPower(12); setBossHp(null); setBossDefeated(false); setAreaNotice(null); setCredits(0); setPotions(1); setHp(100); setCardCharge([0,0,0,0]); setCardPulse(null); setEvent(null); setEventMeter(0); setDailyClaimed(false); setStreakDay(3); setMissionClaims({}); setMilestoneClaims({}); setRenown(0); };
   const foe = enemies[enemyIndex];
 
   return (
@@ -138,6 +140,10 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           <div className={hitFlash ? 'relative scale-95 brightness-150 transition' : 'relative transition'}><div className="absolute left-1/2 top-16 h-5 w-28 -translate-x-1/2 rounded-[50%] bg-fuchsia-400/10 blur-sm" /><div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-[40%_40%_32%_32%] border-2 border-fuchsia-300/50 bg-gradient-to-b from-fuchsia-400/20 to-slate-950 text-6xl text-fuchsia-200 shadow-[0_0_35px_rgba(217,70,239,.18)]">{foe.icon}</div><b className="mt-3 block text-xs text-white">{foe.name}</b><div className="mx-auto mt-2 h-2 max-w-36 overflow-hidden rounded bg-slate-700"><div className="h-full bg-rose-400 transition-all" style={{width:(enemyHp/foe.max*100)+'%'}} /></div><small className="text-slate-400">{enemyHp}/{foe.max} HP</small></div>
         </div></div>
         <div className="relative mt-10 flex justify-center gap-2">{companions.map((c,i)=><div key={c.name} title={c.effect} className={(cardPulse===i?'scale-110 border-cyan-200 bg-cyan-400/25 ':'')+"group relative flex h-20 w-16 flex-col items-center justify-center overflow-hidden rounded-lg border border-violet-400/40 bg-gradient-to-b from-violet-500/20 to-black/50 text-xl text-violet-200 shadow-[0_5px_18px_rgba(139,92,246,.12)] transition"}><span className="transition group-hover:-translate-y-0.5">{c.icon}</span><small className="mt-1 text-[7px] font-bold text-slate-300">{c.name}</small><small className="text-[6px] uppercase text-slate-500">{c.role}</small><div className="absolute bottom-0 left-0 h-1 bg-cyan-400 transition-all" style={{width:cardCharge[i]+'%'}} /></div>)}</div>
+      </section>
+      <section className="rounded-xl border border-fuchsia-400/15 bg-gradient-to-r from-fuchsia-500/5 to-violet-500/5 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-fuchsia-300">Renome da Expedição</span><b className="mt-1 block text-sm text-white">{renownTier} · {renown} REN</b><p className="text-[9px] text-slate-500">Conquistas permanentes do protótipo. Não resetam como missões diárias.</p></div><div className="rounded-lg border border-fuchsia-400/20 bg-black/20 px-3 py-2 text-center"><span className="block text-[7px] uppercase text-slate-500">Próximo título</span><b className="text-[9px] text-fuchsia-200">{renown<10?'Batedor':renown<30?'Operador':renown<60?'Vanguarda':'Máximo atual'}</b></div></div>
+        <div className="mt-3 grid gap-2 md:grid-cols-4">{milestones.map(m=>{const done=m.value>=m.target;const claimed=!!milestoneClaims[m.id];return <div key={m.id} className="rounded-lg border border-white/10 bg-black/20 p-2"><b className="text-[9px] text-white">{m.title}</b><span className="mt-1 block text-[7px] text-slate-500">{Math.min(m.value,m.target)}/{m.target}</span><button disabled={!done||claimed} onClick={()=>{setMilestoneClaims(c=>({...c,[m.id]:true}));setRenown(r=>r+m.reward)}} className="mt-2 w-full rounded border border-fuchsia-400/20 px-2 py-1 text-[7px] font-black text-fuchsia-200 disabled:opacity-30">{claimed?'CONCLUÍDA':done?'+'+m.reward+' REN':'EM PROGRESSO'}</button></div>})}</div>
       </section>
       <section className="rounded-xl border border-cyan-400/15 bg-[#061019] p-3">
         <div className="flex items-center justify-between"><div><span className="text-[8px] font-black uppercase tracking-[.2em] text-cyan-300">Missões da Expedição</span><p className="mt-1 text-[9px] text-slate-500">Objetivos curtos para dar direção ao farm diário.</p></div><span className="text-[8px] text-slate-500">{missions.filter(m=>m.value>=m.target).length}/4 prontas</span></div>
