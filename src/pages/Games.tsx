@@ -369,6 +369,27 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   );
   const dailyNexPool = dailyNexBasePool + veteranBonus;
   const dailyNexReward = Math.floor(dailyNexPool * dailyProgress / 100);
+  const zoneNames = ['Setor Neon','Distrito Rift','Ruínas Ciano','Abismo Nexus','Núcleo de Ruptura'];
+  const companions = [
+    {name:'Vektor',role:'Ataque',effect:'Disparo de ruptura',icon:'◆'},
+    {name:'Aegis',role:'Defesa',effect:'Pulso restaurador',icon:'⬢'},
+    {name:'Nyra',role:'Suporte',effect:'Recuperação tática',icon:'✦'},
+    {name:'Flux',role:'Coleta',effect:'Recupera sucata',icon:'◈'}
+  ];
+  const synergy = power >= 35 ? 'Ressonância Nexus' : power >= 22 ? 'Formação Sincronizada' : 'Esquadrão em Formação';
+  const synergyText = power >= 35 ? 'A equipe opera em alta sintonia.' : power >= 22 ? 'Cartas e equipamento começam a formar uma composição.' : 'Aumente o poder e refine a composição para liberar sinergias.';
+  const milestones = [
+    {id:'kills',title:'Caçador de Ruptura',value:kills,target:30,reward:5},
+    {id:'elite',title:'Quebra-Elites',value:eliteKills,target:3,reward:6},
+    {id:'guardians',title:'Guardião Caído',value:guardiansDefeated,target:2,reward:7},
+    {id:'explore',title:'Cartógrafo',value:mapNode,target:100,reward:5}
+  ];
+  const missions = [
+    {id:'hunt',title:'Limpeza do Setor',desc:'Elimine criaturas durante a expedição.',value:kills,target:12,reward:'20 Sucata'},
+    {id:'gear',title:'Coleta de Campo',desc:'Encontre equipamentos durante o farm.',value:drops,target:2,reward:'1 Poção'},
+    {id:'boss',title:'Ameaça Maior',desc:'Derrote um Guardião da Zona.',value:guardiansDefeated,target:1,reward:'35 Sucata'},
+    {id:'map',title:'Reconhecimento',desc:'Avance pela exploração do mapa.',value:mapNode,target:50,reward:'15 Sucata'}
+  ];
   const foe = enemies[enemyIndex];
 
   return (
