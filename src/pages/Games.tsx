@@ -67,15 +67,6 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   ], []);
   const needXp = 40 + (level - 1) * 25;
 
-  useEffect(() => {
-    if (!running) return;
-    const timer = window.setInterval(() => {
-      setEnemyHp(hp => {
-        setHitFlash(true);
-        window.setTimeout(() => setHitFlash(false), 140);
-        const next = hp - (8 + level * 2 + Math.floor(power / 4) + upgrades.damage * 2);
-        if (next > 0) return next;
-        const foe = {...enemies[enemyIndex], max: Math.round(enemies[enemyIndex].max * (1 + (zone - 1) * .28))};
   const rarityClass = (r:string) => r==='Lendário' ? 'border-amber-300/60 text-amber-200' : r==='Épico' ? 'border-fuchsia-400/50 text-fuchsia-200' : r==='Raro' ? 'border-cyan-400/50 text-cyan-200' : 'border-white/15 text-slate-300';
   const salvageItem = (item:ProtoGear) => {
     const gain = item.rarity==='Lendário'?12:item.rarity==='Épico'?7:item.rarity==='Raro'?4:2;
@@ -106,6 +97,16 @@ const ExpeditionPrototype: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       return next;
     });
   };
+
+  useEffect(() => {
+    if (!running) return;
+    const timer = window.setInterval(() => {
+      setEnemyHp(hp => {
+        setHitFlash(true);
+        window.setTimeout(() => setHitFlash(false), 140);
+        const next = hp - (8 + level * 2 + Math.floor(power / 4) + upgrades.damage * 2);
+        if (next > 0) return next;
+        const foe = {...enemies[enemyIndex], max: Math.round(enemies[enemyIndex].max * (1 + (zone - 1) * .28))};
         if (!elite && (kills + 1) % 9 === 0) {
           const eliteMax = 95 + zone * 45;
           setElite({name: zone>=4?'Arauto Abissal':zone>=2?'Executor Rift':'Drone Alfa',hp:eliteMax,max:eliteMax,trait:zone%2===0?'Blindagem Reativa':'Carga Instável'});
